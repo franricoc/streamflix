@@ -194,6 +194,19 @@
             tools:text="00:00:00" />
 
         <ImageView
+            android:id="@+id/btn_exo_download"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:padding="12dp"
+            android:src="@drawable/ic_download"
+            android:tint="#FFFFFF"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_exo_lock"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="ContentDescription,UseAppTint" />
+
+        <ImageView
             android:id="@+id/btn_exo_lock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

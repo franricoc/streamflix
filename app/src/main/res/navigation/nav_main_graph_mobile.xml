@@ -235,4 +235,11 @@
         android:id="@+id/settings_about"
         android:name="com.streamflixreborn.streamflix.fragments.settings.about.SettingsAboutMobileFragment"
         android:label="fragment_settings_about_mobile" />
+
+    <fragment
+        android:id="@+id/downloads"
+        android:name="com.streamflixreborn.streamflix.offline.ui.DownloadsFragment"
+        android:label="fragment_downloads"
+        tools:layout="@layout/fragment_downloads" />
+
 </navigation>

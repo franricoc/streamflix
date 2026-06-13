@@ -281,8 +281,10 @@ class PlayerMobileFragment : Fragment() {
         )
 
         // Stato Video
-        viewLifecycleOwner.lifecycleScope.launch { 
-            viewModel.state.flowWithLifecycle(lifecycle, Lifecycle.State.CREATED).collect { state ->
+        val isOfflinePlayback = arguments?.getBoolean("is_offline_playback", false) ?: false
+        if (!isOfflinePlayback) {
+            viewLifecycleOwner.lifecycleScope.launch { 
+                viewModel.state.flowWithLifecycle(lifecycle, Lifecycle.State.CREATED).collect { state ->
                 when (state) {
                     PlayerViewModel.State.LoadingServers -> {}
                     is PlayerViewModel.State.SuccessLoadingServers -> {
@@ -486,6 +488,32 @@ class PlayerMobileFragment : Fragment() {
                     }
                     is PlayerViewModel.SubtitleState.FailedDownloadingSubDLSubtitle -> {
                         Toast.makeText(requireContext(), "${state.subtitle.name}: ${state.error.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+        } else {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                val entity = com.streamflixreborn.streamflix.offline.database.OfflineDatabase.getInstance(requireContext())
+                    .offlineDao().getById(args.id)
+                if (entity != null) {
+                    withContext(Dispatchers.Main) {
+                        val video = Video(
+                            source = entity.url,
+                            type = entity.mimeType,
+                            subtitles = emptyList(),
+                            headers = null
+                        )
+                        val server = Video.Server(
+                            id = "offline",
+                            name = "Offline"
+                        )
+                        displayVideo(video, server)
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Video offline no encontrado", Toast.LENGTH_SHORT).show()
+                        findNavController().navigateUp()
                     }
                 }
             }
@@ -906,6 +934,33 @@ class PlayerMobileFragment : Fragment() {
         currentVideo = video
         currentServer = server
         updatePlayerHeader()
+
+        val isOfflinePlayback = arguments?.getBoolean("is_offline_playback", false) ?: false
+        binding.pvPlayer.controller.binding.btnExoDownload?.apply {
+            visibility = if (isOfflinePlayback) android.view.View.GONE else android.view.View.VISIBLE
+            setOnClickListener {
+                val type = args.videoType
+                val title = resolvePlayerTitle()
+                val poster = when (type) {
+                    is Video.Type.Movie -> type.poster
+                    is Video.Type.Episode -> type.poster ?: type.tvShow.poster
+                }
+                val season = (type as? Video.Type.Episode)?.season?.number
+                val episode = (type as? Video.Type.Episode)?.number
+                
+                com.streamflixreborn.streamflix.offline.DownloadModule.startDownload(
+                    requireContext(),
+                    args.id,
+                    video.source,
+                    title,
+                    poster,
+                    season,
+                    episode,
+                    video.type
+                )
+                android.widget.Toast.makeText(requireContext(), R.string.download_started, android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
 
         val extraBuffering = PlayerSettingsView.Settings.ExtraBuffering.isEnabled
 
@@ -1451,8 +1506,12 @@ class PlayerMobileFragment : Fragment() {
             }
             .build()
         httpDataSource = OkHttpDataSource.Factory(okHttpClient)
-
-        dataSourceFactory = DefaultDataSource.Factory(requireContext(), httpDataSource)
+        val isOffline = arguments?.getBoolean("is_offline_playback", false) ?: false
+        if (isOffline) {
+            dataSourceFactory = com.streamflixreborn.streamflix.offline.DownloadModule.getCacheDataSourceFactory(requireContext())
+        } else {
+            dataSourceFactory = DefaultDataSource.Factory(requireContext(), httpDataSource)
+        }
 
         player = buildPlayer(extraBuffering).also { player ->
                 player.setAudioAttributes(
