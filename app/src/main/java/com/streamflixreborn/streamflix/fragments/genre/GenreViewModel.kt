@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.streamflixreborn.streamflix.database.AppDatabase
 import com.streamflixreborn.streamflix.models.Genre
 import com.streamflixreborn.streamflix.models.Movie
+import com.streamflixreborn.streamflix.models.Show
 import com.streamflixreborn.streamflix.models.TvShow
 import com.streamflixreborn.streamflix.utils.ParentalControlUtils
 import com.streamflixreborn.streamflix.utils.UserPreferences
@@ -138,7 +139,6 @@ class GenreViewModel(private val id: String, database: AppDatabase) : ViewModel(
                         genre = Genre(
                             id = genre.id,
                             name = genre.name,
-
                             shows = currentState.genre.shows + genre.shows,
                         ),
                         hasMore = genre.shows.isNotEmpty(),

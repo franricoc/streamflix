@@ -739,9 +739,8 @@ class TmdbProvider(override val language: String) : Provider {
                 // Solo server francesi
                 servers.addAll(FrembedExtractor(UserPreferences.getProviderCache(FrembedProvider, UserPreferences.PROVIDER_URL)).servers(videoType))
                 servers.addAll(AfterDarkExtractor(UserPreferences.getProviderCache(AfterDarkProvider, UserPreferences.PROVIDER_URL)).servers(videoType))
-            }
-            "es" -> {
-                // TMDB Spagnolo: Utilizza ESCLUSIVAMENTE server certificati con audio spagnolo ([LAT] o [CAST])
+            }            "es" -> {
+                // TMDB Spagnolo: Utilizza server certificati con audio spagnolo ed esegue il fallback sui server globali
                 
                 val targetTitle = when (videoType) {
                     is Video.Type.Movie -> videoType.title
@@ -750,7 +749,6 @@ class TmdbProvider(override val language: String) : Provider {
                 
                 Log.i("StreamFlixES", "[SEARCH START] -> Target: $targetTitle (${if (videoType is Video.Type.Movie) "Movie" else "TV Show"})")
 
-                // Funzione di matching rigorosa per i titoli e tipo
                 fun isMatch(item: AppAdapter.Item, target: String): Boolean {
                     val isCorrectType = if (videoType is Video.Type.Movie) item is Movie else item is TvShow
                     if (!isCorrectType) return false
@@ -759,16 +757,13 @@ class TmdbProvider(override val language: String) : Provider {
                     val nItem = itemTitle.lowercase().replace(Regex("[^a-z0-9]"), "")
                     val nTarget = target.lowercase().replace(Regex("[^a-z0-9]"), "")
                     
-                    // Match esatto (normalizzato) ha la priorità
                     if (nItem == nTarget) return true
                     
-                    // Match parziale se contenuto e differenza lunghezza minima
                     if (nItem.contains(nTarget) || nTarget.contains(nItem)) {
                         val diff = Math.abs(nItem.length - nTarget.length)
-                        if (diff <= 5) return true
+                        if (diff <= 6) return true
                     }
                     
-                    // Match per parole (almeno una deve corrispondere esattamente se il target è corto, o tutte se lungo)
                     val cleanWords: (String) -> Set<String> = { s ->
                         s.lowercase()
                             .replace(Regex("[^a-z0-9 ]"), " ")
@@ -780,35 +775,34 @@ class TmdbProvider(override val language: String) : Provider {
                     val nTargetWords = cleanWords(target)
                     
                     if (nItemWords.isEmpty() || nTargetWords.isEmpty()) return false
-                    
-                    // Se il target ha solo una parola importante, deve esserci
                     if (nTargetWords.size == 1) return nItemWords.contains(nTargetWords.first())
-                    
-                    // Altrimenti tutte le parole del target devono essere presenti nell'item
                     return nItemWords.containsAll(nTargetWords) || nTargetWords.containsAll(nItemWords)
                 }
 
                 coroutineScope {
-                    val providers = listOf(CuevanaEuProvider, PelisplustoProvider, SoloLatinoProvider, CineCalidadProvider, PoseidonHD2Provider)
+                    val providers = listOf(
+                        CuevanaEuProvider, PelisplustoProvider, LamovieProvider,
+                        CineCalidadProvider, SoloLatinoProvider, PoseidonHD2Provider,
+                        FlixLatamProvider, PelisflixHdProvider, DoramasflixProvider
+                    )
                     val deferred = providers.map { provider ->
                         async {
                             try {
                                 val searchResults = provider.search(targetTitle, 1)
                                 val bestMatch = searchResults.firstOrNull { isMatch(it, targetTitle) }
-                                val id = if (bestMatch is Movie) bestMatch.id else (bestMatch as? TvShow)?.id
+                                val matchId = if (bestMatch is Movie) bestMatch.id else (bestMatch as? TvShow)?.id
                                 
-                                if (id != null) {
+                                if (matchId != null) {
                                     val matchTitle = if (bestMatch is Movie) bestMatch.title else (bestMatch as? TvShow)?.title
-                                    Log.i("StreamFlixES", "[MATCH FOUND] -> Provider: ${provider.name}, Matched: '$matchTitle', ID: $id")
+                                    Log.i("StreamFlixES", "[MATCH FOUND] -> Provider: ${provider.name}, Matched: '$matchTitle', ID: $matchId")
                                     
-                                    val allServers = provider.getServers(id, videoType)
-                                    val filtered = allServers.filter { s ->
-                                        val n = s.name.uppercase()
-                                        n.contains("[LAT]") || n.contains("[CAST]") || n.contains("[CAS]") || n.contains("[ES]") ||
-                                        n.contains("(LAT)") || n.contains("(ESP)") || n.contains("LATINO") || n.contains("CASTELLANO")
+                                    val allServers = provider.getServers(matchId, videoType)
+                                    allServers.map { s ->
+                                        val hasLangTag = s.name.contains("[") || s.name.contains("(")
+                                        if (!hasLangTag) {
+                                            s.copy(name = "${s.name} [LAT/ES]")
+                                        } else s
                                     }
-                                    Log.i("StreamFlixES", "[SERVERS OK] -> ${provider.name}: ${filtered.size}/${allServers.size} servers kept")
-                                    filtered
                                 } else {
                                     Log.d("StreamFlixES", "[NO MATCH] -> ${provider.name} did not find a valid match for '$targetTitle'")
                                     emptyList()
@@ -820,6 +814,27 @@ class TmdbProvider(override val language: String) : Provider {
                         }
                     }
                     servers.addAll(deferred.awaitAll().flatten())
+                }
+
+                // If no Spanish servers were found, use global extractors as fallback
+                if (servers.isEmpty()) {
+                    Log.w("StreamFlixES", "[FALLBACK] -> No Spanish servers found, adding global extractors")
+                    servers.addAll(listOf(
+                        VixSrcExtractor().server(videoType),
+                        TwoEmbedExtractor().server(videoType),
+                        VidsrcNetExtractor().server(videoType),
+                        VidLinkExtractor().server(videoType),
+                        VidsrcRuExtractor().server(videoType),
+                        VidflixExtractor().server(videoType),
+                    ))
+
+                    if (videoType is Video.Type.Movie) {
+                        servers.add(MoviesapiExtractor().server(videoType))
+                    }
+
+                    servers.addAll(VidrockExtractor().servers(videoType))
+                    servers.addAll(VidzeeExtractor().servers(videoType))
+                    servers.addAll(PrimeSrcExtractor().servers(videoType))
                 }
             }
             else -> {
@@ -847,23 +862,22 @@ class TmdbProvider(override val language: String) : Provider {
             }
         }
 
-        // ORDINE PRIORITÀ FINALE: Portiamo i server con audio Spagnolo e Filemoon in cima
+        // ORDINE PRIORITÀ FINALE: Audio Latino tiene máxima prioridad (200), Castellano (100)
         val finalServers = if (language.startsWith("es")) {
             servers.sortedByDescending { server ->
                 val n = server.name.uppercase()
                 when {
-                    // Filemoon e tag audio spagnoli hanno la massima priorità
-                    n.contains("FILEMOON") -> 110
-                    n.contains("[CAS]") || n.contains("[LAT]") || n.contains("[ES]") || n.contains("SPAIN") || n.contains("[CAST]") ||
-                    n.contains("LATINO") || n.contains("SPANISH") || n.contains("CASTELLANO") || n.contains("(LAT)") || n.contains("(ESP)") -> 100
+                    // Latino tiene máxima prioridad
+                    n.contains("[LAT]") || n.contains("(LAT)") || n.contains("LATINO") || n.contains("[LAT/ES]") -> 200
+                    n.contains("FILEMOON") -> 180
                     
-                    // Altri aggregatori multi-lingua
-                    n.contains("VIDSRC") || n.contains("VIDLINK") -> 80
+                    // Castellano / Español
+                    n.contains("[CAS]") || n.contains("[CAST]") || n.contains("(ESP)") || n.contains("CASTELLANO") || n.contains("[ES]") || n.contains("SPAIN") -> 100
                     
-                    // Sottotitoli o inglese
-                    n.contains("[EN]") || n.contains("[SUB]") || n.contains("(EN)") || n.contains("(SUB)") -> 50
+                    // Servidores globales fallback
+                    n.contains("VIDSRC") || n.contains("VIDLINK") || n.contains("VIXSRC") -> 50
                     
-                    else -> 0
+                    else -> 10
                 }
             }
         } else {

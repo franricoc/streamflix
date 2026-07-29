@@ -87,6 +87,8 @@ interface Provider {
             AnimeOnlineNinjaProvider to ProviderSupport(movies = true, tvShows = true),
             SoloLatinoProvider to ProviderSupport(movies = true, tvShows = true),
             Cine24hProvider to ProviderSupport(movies = true, tvShows = true),
+            TlnovelasProvider to ProviderSupport(movies = false, tvShows = true),
+            LamovieProvider to ProviderSupport(movies = true, tvShows = true),
             PelisplustoProvider to ProviderSupport(movies = true, tvShows = true),
             PelisflixHdProvider to ProviderSupport(movies = true, tvShows = true),
             CableVisionHDProvider to ProviderSupport(movies = false, tvShows = true),

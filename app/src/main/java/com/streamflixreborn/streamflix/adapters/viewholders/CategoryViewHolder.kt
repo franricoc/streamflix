@@ -1,5 +1,6 @@
 package com.streamflixreborn.streamflix.adapters.viewholders
 
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent

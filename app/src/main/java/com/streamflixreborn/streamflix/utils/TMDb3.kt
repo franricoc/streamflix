@@ -945,7 +945,7 @@ object TMDb3 {
 
         companion object {
             fun build(): ApiService {
-                val apiKey = UserPreferences.tmdbApiKey.ifEmpty { BuildConfig.TMDB_API_KEY }
+                val apiKey = UserPreferences.tmdbApiKey.ifEmpty { BuildConfig.TMDB_API_KEY.ifEmpty { "a07e22bc18f5cb106bfe4cc1f83ad8ed" } }
 
                 val client = OkHttpClient.Builder().addInterceptor { chain ->
                     val original = chain.request()

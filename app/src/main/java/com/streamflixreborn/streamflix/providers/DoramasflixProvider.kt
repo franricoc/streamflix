@@ -244,25 +244,47 @@ object DoramasflixProvider : Provider {
         return try {
             val url = if (id.startsWith("http")) id else "$baseUrl/$id"
             val document = serviceHtml.getPage(url)
-            val script = document.selectFirst("script#__NEXT_DATA__")?.data()
-                ?: throw Exception("No se pudo encontrar el script de datos.")
+            val scriptElement = document.selectFirst("script#__NEXT_DATA__")
+            val script = scriptElement?.data()?.ifBlank { null } ?: scriptElement?.html()?.ifBlank { null }
 
-            val jsonObject = JsonParser.parseString(script).asJsonObject
-            val apolloState = jsonObject.getAsJsonObject("props")
-                .getAsJsonObject("pageProps")
-                .getAsJsonObject("apolloState")
+            if (!script.isNullOrBlank()) {
+                val jsonObject = JsonParser.parseString(script).asJsonObject
+                val pageProps = jsonObject.getAsJsonObject("props")?.getAsJsonObject("pageProps")
+                val apolloState = pageProps?.getAsJsonObject("apolloState")
 
-            val movieData = apolloState.entrySet().firstOrNull { (key, _) -> key.startsWith("Movie:") }?.value?.asJsonObject
-                ?: throw Exception("No se encontraron datos de la película en el JSON.")
+                if (apolloState != null) {
+                    val movieData = apolloState.entrySet().firstOrNull { (key, _) -> key.startsWith("Movie:") || key.startsWith("Dorama:") }?.value?.asJsonObject
+                    if (movieData != null) {
+                        val nameStr = movieData.get("name")?.asString ?: movieData.get("title")?.asString ?: id
+                        val nameEs = movieData.get("name_es")?.asString
+                        return Movie(
+                            id = movieData.get("_id")?.asString ?: id,
+                            title = if (!nameEs.isNullOrBlank()) "$nameStr ($nameEs)" else nameStr,
+                            overview = movieData.get("overview")?.asString,
+                            poster = getPosterUrl(movieData.get("poster_path")?.asString ?: movieData.get("poster")?.asString),
+                        )
+                    }
+                }
+            }
+
+            // HTML Fallback if NEXT_DATA script is missing or formatted differently
+            val title = document.selectFirst("h1, .entry-title, meta[property=og:title]")?.text()
+                ?: document.selectFirst("meta[property=og:title]")?.attr("content")
+                ?: id.replace("-", " ")
+            val overview = document.selectFirst("meta[name=description], meta[property=og:description]")?.attr("content")
+            val poster = document.selectFirst("meta[property=og:image], .poster img")?.attr("content")
 
             Movie(
-                id = movieData.get("_id").asString,
-                title = "${movieData.get("name").asString} (${movieData.get("name_es")?.asString ?: ""})".trim(),
-                overview = movieData.get("overview")?.asString,
-                poster = getPosterUrl(movieData.get("poster_path")?.asString ?: movieData.get("poster")?.asString),
+                id = id,
+                title = title.trim(),
+                overview = overview,
+                poster = getPosterUrl(poster),
             )
         } catch (e: Exception) {
-            throw Exception("No se pudieron cargar los detalles de la película: ${e.message}")
+            Movie(
+                id = id,
+                title = id.replace("-", " ").replace("/", " ").trim(),
+            )
         }
     }
 
@@ -270,43 +292,67 @@ object DoramasflixProvider : Provider {
         return try {
             val url = if (id.startsWith("http")) id else "$baseUrl/$id"
             val document = serviceHtml.getPage(url)
-            val script = document.selectFirst("script#__NEXT_DATA__")?.data()
-                ?: throw Exception("No se pudo encontrar el script de datos.")
+            val scriptElement = document.selectFirst("script#__NEXT_DATA__")
+            val script = scriptElement?.data()?.ifBlank { null } ?: scriptElement?.html()?.ifBlank { null }
 
-            val jsonObject = JsonParser.parseString(script).asJsonObject
-            val apolloState = jsonObject.getAsJsonObject("props")
-                .getAsJsonObject("pageProps")
-                .getAsJsonObject("apolloState")
+            if (!script.isNullOrBlank()) {
+                val jsonObject = JsonParser.parseString(script).asJsonObject
+                val pageProps = jsonObject.getAsJsonObject("props")?.getAsJsonObject("pageProps")
+                val apolloState = pageProps?.getAsJsonObject("apolloState")
 
-            val doramaData = apolloState.entrySet().firstOrNull { (key, _) -> key.startsWith("Dorama:") || key.startsWith("Movie:") }?.value?.asJsonObject
-                ?: throw Exception("No se encontraron datos del dorama en el JSON.")
+                if (apolloState != null) {
+                    val doramaData = apolloState.entrySet().firstOrNull { (key, _) -> key.startsWith("Dorama:") || key.startsWith("Movie:") }?.value?.asJsonObject
+                    if (doramaData != null) {
+                        val doramaId = doramaData.get("_id")?.asString ?: id
+                        val seasonQuery = """
+                            {"operationName":"listSeasons","variables":{"serie_id":"$doramaId"},"query":"query listSeasons(${'$'}serie_id: MongoID!) {\n  listSeasons(sort: NUMBER_ASC, filter: {serie_id: ${'$'}serie_id}) {\n    slug\n    season_number\n    poster_path\n    __typename\n  }\n}\n"}
+                        """.trimIndent()
+                        val seasonBody = seasonQuery.toRequestBody("application/json".toMediaType())
+                        val seasonResponse = service.getApiResponse(seasonBody)
 
-            val doramaId = doramaData.get("_id").asString
+                        val seasons = seasonResponse.data?.listSeasons?.map {
+                            Season(
+                                id = "$doramaId/${it.seasonNumber}",
+                                number = it.seasonNumber,
+                                title = "Temporada ${it.seasonNumber}",
+                                poster = getPosterUrl(it.posterPath)
+                            )
+                        } ?: emptyList()
 
-            val seasonQuery = """
-                {"operationName":"listSeasons","variables":{"serie_id":"$doramaId"},"query":"query listSeasons(${'$'}serie_id: MongoID!) {\n  listSeasons(sort: NUMBER_ASC, filter: {serie_id: ${'$'}serie_id}) {\n    slug\n    season_number\n    poster_path\n    __typename\n  }\n}\n"}
-            """.trimIndent()
-            val seasonBody = seasonQuery.toRequestBody("application/json".toMediaType())
-            val seasonResponse = service.getApiResponse(seasonBody)
+                        val nameStr = doramaData.get("name")?.asString ?: doramaData.get("title")?.asString ?: id
+                        val nameEs = doramaData.get("name_es")?.asString
 
-            val seasons = seasonResponse.data?.listSeasons?.map {
-                Season(
-                    id = "$doramaId/${it.seasonNumber}",
-                    number = it.seasonNumber,
-                    title = "Temporada ${it.seasonNumber}",
-                    poster = getPosterUrl(it.posterPath)
-                )
-            } ?: emptyList()
+                        return TvShow(
+                            id = doramaId,
+                            title = if (!nameEs.isNullOrBlank()) "$nameStr ($nameEs)" else nameStr,
+                            overview = doramaData.get("overview")?.asString,
+                            poster = getPosterUrl(doramaData.get("poster_path")?.asString ?: doramaData.get("poster")?.asString),
+                            seasons = seasons
+                        )
+                    }
+                }
+            }
+
+            // HTML Fallback
+            val title = document.selectFirst("h1, .entry-title, meta[property=og:title]")?.text()
+                ?: document.selectFirst("meta[property=og:title]")?.attr("content")
+                ?: id.replace("-", " ")
+            val overview = document.selectFirst("meta[name=description], meta[property=og:description]")?.attr("content")
+            val poster = document.selectFirst("meta[property=og:image], .poster img")?.attr("content")
 
             TvShow(
-                id = doramaId,
-                title = "${doramaData.get("name").asString} (${doramaData.get("name_es")?.asString ?: ""})".trim(),
-                overview = doramaData.get("overview")?.asString,
-                poster = getPosterUrl(doramaData.get("poster_path")?.asString ?: doramaData.get("poster")?.asString),
-                seasons = seasons
+                id = id,
+                title = title.trim(),
+                overview = overview,
+                poster = getPosterUrl(poster),
+                seasons = emptyList()
             )
         } catch (e: Exception) {
-            throw Exception("No se pudieron cargar los detalles del dorama: ${e.message}")
+            TvShow(
+                id = id,
+                title = id.replace("-", " ").replace("/", " ").trim(),
+                seasons = emptyList()
+            )
         }
     }
 
