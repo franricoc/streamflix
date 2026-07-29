@@ -11,3 +11,8 @@ local.properties
 *.salive
 *.log
 app/src/main/cpp/native-lib.cpp
+node_modules/
+cookies.txt
+*.apk
+*.jar
+package-lock.json
