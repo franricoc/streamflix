@@ -41,16 +41,19 @@ class MainViewModel : ViewModel() {
             val newReleases = InAppUpdater.getNewReleases()
             if (newReleases.isEmpty()) return@launch
 
-            val asset = newReleases.first().assets
-                .filter { it.contentType == "application/vnd.android.package-archive" }
-                .find {
-                    when (BuildConfig.APP_LAYOUT) {
-                        "mobile" -> it.name.endsWith("-mobile.apk")
-                        "tv" -> it.name.endsWith("-tv.apk")
-                        else -> !it.name.endsWith("-mobile.apk") && !it.name.endsWith("-tv.apk")
-                    }
+            val apkAssets = newReleases.first().assets.filter { it.name.endsWith(".apk", ignoreCase = true) }
+            
+            val asset = when (BuildConfig.APP_LAYOUT) {
+                "tv" -> {
+                    apkAssets.find { it.name.contains("tv", ignoreCase = true) }
+                        ?: apkAssets.find { !it.name.contains("mobile", ignoreCase = true) }
                 }
-                ?: throw Exception("Can't find update APK")
+                "mobile" -> {
+                    apkAssets.find { it.name.contains("mobile", ignoreCase = true) }
+                        ?: apkAssets.find { !it.name.contains("tv", ignoreCase = true) }
+                }
+                else -> apkAssets.firstOrNull()
+            } ?: throw Exception("Can't find matching update APK for ${BuildConfig.APP_LAYOUT}")
 
             _state.emit(State.SuccessCheckingUpdate(newReleases, asset))
         } catch (e: Exception) {
