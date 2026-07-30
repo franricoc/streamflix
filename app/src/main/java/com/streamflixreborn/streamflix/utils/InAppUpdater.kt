@@ -17,7 +17,9 @@ object InAppUpdater {
     private const val GITHUB_OWNER = "franricoc"
     private const val GITHUB_REPO = "streamflix"
 
-    private data class Version(val name: String) : Comparable<Version> {
+    private data class Version(val rawName: String) : Comparable<Version> {
+        val name: String = rawName.substringBefore("_").replace(Regex("[^0-9.]"), "")
+
         override operator fun compareTo(other: Version): Int {
             val thisParts = this.name.split(".").toTypedArray()
             val thatParts = other.name.split(".").toTypedArray()

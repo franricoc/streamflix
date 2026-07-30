@@ -740,22 +740,26 @@ class TmdbProvider(override val language: String) : Provider {
                 servers.addAll(FrembedExtractor(UserPreferences.getProviderCache(FrembedProvider, UserPreferences.PROVIDER_URL)).servers(videoType))
                 servers.addAll(AfterDarkExtractor(UserPreferences.getProviderCache(AfterDarkProvider, UserPreferences.PROVIDER_URL)).servers(videoType))
             }            "es" -> {
-                // TMDB Spagnolo: Utilizza server certificati con audio spagnolo ed esegue il fallback sui server globali
+                // TMDB Spagnolo: Utilizza exclusivamente server certificati in spagnolo con priorità assoluta per SoloLatino e Latino
                 
-                val targetTitle = when (videoType) {
+                val rawTitle = when (videoType) {
                     is Video.Type.Movie -> videoType.title
                     is Video.Type.Episode -> videoType.tvShow.title
                 }
                 
-                Log.i("StreamFlixES", "[SEARCH START] -> Target: $targetTitle (${if (videoType is Video.Type.Movie) "Movie" else "TV Show"})")
+                Log.i("StreamFlixES", "[SEARCH START] -> Target: $rawTitle (${if (videoType is Video.Type.Movie) "Movie" else "TV Show"})")
+
+                fun normalize(s: String): String = s.lowercase()
+                    .replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ñ", "n")
+                    .replace(Regex("[^a-z0-9]"), "")
 
                 fun isMatch(item: AppAdapter.Item, target: String): Boolean {
                     val isCorrectType = if (videoType is Video.Type.Movie) item is Movie else item is TvShow
                     if (!isCorrectType) return false
 
                     val itemTitle = if (item is Movie) item.title else (item as TvShow).title
-                    val nItem = itemTitle.lowercase().replace(Regex("[^a-z0-9]"), "")
-                    val nTarget = target.lowercase().replace(Regex("[^a-z0-9]"), "")
+                    val nItem = normalize(itemTitle)
+                    val nTarget = normalize(target)
                     
                     if (nItem == nTarget) return true
                     
@@ -765,7 +769,7 @@ class TmdbProvider(override val language: String) : Provider {
                     }
                     
                     val cleanWords: (String) -> Set<String> = { s ->
-                        s.lowercase()
+                        normalize(s)
                             .replace(Regex("[^a-z0-9 ]"), " ")
                             .split(Regex("\\s+"))
                             .filter { it.length > 2 }
@@ -780,16 +784,17 @@ class TmdbProvider(override val language: String) : Provider {
                 }
 
                 coroutineScope {
+                    // Prioridad a SoloLatino y proveedores en español
                     val providers = listOf(
-                        CuevanaEuProvider, PelisplustoProvider, LamovieProvider,
-                        CineCalidadProvider, SoloLatinoProvider, PoseidonHD2Provider,
+                        SoloLatinoProvider, PelisplustoProvider, CuevanaEuProvider,
+                        LamovieProvider, CineCalidadProvider, PoseidonHD2Provider,
                         FlixLatamProvider, PelisflixHdProvider, DoramasflixProvider
                     )
                     val deferred = providers.map { provider ->
                         async {
                             try {
-                                val searchResults = provider.search(targetTitle, 1)
-                                val bestMatch = searchResults.firstOrNull { isMatch(it, targetTitle) }
+                                val searchResults = provider.search(rawTitle, 1)
+                                val bestMatch = searchResults.firstOrNull { isMatch(it, rawTitle) }
                                 val matchId = if (bestMatch is Movie) bestMatch.id else (bestMatch as? TvShow)?.id
                                 
                                 if (matchId != null) {
@@ -799,12 +804,16 @@ class TmdbProvider(override val language: String) : Provider {
                                     val allServers = provider.getServers(matchId, videoType)
                                     allServers.map { s ->
                                         val hasLangTag = s.name.contains("[") || s.name.contains("(")
+                                        val providerPrefix = if (!s.name.contains(provider.name, ignoreCase = true)) "[${provider.name}] " else ""
+                                        val nameWithProvider = "$providerPrefix${s.name}"
                                         if (!hasLangTag) {
-                                            s.copy(name = "${s.name} [LAT/ES]")
-                                        } else s
+                                            s.copy(name = "$nameWithProvider [LAT]")
+                                        } else {
+                                            s.copy(name = nameWithProvider)
+                                        }
                                     }
                                 } else {
-                                    Log.d("StreamFlixES", "[NO MATCH] -> ${provider.name} did not find a valid match for '$targetTitle'")
+                                    Log.d("StreamFlixES", "[NO MATCH] -> ${provider.name} did not find a valid match for '$rawTitle'")
                                     emptyList()
                                 }
                             } catch (e: Exception) { 
@@ -816,7 +825,7 @@ class TmdbProvider(override val language: String) : Provider {
                     servers.addAll(deferred.awaitAll().flatten())
                 }
 
-                // If no Spanish servers were found, use global extractors as fallback
+                // If no Spanish servers were found AT ALL, use global extractors as last resort
                 if (servers.isEmpty()) {
                     Log.w("StreamFlixES", "[FALLBACK] -> No Spanish servers found, adding global extractors")
                     servers.addAll(listOf(
@@ -862,21 +871,37 @@ class TmdbProvider(override val language: String) : Provider {
             }
         }
 
-        // ORDINE PRIORITÀ FINALE: Audio Latino tiene máxima prioridad (200), Castellano (100)
+        // ORDINE PRIORITÀ FINALE: SoloLatino -> Audio Latino -> Castellano -> Filtrar servidores en italiano/inglés si hay en español
         val finalServers = if (language.startsWith("es")) {
-            servers.sortedByDescending { server ->
+            val hasSpanishServers = servers.any { s -> 
+                val n = s.name.uppercase()
+                n.contains("SOLOLATINO") || n.contains("[LAT]") || n.contains("LATINO") || n.contains("[CAST]") || n.contains("CASTELLANO") || n.contains("[ES]")
+            }
+
+            val validServers = if (hasSpanishServers) {
+                // Ignore Italian / English servers when Spanish servers are found!
+                servers.filterNot { s ->
+                    val n = s.name.uppercase()
+                    n.contains("[IT]") || n.contains("(IT)") || n.contains("ITALIANO") || n.contains("STREAMINGCOMMUNITY") || n.contains("CB01") || n.contains("ALTADEFINIZIONE")
+                }
+            } else {
+                servers
+            }
+
+            validServers.sortedByDescending { server ->
                 val n = server.name.uppercase()
                 when {
-                    // Latino tiene máxima prioridad
-                    n.contains("[LAT]") || n.contains("(LAT)") || n.contains("LATINO") || n.contains("[LAT/ES]") -> 200
-                    n.contains("FILEMOON") -> 180
+                    // SoloLatino tiene máxima prioridad
+                    n.contains("SOLOLATINO") -> 500
+                    
+                    // Latino
+                    n.contains("[LAT]") || n.contains("(LAT)") || n.contains("LATINO") -> 400
+                    n.contains("FILEMOON") -> 300
                     
                     // Castellano / Español
-                    n.contains("[CAS]") || n.contains("[CAST]") || n.contains("(ESP)") || n.contains("CASTELLANO") || n.contains("[ES]") || n.contains("SPAIN") -> 100
+                    n.contains("[CAS]") || n.contains("[CAST]") || n.contains("(ESP)") || n.contains("CASTELLANO") || n.contains("[ES]") || n.contains("SPAIN") -> 200
                     
-                    // Servidores globales fallback
-                    n.contains("VIDSRC") || n.contains("VIDLINK") || n.contains("VIXSRC") -> 50
-                    
+                    // Otros
                     else -> 10
                 }
             }
