@@ -116,6 +116,8 @@ class MainMobileActivity : FragmentActivity() {
         _binding = ActivityMainMobileBinding.inflate(layoutInflater)
         setContentView(binding.root)
         applyThemeNavigationChrome()
+        setupCastControlBar()
+
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.mainContent) { view, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -252,10 +254,12 @@ class MainMobileActivity : FragmentActivity() {
     }
 
     override fun onDestroy() {
+        castStateListener?.let { com.streamflixreborn.streamflix.cast.CastControlManager.unregisterListener(it) }
         dismissUpdateDialog()
         _binding = null
         super.onDestroy()
     }
+
 
     private fun clearResolverState() {
         pendingWs = null
@@ -590,4 +594,74 @@ class MainMobileActivity : FragmentActivity() {
             isAppearanceLightNavigationBars = false
         }
     }
+
+    private var castStateListener: com.streamflixreborn.streamflix.cast.CastControlManager.CastStateListener? = null
+
+    private fun setupCastControlBar() {
+        binding.btnCastBarPlayPause.setOnClickListener {
+            com.streamflixreborn.streamflix.cast.CastControlManager.togglePlayPause()
+        }
+        binding.btnCastBarRew.setOnClickListener {
+            com.streamflixreborn.streamflix.cast.CastControlManager.rewind10s()
+        }
+        binding.btnCastBarFfwd.setOnClickListener {
+            com.streamflixreborn.streamflix.cast.CastControlManager.fastForward10s()
+        }
+        binding.btnCastBarStop.setOnClickListener {
+            com.streamflixreborn.streamflix.cast.CastControlManager.stopSession()
+        }
+
+        val listener = object : com.streamflixreborn.streamflix.cast.CastControlManager.CastStateListener {
+            override fun onSessionStarted(session: com.streamflixreborn.streamflix.cast.CastControlManager.ActiveCastSession) {
+                runOnUiThread {
+                    val b = _binding ?: return@runOnUiThread
+                    b.tvCastBarTitle.text = session.title
+                    b.tvCastBarSubtitle.text = "📺 Transmitiendo en ${session.device.name}"
+                    b.btnCastBarPlayPause.setImageResource(
+                        if (session.isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+                    )
+                    b.layoutCastControlBar.visibility = View.VISIBLE
+                }
+            }
+
+            override fun onSessionStateChanged(session: com.streamflixreborn.streamflix.cast.CastControlManager.ActiveCastSession) {
+                runOnUiThread {
+                    val b = _binding ?: return@runOnUiThread
+                    b.btnCastBarPlayPause.setImageResource(
+                        if (session.isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+                    )
+                }
+            }
+
+            override fun onPositionUpdated(session: com.streamflixreborn.streamflix.cast.CastControlManager.ActiveCastSession) {
+            }
+
+            override fun onSessionEnded() {
+                runOnUiThread {
+                    val b = _binding ?: return@runOnUiThread
+                    b.layoutCastControlBar.visibility = View.GONE
+                }
+            }
+        }
+
+        castStateListener = listener
+        com.streamflixreborn.streamflix.cast.CastControlManager.registerListener(listener)
+    }
+
+
+    private fun formatTime(ms: Long): String {
+        val totalSecs = ms / 1000
+        val mins = totalSecs / 60
+        val secs = totalSecs % 60
+        val hrs = mins / 60
+        return if (hrs > 0) {
+            String.format(java.util.Locale.getDefault(), "%d:%02d:%02d", hrs, mins % 60, secs)
+        } else {
+            String.format(java.util.Locale.getDefault(), "%02d:%02d", mins, secs)
+        }
+    }
 }
+
+
+
+

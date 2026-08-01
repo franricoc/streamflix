@@ -17,7 +17,9 @@ import com.streamflixreborn.streamflix.fragments.home.HomeMobileFragmentDirectio
 import com.streamflixreborn.streamflix.models.Episode
 import com.streamflixreborn.streamflix.models.Movie
 import com.streamflixreborn.streamflix.models.TvShow
+import com.streamflixreborn.streamflix.models.Video
 import com.streamflixreborn.streamflix.providers.Provider
+
 import com.streamflixreborn.streamflix.utils.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -261,7 +263,13 @@ class ShowOptionsMobileDialog(
                 else -> View.GONE
             }
         }
+
+        binding.btnOptionCastToTv.apply {
+            visibility = View.GONE
+        }
+
     }
+
 
     private fun displayMovie(movie: Movie) {
         binding.ivOptionsShowPoster.loadMoviePoster(movie) {
@@ -358,7 +366,13 @@ class ShowOptionsMobileDialog(
                 else -> View.GONE
             }
         }
+
+        binding.btnOptionCastToTv.apply {
+            visibility = View.GONE
+        }
+
     }
+
 
     private fun displayTvShow(tvShow: TvShow) {
         binding.ivOptionsShowPoster.loadTvShowPoster(tvShow) {
@@ -406,5 +420,57 @@ class ShowOptionsMobileDialog(
             }
             visibility = View.VISIBLE
         }
+        binding.btnOptionCastToTv.apply {
+            visibility = View.GONE
+        }
+    }
+
+    private fun castOnlineMediaToTv(videoType: Video.Type, id: String) {
+        hide()
+        com.streamflixreborn.streamflix.cast.ui.DeviceSelectorDialog.show(context) { device ->
+            val title = when (videoType) {
+                is Video.Type.Movie -> videoType.title
+                is Video.Type.Episode -> "${videoType.tvShow.title} - S${videoType.season.number}E${videoType.number}"
+            }
+            val subtitleText = when (videoType) {
+                is Video.Type.Movie -> videoType.releaseDate
+                is Video.Type.Episode -> videoType.title ?: "Episodio ${videoType.number}"
+            }
+            val posterUrl = when (videoType) {
+                is Video.Type.Movie -> videoType.poster
+                is Video.Type.Episode -> videoType.poster ?: videoType.tvShow.poster
+            }
+
+            val payload = com.streamflixreborn.streamflix.cast.CastPayload(
+                action = "PLAY",
+                title = title,
+                subtitle = subtitleText,
+                posterUrl = posterUrl,
+                streamUrl = "",
+                videoType = videoType,
+                mediaId = id,
+                isOfflineDownload = false
+            )
+
+            android.widget.Toast.makeText(context, "📺 Abriendo reproductor en ${device.name}...", android.widget.Toast.LENGTH_SHORT).show()
+            com.streamflixreborn.streamflix.cast.MobileCastClient.sendPayloadToTv(
+                ipAddress = device.ipAddress,
+                port = device.port,
+                payload = payload,
+                onSuccess = {
+                    com.streamflixreborn.streamflix.cast.ui.CastRemoteControlDialog.show(
+                        context = context,
+                        device = device,
+                        title = title,
+                        subtitle = subtitleText
+                    )
+                },
+                onError = { err ->
+                    android.widget.Toast.makeText(context, "Error al enviar: $err", android.widget.Toast.LENGTH_LONG).show()
+                }
+            )
+        }
     }
 }
+
+

@@ -252,11 +252,57 @@ class PlayerTvFragment : Fragment() {
         return binding.root
     }
 
+    private var isCastPlayback = false
+
+    fun onNewCastPayload(payload: com.streamflixreborn.streamflix.cast.CastPayload) {
+        if (payload.streamUrl.isNotEmpty()) {
+            isCastPlayback = true
+            val castVideo = com.streamflixreborn.streamflix.models.Video(
+                source = payload.streamUrl,
+                headers = payload.headers,
+                subtitles = payload.subtitles.map {
+                    com.streamflixreborn.streamflix.models.Video.Subtitle(label = it.label, file = it.url, default = it.default)
+                }
+            )
+            val castServer = com.streamflixreborn.streamflix.models.Video.Server(id = "cast", name = "StreamFlix Cast")
+            displayVideo(castVideo, castServer, payload.startPositionMs)
+        } else {
+            isCastPlayback = false
+            initializeVideo()
+        }
+    }
+
+    fun handleRemoteControl(action: String, positionMs: Long) {
+        if (!::player.isInitialized) return
+        when (action) {
+            "PAUSE" -> player.pause()
+            "RESUME" -> player.play()
+            "SEEK" -> player.seekTo(positionMs)
+            "STOP" -> {
+                player.stop()
+                findNavController().navigateUp()
+            }
+        }
+    }
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         initializePlayer(false)
         initializeVideo()
+
+        val castPayload = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arguments?.getSerializable("cast_payload", com.streamflixreborn.streamflix.cast.CastPayload::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            arguments?.getSerializable("cast_payload") as? com.streamflixreborn.streamflix.cast.CastPayload
+        }
+
+        if (castPayload != null) {
+            onNewCastPayload(castPayload)
+        }
+
         binding.pvPlayer.onMediaPreviousClicked = ::handleMediaPrevious
         binding.pvPlayer.onMediaNextClicked = ::handleMediaNext
         gestureHelper = PlayerGestureHelper(
@@ -273,7 +319,9 @@ class PlayerTvFragment : Fragment() {
         // Stato Video
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.state.flowWithLifecycle(lifecycle, Lifecycle.State.CREATED).collect { state ->
+                if (isCastPlayback) return@collect
                 when (state) {
+
                     PlayerViewModel.State.LoadingServers -> {}
                     is PlayerViewModel.State.SuccessLoadingServers -> {
                         servers = state.servers
@@ -1177,7 +1225,12 @@ class PlayerTvFragment : Fragment() {
                         binding.pvPlayer.controller.binding.exoPlayPause.nextFocusDownId = -1
                         val videoFormat = player.videoFormat
                         updatePlayerScale()
+                    } else if (playbackState == Player.STATE_ENDED) {
+                        if (args.videoType is Video.Type.Episode || currentVideoTypeForUi() is Video.Type.Episode) {
+                            playNextEpisodeAcrossSeasons(autoplay = true)
+                        }
                     }
+
                 }
 
                 override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
@@ -1427,9 +1480,16 @@ class PlayerTvFragment : Fragment() {
                     val show = player.currentPosition in 3000..120000
                     showSkipIntroButton(show)
                     updateNextEpisodeOverlay()
+
+                    (requireActivity() as? com.streamflixreborn.streamflix.activities.main.MainTvActivity)?.tvWebSocketServer?.broadcastStatus(
+                        positionMs = player.currentPosition,
+                        durationMs = player.duration.coerceAtLeast(0L),
+                        isPlaying = player.isPlaying
+                    )
                 }
                 progressHandler.postDelayed(progressRunnable, 1000)
             }
+
             progressHandler.post(progressRunnable)
         }
 

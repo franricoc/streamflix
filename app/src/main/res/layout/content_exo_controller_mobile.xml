@@ -40,7 +40,7 @@
         android:textColor="#FFFFFF"
         android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/btn_exo_external_player"
+        app:layout_constraintEnd_toStartOf="@id/btn_exo_cast"
         app:layout_constraintStart_toEndOf="@id/btn_exo_back"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Title" />
@@ -54,10 +54,23 @@
         android:layout_marginEnd="16dp"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/btn_exo_external_player"
+        app:layout_constraintEnd_toStartOf="@id/btn_exo_cast"
         app:layout_constraintStart_toEndOf="@id/btn_exo_back"
         app:layout_constraintTop_toBottomOf="@id/tv_exo_title"
         tools:text="Description" />
+
+    <ImageView
+        android:id="@+id/btn_exo_cast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_cast"
+        android:tint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="@id/tv_exo_subtitle"
+        app:layout_constraintEnd_toStartOf="@id/btn_exo_external_player"
+        app:layout_constraintTop_toTopOf="@id/tv_exo_title"
+        tools:ignore="ContentDescription,UseAppTint" />
 
     <ImageView
         android:id="@+id/btn_exo_external_player"
@@ -71,6 +84,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/tv_exo_title"
         tools:ignore="ContentDescription,UseAppTint" />
+
 
     <LinearLayout
         android:id="@+id/exo_center_controls"
@@ -301,6 +315,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="visible"
-        app:constraint_referenced_ids="btn_exo_back,tv_exo_title,tv_exo_subtitle,btn_exo_external_player,exo_center_controls,exo_progress,exo_bottom_bar" />
+        app:constraint_referenced_ids="btn_exo_back,tv_exo_title,tv_exo_subtitle,btn_exo_cast,btn_exo_external_player,exo_center_controls,exo_progress,exo_bottom_bar" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

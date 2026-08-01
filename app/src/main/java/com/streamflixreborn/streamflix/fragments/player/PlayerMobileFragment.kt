@@ -679,6 +679,71 @@ class PlayerMobileFragment : Fragment() {
             ).show()
         }
 
+        binding.pvPlayer.controller.binding.btnExoCast.setOnClickListener {
+            val vid = currentVideo
+            if (vid == null || vid.source.isEmpty()) {
+                Toast.makeText(requireContext(), "El video aún no se ha cargado", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val currentPos = if (::player.isInitialized) player.currentPosition else 0L
+
+            val title = resolvePlayerTitle()
+            val subtitleText = resolvePlayerSubtitle()
+
+            val posterUrl = when (val type = args.videoType) {
+                is Video.Type.Movie -> type.poster
+                is Video.Type.Episode -> type.poster ?: type.tvShow.poster
+            }
+
+            val subtitlesList = vid.subtitles.map {
+                com.streamflixreborn.streamflix.cast.CastPayload.SubtitleInfo(
+                    label = it.label,
+                    url = it.file,
+                    default = it.default
+                )
+            }
+
+            val payload = com.streamflixreborn.streamflix.cast.CastPayload(
+                action = "PLAY",
+                title = title,
+                subtitle = subtitleText,
+                posterUrl = posterUrl,
+                streamUrl = vid.source,
+                headers = vid.headers,
+                subtitles = subtitlesList,
+                startPositionMs = currentPos,
+                isOfflineDownload = false
+            )
+
+            com.streamflixreborn.streamflix.cast.ui.DeviceSelectorDialog.show(requireContext()) { device ->
+                if (::player.isInitialized) {
+                    player.pause()
+                }
+                Toast.makeText(requireContext(), "Enviando a ${device.name}...", Toast.LENGTH_SHORT).show()
+                com.streamflixreborn.streamflix.cast.MobileCastClient.sendPayloadToTv(
+                    ipAddress = device.ipAddress,
+                    port = device.port,
+                    payload = payload,
+                    onSuccess = {
+                        Toast.makeText(requireContext(), "📺 Transmitiendo en ${device.name}", Toast.LENGTH_SHORT).show()
+                        com.streamflixreborn.streamflix.cast.CastControlManager.startSession(
+                            device = device,
+                            title = title,
+                            subtitle = subtitleText
+                        )
+                        findNavController().navigateUp()
+                    },
+
+
+                    onError = { err ->
+                        Toast.makeText(requireContext(), "Error al enviar: $err", Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+        }
+
+
         binding.pvPlayer.controller.binding.exoReplay.setOnClickListener {
             player.seekTo(0)
         }

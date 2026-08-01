@@ -72,6 +72,8 @@ class MainTvActivity : FragmentActivity() {
                 binding.ivSplashOverlay.visibility = View.GONE
             }
 
+        startTvCastServer()
+
         val navHostFragment = this.supportFragmentManager
             .findFragmentById(binding.navMainFragment.id) as NavHostFragment
         val navController = navHostFragment.navController
@@ -212,6 +214,87 @@ class MainTvActivity : FragmentActivity() {
         binding.root.setPadding(uDeltaX, uDeltaY, uDeltaX, uDeltaY)
     }
 
+    var tvWebSocketServer: com.streamflixreborn.streamflix.cast.TvWebSocketServer? = null
+
+    private var deviceDiscoveryManager: com.streamflixreborn.streamflix.cast.DeviceDiscoveryManager? = null
+
+    private fun startTvCastServer() {
+        try {
+            val port = 8080
+            tvWebSocketServer = com.streamflixreborn.streamflix.cast.TvWebSocketServer(
+                port = port,
+                onPlayRequested = { payload ->
+                    runOnUiThread { handleIncomingCastPayload(payload) }
+                },
+                onControlRequested = { action, pos ->
+                    runOnUiThread {
+                        (getCurrentFragment() as? PlayerTvFragment)?.handleRemoteControl(action, pos)
+                    }
+                }
+            ).also { it.start() }
+
+            deviceDiscoveryManager = com.streamflixreborn.streamflix.cast.DeviceDiscoveryManager(this).also {
+                it.registerTvService(port)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainTvActivity", "Error starting TV cast server", e)
+        }
+    }
+
+    private fun handleIncomingCastPayload(payload: com.streamflixreborn.streamflix.cast.CastPayload) {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(binding.navMainFragment.id) as? NavHostFragment ?: return
+        val navController = navHostFragment.navController
+
+        Toast.makeText(this, "📺 Reproduciendo desde móvil: ${payload.title}", Toast.LENGTH_SHORT).show()
+
+        val currentFragment = getCurrentFragment()
+        if (currentFragment is PlayerTvFragment) {
+            currentFragment.onNewCastPayload(payload)
+            return
+        }
+
+        val videoType = payload.videoType ?: com.streamflixreborn.streamflix.models.Video.Type.Movie(
+            id = payload.mediaId ?: "cast_${System.currentTimeMillis()}",
+            title = payload.title,
+            releaseDate = payload.subtitle ?: "",
+            poster = payload.posterUrl ?: "",
+            imdbId = null
+        )
+
+        val mediaId = payload.mediaId ?: "cast_${System.currentTimeMillis()}"
+
+        val bundle = Bundle().apply {
+            putString("id", mediaId)
+            putParcelable("videoType", videoType)
+            putString("title", payload.title)
+            putString("subtitle", payload.subtitle ?: "")
+            putSerializable("cast_payload", payload)
+            putBoolean("is_cast", true)
+        }
+
+        navController.navigate(
+            R.id.player,
+            bundle,
+            navOptions {
+                launchSingleTop = true
+            }
+        )
+    }
+
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            tvWebSocketServer?.stop()
+            deviceDiscoveryManager?.unregisterTvService()
+        } catch (e: Exception) {
+            android.util.Log.e("MainTvActivity", "Error stopping TV cast server", e)
+        }
+        _binding = null
+    }
+
     private fun navigateToProviderHome(navController: androidx.navigation.NavController) {
         if (!navController.popBackStack(R.id.home, false)) {
             navController.navigate(
@@ -227,3 +310,4 @@ class MainTvActivity : FragmentActivity() {
         }
     }
 }
+
