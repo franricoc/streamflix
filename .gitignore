@@ -5,12 +5,8 @@
 .DS_Store
 /build
 /captures
-.externalNativeBuild
-.cxx
-local.properties
 *.salive
 *.log
-app/src/main/cpp/native-lib.cpp
 node_modules/
 cookies.txt
 *.apk

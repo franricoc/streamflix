@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-and-release:
@@ -11,41 +19,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
-      - name: Setup JDK environment
-        uses: actions/setup-java@v1
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
         with:
-          java-version: 17
+          distribution: temurin
+          java-version: '17'
 
-      - name: Access Secrets
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Inject API keys into local.properties
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           RABBITSTREAM_SOURCE_API: ${{ secrets.RABBITSTREAM_SOURCE_API }}
-        run: |
-          echo TMDB_API_KEY=$TMDB_API_KEY >> local.properties
-          echo RABBITSTREAM_SOURCE_API=$RABBITSTREAM_SOURCE_API >> local.properties
-
-      - name: Generate native-lib.cpp from template
-        env:
+          GOOGLE_DRIVE_API_KEY: ${{ secrets.GOOGLE_DRIVE_API_KEY }}
           UPROT_MSFI_API_BASE: ${{ secrets.UPROT_MSFI_API_BASE }}
           UPROT_MSE_API_BASE: ${{ secrets.UPROT_MSE_API_BASE }}
           UPROT_API_KEY: ${{ secrets.UPROT_API_KEY }}
         run: |
-          sed -e "s|{{UPROT_MSFI_API_BASE}}|$UPROT_MSFI_API_BASE|g" \
-              -e "s|{{UPROT_MSE_API_BASE}}|$UPROT_MSE_API_BASE|g" \
-              -e "s|{{UPROT_API_KEY}}|$UPROT_API_KEY|g" \
-              app/src/main/cpp/native-lib.cpp.template > app/src/main/cpp/native-lib.cpp
+          echo TMDB_API_KEY=$TMDB_API_KEY >> local.properties
+          echo RABBITSTREAM_SOURCE_API=$RABBITSTREAM_SOURCE_API >> local.properties
+          echo GOOGLE_DRIVE_API_KEY=$GOOGLE_DRIVE_API_KEY >> local.properties
+          echo UPROT_MSFI_API_BASE=$UPROT_MSFI_API_BASE >> local.properties
+          echo UPROT_MSE_API_BASE=$UPROT_MSE_API_BASE >> local.properties
+          echo UPROT_API_KEY=$UPROT_API_KEY >> local.properties
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Build APK
+      # --- Universal APK (default APP_LAYOUT) ---
+      - name: Build Universal APK
         run: ./gradlew assembleRelease --stacktrace
 
-      - name: Sign APK
+      - name: Sign Universal APK
         id: sign_apk
-        uses: r0adkll/sign-android-release@v1
+        uses: r0adkll/sign-android-release@v2
         with:
           releaseDirectory: app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.KEYSTORE }}
@@ -53,83 +63,61 @@ jobs:
           keyStorePassword: ${{ secrets.SIGNING_STORE_PASSWORD }}
           keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
         env:
-          BUILD_TOOLS_VERSION: "34.0.0"
+          BUILD_TOOLS_VERSION: "36.0.0"
+
+      - name: Stage Universal APK
+        run: |
+          mkdir -p dist
+          cp "${{ steps.sign_apk.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}.apk
+
+      # --- Mobile-only APK ---
+      - name: Set Mobile version
+        run: echo APP_LAYOUT=mobile >> local.properties
+
+      - name: Build Mobile APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Sign Mobile APK
+        id: sign_apk_mobile
+        uses: r0adkll/sign-android-release@v2
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.KEYSTORE }}
+          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "36.0.0"
+
+      - name: Stage Mobile APK
+        run: cp "${{ steps.sign_apk_mobile.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}-only-mobile.apk
+
+      # --- TV-only APK ---
+      - name: Set TV version
+        run: echo APP_LAYOUT=tv >> local.properties
+
+      - name: Build TV APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Sign TV APK
+        id: sign_apk_tv
+        uses: r0adkll/sign-android-release@v2
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.KEYSTORE }}
+          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "36.0.0"
+
+      - name: Stage TV APK
+        run: cp "${{ steps.sign_apk_tv.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}-only-tv.apk
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-
-      - name: Upload Release APK
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
-          asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}.apk
-          asset_content_type: application/zip
-
-
-      - name: Set Mobile version
-        run: |
-          echo APP_LAYOUT=mobile >> local.properties
-
-      - name: Build APK
-        run: ./gradlew assembleRelease --stacktrace
-
-      - name: Sign APK
-        id: sign_apk_mobile
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.KEYSTORE }}
-          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-      - name: Upload Release APK
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.sign_apk_mobile.outputs.signedReleaseFile }}
-          asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-only-mobile.apk
-          asset_content_type: application/zip
-
-
-      - name: Set TV version
-        run: |
-          echo APP_LAYOUT=tv >> local.properties
-
-      - name: Build APK
-        run: ./gradlew assembleRelease --stacktrace
-
-      - name: Sign APK
-        id: sign_apk_tv
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.KEYSTORE }}
-          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-      - name: Upload Release APK
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.sign_apk_tv.outputs.signedReleaseFile }}
-          asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-only-tv.apk
-          asset_content_type: application/zip
+          files: dist/*.apk
+          generate_release_notes: true

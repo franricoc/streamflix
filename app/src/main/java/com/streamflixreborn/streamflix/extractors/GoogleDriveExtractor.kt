@@ -2,6 +2,7 @@ package com.streamflixreborn.streamflix.extractors
 
 import androidx.media3.common.MimeTypes
 import com.google.gson.JsonParser
+import com.streamflixreborn.streamflix.BuildConfig
 import com.streamflixreborn.streamflix.models.Video
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
@@ -26,10 +27,15 @@ class GoogleDriveExtractor : Extractor() {
             ?: throw Exception("File ID not found in URL")
 
         val service = Service.build(mainUrl)
-        
+
+        val apiKey = BuildConfig.GOOGLE_DRIVE_API_KEY
+        require(apiKey.isNotBlank()) {
+            "GOOGLE_DRIVE_API_KEY is not configured. Add it to local.properties (or the GOOGLE_DRIVE_API_KEY secret in CI)."
+        }
+
         val responseBody = service.getPlayback(
             fileId = fileId,
-            key = "AIzaSyDVQw45DwoYh632gvsP5vPDqEKvb-Ywnb8",
+            key = apiKey,
             unique = "gc999"
         )
 

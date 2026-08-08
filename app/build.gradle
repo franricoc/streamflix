@@ -1,10 +1,10 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'androidx.navigation.safeargs.kotlin'
-    id 'kotlin-parcelize'
-    id 'com.google.devtools.ksp'
-    id 'org.jetbrains.kotlin.plugin.serialization'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.navigation.safeargs)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -28,6 +28,10 @@ android {
         buildConfigField "String", "TMDB_API_KEY", "\"${properties.getProperty("TMDB_API_KEY") ?: ""}\""
         buildConfigField "String", "SUBDL_API_KEY", "\"${properties.getProperty("SUBDL_API_KEY") ?: ""}\""
         buildConfigField "String", "RABBITSTREAM_SOURCE_API", "\"${properties.getProperty("RABBITSTREAM_SOURCE_API") ?: ""}\""
+        buildConfigField "String", "GOOGLE_DRIVE_API_KEY", "\"${properties.getProperty("GOOGLE_DRIVE_API_KEY") ?: ""}\""
+        buildConfigField "String", "UPROT_MSFI_API_BASE", "\"${properties.getProperty("UPROT_MSFI_API_BASE") ?: ""}\""
+        buildConfigField "String", "UPROT_MSE_API_BASE", "\"${properties.getProperty("UPROT_MSE_API_BASE") ?: ""}\""
+        buildConfigField "String", "UPROT_API_KEY", "\"${properties.getProperty("UPROT_API_KEY") ?: ""}\""
     }
 
     compileOptions {
@@ -61,56 +65,57 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
-    implementation 'androidx.media3:media3-datasource-okhttp:1.8.0'
-    implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.8.8'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.8.8'
+    coreLibraryDesugaring libs.desugar.jdk.libs
+
+    implementation libs.media3.datasource.okhttp
+    implementation libs.appcompat
+    implementation libs.constraintlayout
+    implementation libs.navigation.fragment.ktx
+    implementation libs.navigation.ui.ktx
     implementation project(path: ':navigation')
 
-    implementation 'androidx.core:core-ktx:1.17.0'
-    implementation 'androidx.leanback:leanback:1.2.0'
-    implementation 'com.github.bumptech.glide:glide:5.0.0-rc01'
-    implementation 'androidx.work:work-runtime-ktx:2.10.0'
-    ksp 'com.github.bumptech.glide:ksp:5.0.0-rc01'
-    implementation 'com.github.bumptech.glide:okhttp3-integration:5.0.0-rc01'
+    implementation libs.core.ktx
+    implementation libs.leanback
+    implementation libs.glide
+    implementation libs.glide.okhttp3.integration
+    ksp libs.glide.ksp
+    implementation libs.work.runtime.ktx
 
-    implementation 'androidx.media3:media3-exoplayer:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer-dash:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'
-    implementation 'androidx.media3:media3-session:1.8.0'
-    implementation 'androidx.media3:media3-ui:1.8.0'
+    implementation libs.media3.exoplayer
+    implementation libs.media3.exoplayer.dash
+    implementation libs.media3.exoplayer.hls
+    implementation libs.media3.session
+    implementation libs.media3.ui
 
-    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    implementation libs.retrofit
+    implementation libs.okhttp
+    implementation libs.okhttp.dnsoverhttps
+    implementation libs.logging.interceptor
     implementation project(path: ':retrofit-jsoup-converter')
-    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
-    implementation 'com.squareup.retrofit2:converter-scalars:2.11.0'
-    implementation 'org.jsoup:jsoup:1.19.1'
+    implementation libs.retrofit.converter.gson
+    implementation libs.retrofit.converter.scalars
+    implementation libs.jsoup
 
-    implementation 'androidx.fragment:fragment-ktx:1.8.6'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.7'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
-    implementation 'androidx.preference:preference-ktx:1.2.1'
-    implementation 'androidx.leanback:leanback-preference:1.2.0'
+    implementation libs.fragment.ktx
+    implementation libs.lifecycle.livedata.ktx
+    implementation libs.lifecycle.viewmodel.ktx
+    implementation libs.preference.ktx
+    implementation libs.leanback.preference
 
-    implementation 'androidx.tvprovider:tvprovider:1.1.0'
+    implementation libs.tvprovider
 
-    implementation "androidx.room:room-runtime:2.7.0-rc01"
-    implementation "androidx.room:room-ktx:2.7.0-rc01"
-    implementation 'com.google.android.material:material:1.12.0'
-    ksp 'androidx.room:room-compiler:2.7.0-rc01'
+    implementation libs.room.runtime
+    implementation libs.room.ktx
+    implementation libs.material
+    ksp libs.room.compiler
 
-    implementation("org.mozilla:rhino:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-    implementation 'org.conscrypt:conscrypt-android:2.5.2'
-    implementation "androidx.browser:browser:1.7.0"
-    implementation "org.nanohttpd:nanohttpd:2.3.1"
-    implementation "com.google.zxing:core:3.5.1"
-    implementation("org.java-websocket:Java-WebSocket:1.5.3")
+    implementation libs.rhino
+    implementation libs.kotlinx.serialization.json
+    implementation libs.conscrypt.android
+    implementation libs.browser
+    implementation libs.nanohttpd
+    implementation libs.zxing.core
+    implementation libs.java.websocket
 }
 
 ksp {

@@ -1,6 +1,6 @@
 plugins {
-    id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -33,14 +33,17 @@ android {
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.17.0'
-    implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'com.google.android.material:material:1.13.0'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    implementation libs.core.ktx
+    implementation libs.appcompat
+    implementation libs.material
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.test.junit
+    androidTestImplementation libs.espresso.core
 
-    implementation 'com.squareup.retrofit2:retrofit:3.0.0'
+    implementation libs.retrofit
+    // Explicitly pin OkHttp 4.x: Retrofit 2.x brings okhttp 3.14.9 transitively, whose
+    // Java MediaType breaks Kotlin 2.2 interop (private 'subtype' field). The app runs on 4.12.0.
+    implementation libs.okhttp
 
-    implementation 'org.jsoup:jsoup:1.21.2'
+    implementation libs.jsoup
 }

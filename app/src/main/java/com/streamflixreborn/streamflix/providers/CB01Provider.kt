@@ -1,6 +1,8 @@
 package com.streamflixreborn.streamflix.providers
 
+import android.util.Log
 import com.tanasi.retrofit_jsoup.converter.JsoupConverterFactory
+import com.streamflixreborn.streamflix.BuildConfig
 import com.streamflixreborn.streamflix.adapters.AppAdapter
 import com.streamflixreborn.streamflix.models.Category
 import com.streamflixreborn.streamflix.models.Genre
@@ -26,7 +28,6 @@ import retrofit2.http.Headers
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Url
-import com.streamflixreborn.streamflix.utils.Keys
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import java.util.concurrent.TimeUnit
@@ -39,6 +40,8 @@ import org.json.JSONObject
     tvShows = true
 )
 object CB01Provider : BaseProvider(){
+
+    private const val TAG = "CB01Provider"
 
     override val name = "CB01"
     override val baseUrl = "https://cb01official.uno"
@@ -590,11 +593,11 @@ object CB01Provider : BaseProvider(){
      * @param isStayOnline True if the link originated from stayonline.pro
      */
     private suspend fun resolveMaxstreamUrl(url: String, isStayOnline: Boolean = false): String? {
-        // 1. Links from stayonline.pro or containing /msfi/ use Keys.getUprotMsfiApiBase()
+        // 1. Links from stayonline.pro or containing /msfi/ use BuildConfig.UPROT_MSFI_API_BASE
         if (isStayOnline || url.contains("/msfi/", ignoreCase = true)) {
             val uprotId = Regex("""/ms[a-zA-Z]+/([A-Za-z0-9+/=]+)""").find(url)?.groupValues?.getOrNull(1)
                 ?: return null
-            return callUprotApi(Keys.getUprotMsfiApiBase(), uprotId)
+            return callUprotApi(BuildConfig.UPROT_MSFI_API_BASE, uprotId)
         }
 
         // 2. Direct uprot.net links (/mse/): Try HTML base64 decoding first
@@ -614,10 +617,10 @@ object CB01Provider : BaseProvider(){
             }
         } catch (_: Exception) { }
 
-        // 3. Fallback for direct uprot.net links when base64 fails: Call Keys.getUprotMseApiBase()
+        // 3. Fallback for direct uprot.net links when base64 fails: Call BuildConfig.UPROT_MSE_API_BASE
         val uprotId = Regex("""/ms[a-zA-Z]+/([A-Za-z0-9+/=]+)""").find(url)?.groupValues?.getOrNull(1)
             ?: return null
-        return callUprotApi(Keys.getUprotMseApiBase(), uprotId)
+        return callUprotApi(BuildConfig.UPROT_MSE_API_BASE, uprotId)
 
     }
 
@@ -625,7 +628,13 @@ object CB01Provider : BaseProvider(){
 
 
     private fun callUprotApi(apiBase: String, uprotId: String): String? {
-        val apiUrl = "$apiBase$uprotId&key=${Keys.getUprotApiKey()}"
+        val apiKey = BuildConfig.UPROT_API_KEY
+        if (apiBase.isBlank() || apiKey.isBlank()) {
+            // UPROT keys not configured (local.properties / CI secret). Degrade gracefully.
+            Log.w(TAG, "UPROT keys not configured (local.properties / CI secret). Maxstream resolution for CB01 disabled.")
+            return null
+        }
+        val apiUrl = "$apiBase$uprotId&key=$apiKey"
         return try {
             val client = OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
