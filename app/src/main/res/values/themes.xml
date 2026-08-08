@@ -1,9 +1,22 @@
 <resources>
 
-    <style name="AppTheme.Mobile" parent="Theme.AppCompat">
+    <style name="AppTheme.Mobile" parent="Theme.MaterialComponents.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="app_background_color">#181818</item>
+        <item name="app_background_color">@color/theme_default_bg</item>
+        <item name="android:windowBackground">@drawable/bg_splash_screen</item>
+        <item name="android:colorBackground">@color/theme_default_bg</item>
+        <item name="colorAccent">@color/theme_default_accent</item>
+        <item name="colorPrimary">@color/theme_default_accent</item>
+        <item name="colorPrimaryVariant">@color/theme_default_secondary_text</item>
+        <item name="colorOnPrimary">#000000</item>
+        <item name="colorSecondary">@color/theme_default_accent</item>
+        <item name="colorOnSecondary">#000000</item>
+        <item name="colorSurface">@color/theme_default_bg</item>
+        <item name="colorOnSurface">@color/theme_default_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_default_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_default_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_default</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_default</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_default</item>
@@ -16,12 +29,15 @@
 
     <!-- Tema Nero Amoled/Oled per Mobile -->
     <style name="AppTheme.Mobile.NeroAmoledOled" parent="AppTheme.Mobile">
-        <item name="app_background_color">#000000</item>
+        <item name="app_background_color">@color/theme_amoled_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_amoled</item>
-        <item name="android:colorBackground">#000000</item>
-        <item name="colorAccent">#FFFFFF</item>
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:textColorSecondary">#BDBDBD</item>
+        <item name="android:colorBackground">@color/theme_amoled_bg</item>
+        <item name="colorAccent">@color/theme_amoled_accent</item>
+        <item name="colorPrimary">@color/theme_amoled_accent</item>
+        <item name="colorSurface">@color/theme_amoled_bg</item>
+        <item name="colorOnSurface">@color/theme_amoled_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_amoled_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_amoled_secondary_text</item>
         <item name="alertDialogTheme">@style/Theme.Amoled.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_amoled</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_amoled</item>
@@ -30,12 +46,16 @@
     </style>
 
     <style name="AppTheme.Mobile.SunsetCinema" parent="AppTheme.Mobile">
-        <item name="app_background_color">#201410</item>
+        <item name="app_background_color">@color/theme_sunset_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_sunset</item>
-        <item name="android:colorBackground">#201410</item>
-        <item name="colorAccent">#F39A5B</item>
-        <item name="android:textColorPrimary">#FFF0E5</item>
-        <item name="android:textColorSecondary">#D7B7A4</item>
+        <item name="android:colorBackground">@color/theme_sunset_bg</item>
+        <item name="colorAccent">@color/theme_sunset_accent</item>
+        <item name="colorPrimary">@color/theme_sunset_accent</item>
+        <item name="colorSurface">@color/theme_sunset_bg</item>
+        <item name="colorOnSurface">@color/theme_sunset_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_sunset_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_sunset_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_sunset</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_sunset</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_sunset</item>
@@ -43,12 +63,16 @@
     </style>
 
     <style name="AppTheme.Mobile.SteelBlue" parent="AppTheme.Mobile">
-        <item name="app_background_color">#141C25</item>
+        <item name="app_background_color">@color/theme_steel_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_steel</item>
-        <item name="android:colorBackground">#141C25</item>
-        <item name="colorAccent">#7DB3E8</item>
-        <item name="android:textColorPrimary">#EAF4FF</item>
-        <item name="android:textColorSecondary">#ADC5DA</item>
+        <item name="android:colorBackground">@color/theme_steel_bg</item>
+        <item name="colorAccent">@color/theme_steel_accent</item>
+        <item name="colorPrimary">@color/theme_steel_accent</item>
+        <item name="colorSurface">@color/theme_steel_bg</item>
+        <item name="colorOnSurface">@color/theme_steel_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_steel_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_steel_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_steel</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_steel</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_steel</item>
@@ -56,12 +80,16 @@
     </style>
 
     <style name="AppTheme.Mobile.ForestNight" parent="AppTheme.Mobile">
-        <item name="app_background_color">#101816</item>
+        <item name="app_background_color">@color/theme_forest_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_forest</item>
-        <item name="android:colorBackground">#101816</item>
-        <item name="colorAccent">#65D7C2</item>
-        <item name="android:textColorPrimary">#E6FFF8</item>
-        <item name="android:textColorSecondary">#A8D1C7</item>
+        <item name="android:colorBackground">@color/theme_forest_bg</item>
+        <item name="colorAccent">@color/theme_forest_accent</item>
+        <item name="colorPrimary">@color/theme_forest_accent</item>
+        <item name="colorSurface">@color/theme_forest_bg</item>
+        <item name="colorOnSurface">@color/theme_forest_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_forest_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_forest_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_forest</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_forest</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_forest</item>
@@ -69,12 +97,16 @@
     </style>
 
     <style name="AppTheme.Mobile.CrimsonNoir" parent="AppTheme.Mobile">
-        <item name="app_background_color">#1C1014</item>
+        <item name="app_background_color">@color/theme_crimson_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_crimson</item>
-        <item name="android:colorBackground">#1C1014</item>
-        <item name="colorAccent">#D86A7A</item>
-        <item name="android:textColorPrimary">#FFECEF</item>
-        <item name="android:textColorSecondary">#D6B2BA</item>
+        <item name="android:colorBackground">@color/theme_crimson_bg</item>
+        <item name="colorAccent">@color/theme_crimson_accent</item>
+        <item name="colorPrimary">@color/theme_crimson_accent</item>
+        <item name="colorSurface">@color/theme_crimson_bg</item>
+        <item name="colorOnSurface">@color/theme_crimson_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_crimson_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_crimson_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_crimson</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_crimson</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_crimson</item>
@@ -82,12 +114,16 @@
     </style>
 
     <style name="AppTheme.Mobile.MidnightViolet" parent="AppTheme.Mobile">
-        <item name="app_background_color">#151523</item>
+        <item name="app_background_color">@color/theme_violet_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_violet</item>
-        <item name="android:colorBackground">#151523</item>
-        <item name="colorAccent">#AFA3FF</item>
-        <item name="android:textColorPrimary">#F1EEFF</item>
-        <item name="android:textColorSecondary">#BFB9DD</item>
+        <item name="android:colorBackground">@color/theme_violet_bg</item>
+        <item name="colorAccent">@color/theme_violet_accent</item>
+        <item name="colorPrimary">@color/theme_violet_accent</item>
+        <item name="colorSurface">@color/theme_violet_bg</item>
+        <item name="colorOnSurface">@color/theme_violet_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_violet_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_violet_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_violet</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_violet</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_violet</item>
@@ -95,12 +131,16 @@
     </style>
 
     <style name="AppTheme.Mobile.NordFrost" parent="AppTheme.Mobile">
-        <item name="app_background_color">#182029</item>
+        <item name="app_background_color">@color/theme_nord_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_nord</item>
-        <item name="android:colorBackground">#182029</item>
-        <item name="colorAccent">#8ED0E8</item>
-        <item name="android:textColorPrimary">#EAF7FD</item>
-        <item name="android:textColorSecondary">#B1C9D6</item>
+        <item name="android:colorBackground">@color/theme_nord_bg</item>
+        <item name="colorAccent">@color/theme_nord_accent</item>
+        <item name="colorPrimary">@color/theme_nord_accent</item>
+        <item name="colorSurface">@color/theme_nord_bg</item>
+        <item name="colorOnSurface">@color/theme_nord_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_nord_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_nord_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_nord</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_nord</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_nord</item>
@@ -108,12 +148,16 @@
     </style>
 
     <style name="AppTheme.Mobile.EmeraldLuxe" parent="AppTheme.Mobile">
-        <item name="app_background_color">#11201B</item>
+        <item name="app_background_color">@color/theme_emerald_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_emerald</item>
-        <item name="android:colorBackground">#11201B</item>
-        <item name="colorAccent">#7ED6A3</item>
-        <item name="android:textColorPrimary">#EDF9F2</item>
-        <item name="android:textColorSecondary">#B6D0C0</item>
+        <item name="android:colorBackground">@color/theme_emerald_bg</item>
+        <item name="colorAccent">@color/theme_emerald_accent</item>
+        <item name="colorPrimary">@color/theme_emerald_accent</item>
+        <item name="colorSurface">@color/theme_emerald_bg</item>
+        <item name="colorOnSurface">@color/theme_emerald_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_emerald_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_emerald_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_emerald</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_emerald</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_emerald</item>
@@ -121,12 +165,16 @@
     </style>
 
     <style name="AppTheme.Mobile.RetroNeon" parent="AppTheme.Mobile">
-        <item name="app_background_color">#16161D</item>
+        <item name="app_background_color">@color/theme_neon_bg</item>
         <item name="android:windowBackground">@drawable/bg_splash_screen_neon</item>
-        <item name="android:colorBackground">#16161D</item>
-        <item name="colorAccent">#4DE0D7</item>
-        <item name="android:textColorPrimary">#F4F7FF</item>
-        <item name="android:textColorSecondary">#CFB7DA</item>
+        <item name="android:colorBackground">@color/theme_neon_bg</item>
+        <item name="colorAccent">@color/theme_neon_accent</item>
+        <item name="colorPrimary">@color/theme_neon_accent</item>
+        <item name="colorSurface">@color/theme_neon_bg</item>
+        <item name="colorOnSurface">@color/theme_neon_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_neon_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_neon_secondary_text</item>
+        <item name="alertDialogTheme">@style/Theme.AppCompat.Dialog.Alert</item>
         <item name="home_gradient_drawable">@drawable/bg_home_gradient_neon</item>
         <item name="movie_banner_gradient_drawable">@drawable/bg_movie_banner_gradient_neon</item>
         <item name="tv_show_banner_gradient_drawable">@drawable/bg_tv_show_banner_gradient_neon</item>
@@ -340,7 +388,7 @@
         <item name="colorAccent">#FFFFFF</item>
     </style>
 
-    <style name="AppTheme.SplashScreen" parent="Theme.AppCompat">
+    <style name="AppTheme.SplashScreen" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_splash_screen</item>
     </style>
 

@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/onboardingRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- STEP 1: ANIMATED BLACK SCREEN GREETING & LANGUAGE SELECTION -->
+    <LinearLayout
+        android:id="@+id/stepGreetingContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvGreetingText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hola"
+            android:textColor="#FFFFFF"
+            android:textSize="48sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvSelectLangSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:alpha="0"
+            android:text="Selecciona tu idioma / Select your language"
+            android:textColor="#AAAAAA"
+            android:textSize="16sp" />
+
+        <HorizontalScrollView
+            android:id="@+id/scrollLanguages"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:alpha="0">
+
+            <LinearLayout
+                android:id="@+id/layoutLanguageChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnConfirmLanguage"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:minHeight="54dp"
+            android:alpha="0"
+            android:backgroundTint="#E50914"
+            android:text="Continuar"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cornerRadius="27dp" />
+    </LinearLayout>
+
+    <!-- STEP 2: PROFILE CREATION -->
+    <LinearLayout
+        android:id="@+id/stepProfileContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Crea tu Perfil Local"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Elige un avatar y ponle un nombre a tu cuenta"
+            android:textColor="#999999"
+            android:textSize="15sp" />
+
+        <!-- Selected Avatar Preview - FULL CIRCLE FILL -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/avatarPreviewCard"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="#E50914"
+            app:cardCornerRadius="60dp"
+            app:cardElevation="8dp"
+            app:strokeColor="#FFFFFF"
+            app:strokeWidth="3dp">
+
+            <ImageView
+                android:id="@+id/imgAvatarPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_camera" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Avatar Presets Palette -->
+        <LinearLayout
+            android:id="@+id/layoutAvatarPresets"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal" />
+
+        <Button
+            android:id="@+id/btnUploadGalleryPhoto"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:minHeight="50dp"
+            android:text="📷 Subir foto de la galería"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:strokeColor="#E50914"
+            app:strokeWidth="1.5dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:boxBackgroundColor="#1F1F1F"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:hintTextColor="#E50914">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProfileName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Nombre del Perfil"
+                android:inputType="textPersonName"
+                android:singleLine="true"
+                android:textColor="#FFFFFF" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <Button
+            android:id="@+id/btnConfirmProfile"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:minHeight="54dp"
+            android:backgroundTint="#E50914"
+            android:text="Siguiente"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cornerRadius="27dp" />
+    </LinearLayout>
+
+    <!-- STEP 3: THEME SELECTION -->
+    <LinearLayout
+        android:id="@+id/stepThemeContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Elige tu Estilo Visual"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Selecciona el tema que mejor se adapte a tu pantalla"
+            android:textColor="#999999"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:id="@+id/layoutThemesGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:orientation="vertical" />
+
+        <Button
+            android:id="@+id/btnConfirmTheme"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:minHeight="54dp"
+            android:backgroundTint="#E50914"
+            android:text="Siguiente"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cornerRadius="27dp" />
+    </LinearLayout>
+
+    <!-- STEP 4: PROVIDER SELECTION & INFO -->
+    <LinearLayout
+        android:id="@+id/stepProviderContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Selecciona tu Proveedor"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Proveedores disponibles para tu idioma. Elige uno para comenzar:"
+            android:textColor="#999999"
+            android:textSize="15sp" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/layoutProvidersList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <Button
+            android:id="@+id/btnConfirmProvider"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:minHeight="54dp"
+            android:backgroundTint="#E50914"
+            android:text="Comenzar a Usar Streamflix"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cornerRadius="27dp" />
+    </LinearLayout>
+
+</FrameLayout>

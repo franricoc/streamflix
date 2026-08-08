@@ -28,7 +28,13 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
-object AnyMovieProvider : Provider {
+@StreamflixProvider(
+    name = "AnyMovie",
+    language = "en",
+    movies = true,
+    tvShows = true
+)
+object AnyMovieProvider : BaseProvider(){
 
     private const val URL = "https://anymovie.cc/"
     override val baseUrl = URL

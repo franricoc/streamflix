@@ -26,7 +26,13 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-object SuperStreamProvider : Provider {
+@StreamflixProvider(
+    name = "SuperStream",
+    language = "en",
+    movies = true,
+    tvShows = true
+)
+object SuperStreamProvider : BaseProvider(){
 
     override val name = "SuperStream"
     override val logo = ""

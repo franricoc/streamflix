@@ -29,7 +29,13 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Header
 
-object Altadefinizione01Provider : Provider {
+@StreamflixProvider(
+    name = "Altadefinizione01",
+    language = "it",
+    movies = true,
+    tvShows = true
+)
+object Altadefinizione01Provider : BaseProvider(){
 
     override val name: String = "Altadefinizione01"
     override val baseUrl: String = "https://altadefinizione-01.fun"

@@ -34,7 +34,13 @@ import retrofit2.http.Header
 import kotlin.collections.map
 import kotlin.collections.mapNotNull
 
-object AfterDarkProvider : Provider, ProviderPortalUrl, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "AfterDark",
+    language = "en",
+    movies = true,
+    tvShows = true
+)
+object AfterDarkProvider : BaseProvider(), ProviderPortalUrl, ProviderConfigUrl{
     override val name = "AfterDark"
 
     override val defaultPortalUrl: String = "https://topsitestreaming.club/site/afterdark/"

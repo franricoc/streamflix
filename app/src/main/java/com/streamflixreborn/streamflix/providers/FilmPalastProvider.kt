@@ -34,7 +34,13 @@ import retrofit2.http.Url
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-object FilmPalastProvider : Provider {
+@StreamflixProvider(
+    name = "FilmPalast",
+    language = "de",
+    movies = true,
+    tvShows = true
+)
+object FilmPalastProvider : BaseProvider(){
 
     private val BASE_URL = "https://filmpalast.to/"
     override val baseUrl = BASE_URL

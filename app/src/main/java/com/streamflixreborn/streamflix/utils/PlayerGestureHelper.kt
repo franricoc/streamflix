@@ -28,7 +28,10 @@ class PlayerGestureHelper(
     private val brightnessText: TextView,
     private val volumeLayout: View,
     private val volumeBar: ProgressBar,
-    private val volumeText: TextView
+    private val volumeText: TextView,
+    private val speedIndicatorView: View? = null,
+    private val onSpeedChangeRequested: ((Boolean) -> Unit)? = null,
+    private val onDoubleTapSeek: ((isForward: Boolean) -> Unit)? = null
 ) {
 
     private val gestureDetector: GestureDetector
@@ -39,6 +42,7 @@ class PlayerGestureHelper(
     private val sensitivity = 1.2f
     private var isScrolling = false
     private var isScaling = false
+    private var isFastForwarding = false
     private var currentVolumeFloat = 0f
     private var maxVolume = 0
 
@@ -76,6 +80,14 @@ class PlayerGestureHelper(
                 return true 
             }
 
+            override fun onLongPress(e: MotionEvent) {
+                if (!isScrolling && !isScaling) {
+                    isFastForwarding = true
+                    speedIndicatorView?.visibility = View.VISIBLE
+                    onSpeedChangeRequested?.invoke(true)
+                }
+            }
+
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
                 if (e1 == null || isScaling) return false
                 if (e1.y < 100) return false
@@ -100,6 +112,11 @@ class PlayerGestureHelper(
             }
             
             override fun onDoubleTap(e: MotionEvent): Boolean {
+                if (onDoubleTapSeek != null) {
+                    val isForward = e.x >= playerView.width / 2f
+                    onDoubleTapSeek.invoke(isForward)
+                    return true
+                }
                 val videoView = playerView.videoSurfaceView ?: return false
                 videoView.scaleX = 1.0f
                 videoView.scaleY = 1.0f
@@ -131,10 +148,15 @@ class PlayerGestureHelper(
             if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
                 isScrolling = false
                 isScaling = false
+                if (isFastForwarding) {
+                    isFastForwarding = false
+                    speedIndicatorView?.visibility = View.GONE
+                    onSpeedChangeRequested?.invoke(false)
+                }
                 hideBars()
             }
             
-            isScrolling || isScaling
+            isScrolling || isScaling || isFastForwarding
         }
     }
 

@@ -54,9 +54,14 @@ class ProviderViewHolder(
         
         binding.ivProviderFavorite.visibility = if (provider.isFavorite) android.view.View.VISIBLE else android.view.View.GONE
 
+        val logoObj: Any = if (provider.logo == "ic_super_favorites") {
+            R.drawable.ic_super_favorites
+        } else {
+            provider.logo.takeIf { it.isNotEmpty() } ?: R.drawable.ic_provider_default_logo
+        }
+
         Glide.with(context)
-            .load(provider.logo.takeIf { it.isNotEmpty() }
-                ?: R.drawable.ic_provider_default_logo)
+            .load(logoObj)
             .error(R.drawable.ic_provider_default_logo)
             .fitCenter()
             .transition(DrawableTransitionOptions.withCrossFade())
@@ -64,9 +69,13 @@ class ProviderViewHolder(
 
         binding.tvProviderName.text = provider.name
 
-        binding.tvProviderLanguage.text = Locale.forLanguageTag(provider.language)
-            .let { it.getDisplayLanguage(it) }
-            .replaceFirstChar { it.titlecase() }
+        binding.tvProviderLanguage.text = if (provider.language == "all") {
+            "Multilingüe"
+        } else {
+            Locale.forLanguageTag(provider.language)
+                .let { it.getDisplayLanguage(it) }
+                .replaceFirstChar { it.titlecase() }
+        }
     }
 
     private fun displayTvItem(binding: ItemProviderTvBinding) {
@@ -91,18 +100,27 @@ class ProviderViewHolder(
         
         binding.ivProviderFavorite.visibility = if (provider.isFavorite) android.view.View.VISIBLE else android.view.View.GONE
 
+        val logoObj: Any = if (provider.logo == "ic_super_favorites") {
+            R.drawable.ic_super_favorites
+        } else {
+            provider.logo.takeIf { it.isNotEmpty() } ?: R.drawable.ic_provider_default_logo
+        }
+
         Glide.with(context)
-            .load(provider.logo.takeIf { it.isNotEmpty() }
-                ?: R.drawable.ic_provider_default_logo)
+            .load(logoObj)
             .error(R.drawable.ic_provider_default_logo)
             .transition(DrawableTransitionOptions.withCrossFade())
             .into(binding.ivProviderLogo)
 
         binding.tvProviderName.text = provider.name
 
-        binding.tvProviderLanguage.text = Locale.forLanguageTag(provider.language)
-            .let { it.getDisplayLanguage(it) }
-            .replaceFirstChar { it.titlecase() }
+        binding.tvProviderLanguage.text = if (provider.language == "all") {
+            "Multilingüe"
+        } else {
+            Locale.forLanguageTag(provider.language)
+                .let { it.getDisplayLanguage(it) }
+                .replaceFirstChar { it.titlecase() }
+        }
     }
     
     private fun toggleFavorite(provider: Provider) {

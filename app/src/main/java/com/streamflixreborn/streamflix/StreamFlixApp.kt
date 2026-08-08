@@ -21,14 +21,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
+import java.lang.ref.WeakReference
+
 class StreamFlixApp : Application() {
     companion object {
         lateinit var instance: StreamFlixApp
             private set
 
-        @Volatile
-        var currentActivity: Activity? = null
-            private set
+        private var _currentActivityRef: WeakReference<Activity>? = null
+
+        val currentActivity: Activity?
+            get() = _currentActivityRef?.get()
     }
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -46,12 +49,12 @@ class StreamFlixApp : Application() {
             override fun onActivityStarted(activity: Activity) = Unit
 
             override fun onActivityResumed(activity: Activity) {
-                currentActivity = activity
+                _currentActivityRef = WeakReference(activity)
             }
 
             override fun onActivityPaused(activity: Activity) {
-                if (currentActivity === activity) {
-                    currentActivity = null
+                if (_currentActivityRef?.get() === activity) {
+                    _currentActivityRef = null
                 }
             }
 
@@ -60,8 +63,8 @@ class StreamFlixApp : Application() {
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
 
             override fun onActivityDestroyed(activity: Activity) {
-                if (currentActivity === activity) {
-                    currentActivity = null
+                if (_currentActivityRef?.get() === activity) {
+                    _currentActivityRef = null
                 }
             }
         })

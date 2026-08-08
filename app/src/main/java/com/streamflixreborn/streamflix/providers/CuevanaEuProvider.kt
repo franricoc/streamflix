@@ -31,7 +31,13 @@ import retrofit2.http.Url
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-object CuevanaEuProvider : Provider {
+@StreamflixProvider(
+    name = "CuevanaEu",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object CuevanaEuProvider : BaseProvider(){
 
     override val name = "Cuevana 3"
     override val baseUrl: String get() = "https://${UserPreferences.cuevanaDomain}"

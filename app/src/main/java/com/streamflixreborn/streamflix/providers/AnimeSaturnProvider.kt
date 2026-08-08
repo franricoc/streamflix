@@ -31,7 +31,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
-object AnimeSaturnProvider : Provider {
+@StreamflixProvider(
+    name = "AnimeSaturn",
+    language = "it",
+    movies = false,
+    tvShows = true
+)
+object AnimeSaturnProvider : BaseProvider(){
     override val name = "AnimeSaturn"
     override val baseUrl = "https://www.animesaturn.cx"
     

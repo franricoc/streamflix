@@ -37,7 +37,13 @@ import kotlin.collections.mapNotNull
 import kotlin.collections.mapIndexedNotNull
 import kotlin.math.round
 
-object FrenchStreamProvider : Provider, ProviderPortalUrl, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "FrenchStream",
+    language = "fr",
+    movies = true,
+    tvShows = true
+)
+object FrenchStreamProvider : BaseProvider(), ProviderPortalUrl, ProviderConfigUrl{
     override val name = "FrenchStream"
 
     override val defaultPortalUrl: String = "https://fstream.info/"

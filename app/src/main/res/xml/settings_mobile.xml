@@ -3,6 +3,54 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceScreen
+        android:key="screen_profiles"
+        android:title="Cuentas y Perfiles Locales"
+        android:summary="Administra tus perfiles de usuario, cambia de cuenta y respalda tus datos"
+        android:widgetLayout="@layout/preference_widget_chevron"
+        app:iconSpaceReserved="false">
+
+        <PreferenceCategory
+            android:title="Perfil Activo"
+            app:iconSpaceReserved="false">
+
+            <Preference
+                android:key="key_profile_active"
+                android:title="Perfil Actual"
+                android:summary="Selecciona para cambiar de perfil"
+                app:iconSpaceReserved="false" />
+
+            <Preference
+                android:key="key_profile_switch"
+                android:title="Cambiar de Perfil ('¿Quién está viendo?')"
+                android:summary="Alternar entre cuentas locales creadas"
+                app:iconSpaceReserved="false" />
+
+            <Preference
+                android:key="key_profile_create"
+                android:title="Crear Nuevo Perfil"
+                android:summary="Agregar otro perfil de usuario o infantil"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
+            android:title="Copia de Seguridad (Backup)"
+            app:iconSpaceReserved="false">
+
+            <Preference
+                android:key="key_profile_backup_export"
+                android:title="Exportar Cuentas y Configuración (JSON)"
+                android:summary="Guarda una copia de respaldo de tus perfiles y ajustes en tu dispositivo"
+                app:iconSpaceReserved="false" />
+
+            <Preference
+                android:key="key_profile_backup_import"
+                android:title="Importar Cuentas y Configuración (JSON)"
+                android:summary="Restaura tus perfiles y preferencias desde un archivo JSON"
+                app:iconSpaceReserved="false" />
+        </PreferenceCategory>
+    </PreferenceScreen>
+
+    <PreferenceScreen
         android:key="screen_content"
         android:title="@string/settings_section_content_title"
         android:summary="@string/settings_screen_content_summary"

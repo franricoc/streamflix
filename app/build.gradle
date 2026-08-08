@@ -8,70 +8,37 @@ plugins {
 }
 
 android {
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-        coreLibraryDesugaringEnabled true
-    }
-}
-
-dependencies {
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
-}
-
-android {
     namespace 'com.streamflixreborn.streamflix'
     compileSdk 36
-    ndkVersion "26.1.10909125"
 
     def properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def localPropertiesFile = project.rootProject.file('local.properties')
+    if (localPropertiesFile.exists()) {
+        properties.load(localPropertiesFile.newDataInputStream())
+    }
 
     defaultConfig {
         applicationId "com.streamflixreborn.streamflix"
         minSdk 21
         targetSdk 35
         versionCode 158
-        versionName "1.7.229.3"
+        versionName "1.7.229.4"
 
-        buildConfigField "String", "APP_LAYOUT", "\"${properties.getProperty("APP_LAYOUT")}\""
-        buildConfigField "String", "TMDB_API_KEY", "\"${properties.getProperty("TMDB_API_KEY")}\""
-        buildConfigField "String", "SUBDL_API_KEY", "\"${properties.getProperty("SUBDL_API_KEY")}\""
-        buildConfigField "String", "RABBITSTREAM_SOURCE_API", "\"${properties.getProperty("RABBITSTREAM_SOURCE_API")}\""
-
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++17"
-            }
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.22.1"
-        }
-    }
-
-    sourceSets {
-        main {
-            def appLayout = properties.getProperty("APP_LAYOUT")
-            if (appLayout == "mobile") {
-                manifest.srcFile "${project.rootDir}/app/src/main/mobile/AndroidManifest.xml"
-            } else if (appLayout == "tv") {
-                manifest.srcFile "${project.rootDir}/app/src/main/tv/AndroidManifest.xml"
-            } else {
-                manifest.srcFile "${project.rootDir}/app/src/main/AndroidManifest.xml"
-            }
-        }
+        buildConfigField "String", "APP_LAYOUT", "\"${properties.getProperty("APP_LAYOUT") ?: "universal"}\""
+        buildConfigField "String", "TMDB_API_KEY", "\"${properties.getProperty("TMDB_API_KEY") ?: ""}\""
+        buildConfigField "String", "SUBDL_API_KEY", "\"${properties.getProperty("SUBDL_API_KEY") ?: ""}\""
+        buildConfigField "String", "RABBITSTREAM_SOURCE_API", "\"${properties.getProperty("RABBITSTREAM_SOURCE_API") ?: ""}\""
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
     }
+
     kotlinOptions {
         jvmTarget = '17'
+        freeCompilerArgs += ["-nowarn"]
     }
 
     buildTypes {
@@ -94,6 +61,7 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
     implementation 'androidx.media3:media3-datasource-okhttp:1.8.0'
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
@@ -118,7 +86,6 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
-    implementation 'dnsjava:dnsjava:3.6.3'
     implementation project(path: ':retrofit-jsoup-converter')
     implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
     implementation 'com.squareup.retrofit2:converter-scalars:2.11.0'
@@ -144,7 +111,6 @@ dependencies {
     implementation "org.nanohttpd:nanohttpd:2.3.1"
     implementation "com.google.zxing:core:3.5.1"
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
-    
 }
 
 ksp {

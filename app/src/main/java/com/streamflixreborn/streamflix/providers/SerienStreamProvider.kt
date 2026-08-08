@@ -52,7 +52,13 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 
-object SerienStreamProvider : Provider {
+@StreamflixProvider(
+    name = "SerienStream",
+    language = "de",
+    movies = false,
+    tvShows = true
+)
+object SerienStreamProvider : BaseProvider(){
 
     private const val DEFAULT_DOMAIN = "serienstream.to"
 

@@ -61,22 +61,24 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         fun getInstance(context: Context): AppDatabase {
+            val activeProfileId = com.streamflixreborn.streamflix.utils.UserProfileManager.getActiveProfile(context)?.id ?: "default_profile"
             val providerName = UserPreferences.currentProvider?.name
                 ?: currentProviderName
                 ?: throw IllegalStateException("Current provider is not set")
 
-            return INSTANCE?.takeIf { currentProviderName == providerName } ?: synchronized(this) {
-                INSTANCE?.takeIf { currentProviderName == providerName } ?: run {
+            val dbKey = "${activeProfileId}_${providerName}"
+
+            return INSTANCE?.takeIf { currentProviderName == dbKey } ?: synchronized(this) {
+                INSTANCE?.takeIf { currentProviderName == dbKey } ?: run {
                     INSTANCE?.close()
-                    buildDatabase(providerName, context).also { instance ->
+                    buildDatabase(activeProfileId, providerName, context).also { instance ->
                         INSTANCE = instance
-                        currentProviderName = providerName
+                        currentProviderName = dbKey
                     }
                 }
             }
         }
 
-        // Metodo per forzare il cambio di database quando cambia il provider
         fun resetInstance() {
             synchronized(this) {
                 INSTANCE?.close()
@@ -86,15 +88,18 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         fun getInstanceForProvider(providerName: String, context: Context): AppDatabase {
-            return buildDatabase(providerName, context)
+            val activeProfileId = com.streamflixreborn.streamflix.utils.UserProfileManager.getActiveProfile(context)?.id ?: "default_profile"
+            return buildDatabase(activeProfileId, providerName, context)
         }
 
-        private fun buildDatabase(providerName: String, context: Context): AppDatabase {
-            val sanitizedName = sanitizeProviderName(providerName)
+        private fun buildDatabase(profileId: String, providerName: String, context: Context): AppDatabase {
+            val sanitizedProfile = sanitizeProviderName(profileId)
+            val sanitizedProvider = sanitizeProviderName(providerName)
+            val dbName = "prof_${sanitizedProfile}_${sanitizedProvider}.db"
             return Room.databaseBuilder(
                 context = context.applicationContext,
                 klass = AppDatabase::class.java,
-                name = "$sanitizedName.db"
+                name = dbName
             )
                 .allowMainThreadQueries()
                 .addMigrations(MIGRATION_1_2)

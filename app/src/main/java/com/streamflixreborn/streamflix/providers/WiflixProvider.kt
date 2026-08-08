@@ -27,7 +27,13 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-object WiflixProvider : Provider, ProviderPortalUrl, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "Wiflix",
+    language = "fr",
+    movies = true,
+    tvShows = true
+)
+object WiflixProvider : BaseProvider(), ProviderPortalUrl, ProviderConfigUrl{
 
     override val name = "Wiflix"
 

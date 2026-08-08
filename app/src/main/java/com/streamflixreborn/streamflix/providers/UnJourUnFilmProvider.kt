@@ -38,7 +38,13 @@ import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
 
-object UnJourUnFilmProvider : Provider, ProviderPortalUrl, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "UnJourUnFilm",
+    language = "fr",
+    movies = true,
+    tvShows = true
+)
+object UnJourUnFilmProvider : BaseProvider(), ProviderPortalUrl, ProviderConfigUrl{
     override val name = "1Jour1Film"
 
     const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"

@@ -31,7 +31,13 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-object FrenchAnimeProvider : Provider, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "FrenchAnime",
+    language = "fr",
+    movies = true,
+    tvShows = true
+)
+object FrenchAnimeProvider : BaseProvider(), ProviderConfigUrl{
     override val defaultBaseUrl: String = "https://french-anime.com/"
     override val baseUrl: String = FrenchAnimeProvider.defaultBaseUrl
         get() {

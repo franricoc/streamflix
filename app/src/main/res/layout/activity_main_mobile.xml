@@ -24,9 +24,12 @@
         android:id="@+id/layout_cast_control_bar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="8dp"
         android:orientation="horizontal"
-        android:background="#161622"
-        android:elevation="12dp"
+        android:background="@drawable/bg_cast_bar_glass"
+        android:elevation="8dp"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
         android:paddingTop="8dp"
@@ -49,7 +52,7 @@
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_cast"
-                app:tint="#E50914" />
+                app:tint="@color/accent_primary" />
         </androidx.cardview.widget.CardView>
 
         <LinearLayout
@@ -78,7 +81,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Conectado"
-                android:textColor="#9E9EB3"
+                android:textColor="@color/text_secondary_muted"
                 android:textSize="11sp" />
         </LinearLayout>
 
@@ -87,25 +90,25 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_media_rew"
+            android:src="@drawable/ic_rewind_10"
             android:contentDescription="Rebobinar 10s"
             app:tint="#D0D0E0" />
 
         <androidx.cardview.widget.CardView
             android:layout_width="38dp"
             android:layout_height="38dp"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
             app:cardCornerRadius="19dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="#E50914">
+            app:cardBackgroundColor="@color/accent_primary">
             <ImageButton
                 android:id="@+id/btn_cast_bar_play_pause"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="centerInside"
-                android:src="@android:drawable/ic_media_pause"
+                android:src="@drawable/ic_pause_modern"
                 app:tint="#FFFFFF" />
         </androidx.cardview.widget.CardView>
 
@@ -114,7 +117,7 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_media_ff"
+            android:src="@drawable/ic_fast_forward_10"
             android:contentDescription="Adelantar 10s"
             app:tint="#D0D0E0" />
 
@@ -124,7 +127,7 @@
             android:layout_height="32dp"
             android:layout_marginStart="6dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:src="@drawable/ic_close_modern"
             android:contentDescription="Detener"
             app:tint="#888899" />
     </LinearLayout>
@@ -133,9 +136,11 @@
         android:id="@+id/bnv_main"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:theme="@style/Theme.AppCompat"
+        android:background="@color/glass_surface"
+        android:elevation="16dp"
         app:itemIconTint="@color/nav_item_app"
         app:itemTextColor="@color/nav_item_app"
+        app:itemRippleColor="@color/nav_active_indicator"
         app:itemTextAppearanceActive="@style/BottomNavLabelStyle"
         app:itemTextAppearanceInactive="@style/BottomNavLabelStyle"
         app:labelVisibilityMode="labeled"

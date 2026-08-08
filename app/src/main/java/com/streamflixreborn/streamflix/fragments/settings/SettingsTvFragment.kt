@@ -77,6 +77,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import com.streamflixreborn.streamflix.ui.ProfileSelectorTvDialog
+import com.streamflixreborn.streamflix.ui.CreateProfileTvDialog
+import com.streamflixreborn.streamflix.utils.UserProfileManager
+import com.streamflixreborn.streamflix.activities.onboarding.OnboardingActivity
+
 class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
     private data class SettingsScreenState(
         val rootKey: String?,
@@ -235,6 +240,45 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
     }
 
     private fun displaySettings() {
+        val activeProfile = UserProfileManager.getActiveProfile(requireContext())
+        findPreference<Preference>("key_profile_active")?.apply {
+            summary = activeProfile?.let { "${it.name}${if (it.isKids) " 🧒 (Modo Niños)" else ""}" } ?: "Ninguno"
+        }
+
+        findPreference<Preference>("key_profile_switch")?.setOnPreferenceClickListener {
+            UserProfileManager.isSessionProfileSelected = false
+            ProfileSelectorTvDialog(requireContext()) { selected ->
+                UserProfileManager.setActiveProfile(requireContext(), selected.id)
+                UserProfileManager.isSessionProfileSelected = true
+                Toast.makeText(requireContext(), "Perfil cambiado a ${selected.name}", Toast.LENGTH_SHORT).show()
+                requireActivity().apply {
+                    finish()
+                    startActivity(Intent(this, this::class.java))
+                }
+            }.show()
+            true
+        }
+
+        findPreference<Preference>("key_profile_create")?.setOnPreferenceClickListener {
+            ProfileSelectorTvDialog.showCreateProfileInputDialog(requireContext()) { created ->
+                Toast.makeText(requireContext(), "Perfil '${created.name}' creado", Toast.LENGTH_SHORT).show()
+                requireActivity().recreate()
+            }
+            true
+        }
+
+        findPreference<Preference>("key_profile_backup_export")?.setOnPreferenceClickListener {
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val fileName = "streamflix_tv_profiles_backup_$timestamp.json"
+            showBackupExportOptions(fileName)
+            true
+        }
+
+        findPreference<Preference>("key_profile_backup_import")?.setOnPreferenceClickListener {
+            showBackupImportOptions()
+            true
+        }
+
         updateOverviewLabels()
         updateProviderVisibilityState()
 
@@ -809,23 +853,18 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
             true
         }
 
-        findPreference<ListPreference>("theme_preference")?.apply {
+        findPreference<ListPreference>("SELECTED_THEME")?.apply {
             summaryProvider = Preference.SummaryProvider<ListPreference> { pref ->
                 getString(ThemeManager.titleRes(pref.value ?: ThemeManager.DEFAULT))
             }
 
-            setOnPreferenceChangeListener { _, newValue ->
+            setOnPreferenceChangeListener { preference, newValue ->
                 val newTheme = newValue as String
                 UserPreferences.selectedTheme = newTheme
-
-                // Apply the theme and restart the activity
-                requireActivity().apply {
-                    finish()
-                    startActivity(Intent(this, MainTvActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    })
-                    overridePendingTransition(0, 0) // Disable transition animation
+                if (preference is ListPreference) {
+                    preference.value = newTheme
                 }
+                requireActivity().recreate()
                 true
             }
         }

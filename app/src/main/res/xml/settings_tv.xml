@@ -1,5 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceScreen
+        android:key="screen_profiles"
+        android:title="Cuentas y Perfiles Locales"
+        android:summary="Administra tus perfiles de usuario y cambia de cuenta en TV"
+        android:widgetLayout="@layout/preference_widget_chevron">
+
+        <PreferenceCategory
+            android:title="Perfil Activo">
+
+            <Preference
+                android:key="key_profile_active"
+                android:title="Perfil Actual"
+                android:summary="Selecciona para cambiar de perfil" />
+
+            <Preference
+                android:key="key_profile_switch"
+                android:title="Cambiar de Perfil ('¿Quién está viendo?')"
+                android:summary="Alternar entre cuentas locales creadas" />
+
+            <Preference
+                android:key="key_profile_create"
+                android:title="Crear Nuevo Perfil"
+                android:summary="Agregar otro perfil de usuario o infantil" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
+            android:title="Copia de Seguridad (Backup)">
+
+            <Preference
+                android:key="key_profile_backup_export"
+                android:title="Exportar Cuentas y Configuración (JSON)"
+                android:summary="Guarda una copia de respaldo de tus perfiles y ajustes en tu dispositivo" />
+
+            <Preference
+                android:key="key_profile_backup_import"
+                android:title="Importar Cuentas y Configuración (JSON)"
+                android:summary="Restaura tus perfiles y preferencias desde un archivo JSON" />
+        </PreferenceCategory>
+    </PreferenceScreen>
 
     <PreferenceScreen
         android:key="screen_content"
@@ -142,8 +183,9 @@
                 android:defaultValue="system" />
 
             <ListPreference
-                android:key="theme_preference"
+                android:key="SELECTED_THEME"
                 android:title="@string/settings_theme_title"
+                android:summary="%s"
                 android:entries="@array/theme_names"
                 android:entryValues="@array/theme_values"
                 android:defaultValue="default" />

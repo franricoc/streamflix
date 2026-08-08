@@ -34,7 +34,13 @@ import java.net.URL
 import java.util.concurrent.TimeUnit
 import kotlin.String
 
-object MStreamProvider : Provider {
+@StreamflixProvider(
+    name = "MStream",
+    language = "it",
+    movies = true,
+    tvShows = true
+)
+object MStreamProvider : BaseProvider(){
     private const val DEFAULT_DOMAIN = "moflix-stream.xyz"
 
     private val LEGACY_URL = Base64.decode(

@@ -7,6 +7,70 @@
     <!-- Colore di sfondo dinamico per TV -->
     <color name="app_background">#181818</color>
 
+    <!-- Modern Design Tokens -->
+    <color name="accent_primary">#E50914</color>
+    <color name="accent_primary_variant">#B20710</color>
+    <color name="accent_gradient_start">#E50914</color>
+    <color name="accent_gradient_end">#FF3B30</color>
+    <color name="glass_surface">#CC161622</color>
+    <color name="glass_surface_light">#26FFFFFF</color>
+    <color name="glass_border">#33FFFFFF</color>
+    <color name="badge_background">#AA000000</color>
+    <color name="focus_stroke_red">#E50914</color>
+    <color name="text_secondary_muted">#9E9EB3</color>
+    <color name="nav_active_indicator">#33E50914</color>
+
+    <!-- Theme Color Resources for Material & Navigation Components -->
+    <color name="theme_default_bg">#181818</color>
+    <color name="theme_default_primary_text">#FFFFFF</color>
+    <color name="theme_default_secondary_text">#BDBDBD</color>
+    <color name="theme_default_accent">#FFFFFF</color>
+
+    <color name="theme_amoled_bg">#000000</color>
+    <color name="theme_amoled_primary_text">#FFFFFF</color>
+    <color name="theme_amoled_secondary_text">#BDBDBD</color>
+    <color name="theme_amoled_accent">#FFFFFF</color>
+
+    <color name="theme_sunset_bg">#201410</color>
+    <color name="theme_sunset_primary_text">#FFF0E5</color>
+    <color name="theme_sunset_secondary_text">#D7B7A4</color>
+    <color name="theme_sunset_accent">#F39A5B</color>
+
+    <color name="theme_steel_bg">#141C25</color>
+    <color name="theme_steel_primary_text">#EAF4FF</color>
+    <color name="theme_steel_secondary_text">#ADC5DA</color>
+    <color name="theme_steel_accent">#7DB3E8</color>
+
+    <color name="theme_forest_bg">#101816</color>
+    <color name="theme_forest_primary_text">#E6FFF8</color>
+    <color name="theme_forest_secondary_text">#A8D1C7</color>
+    <color name="theme_forest_accent">#65D7C2</color>
+
+    <color name="theme_crimson_bg">#1C1014</color>
+    <color name="theme_crimson_primary_text">#FFECEF</color>
+    <color name="theme_crimson_secondary_text">#D6B2BA</color>
+    <color name="theme_crimson_accent">#D86A7A</color>
+
+    <color name="theme_violet_bg">#151523</color>
+    <color name="theme_violet_primary_text">#F1EEFF</color>
+    <color name="theme_violet_secondary_text">#BFB9DD</color>
+    <color name="theme_violet_accent">#AFA3FF</color>
+
+    <color name="theme_nord_bg">#182029</color>
+    <color name="theme_nord_primary_text">#EAF7FD</color>
+    <color name="theme_nord_secondary_text">#B1C9D6</color>
+    <color name="theme_nord_accent">#8ED0E8</color>
+
+    <color name="theme_emerald_bg">#11201B</color>
+    <color name="theme_emerald_primary_text">#EDF9F2</color>
+    <color name="theme_emerald_secondary_text">#B6D0C0</color>
+    <color name="theme_emerald_accent">#7ED6A3</color>
+
+    <color name="theme_neon_bg">#16161D</color>
+    <color name="theme_neon_primary_text">#F4F7FF</color>
+    <color name="theme_neon_secondary_text">#CFB7DA</color>
+    <color name="theme_neon_accent">#4DE0D7</color>
+
     <array name="genres">
         <item>#E13300</item>
         <item>#7358FF</item>

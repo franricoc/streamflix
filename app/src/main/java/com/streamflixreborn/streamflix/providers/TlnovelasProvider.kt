@@ -15,7 +15,13 @@ import org.jsoup.nodes.Document
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
-object TlnovelasProvider : Provider {
+@StreamflixProvider(
+    name = "Tlnovelas",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object TlnovelasProvider : BaseProvider(){
 
     override val name = "Tlnovelas.net"
     override val baseUrl = "https://ww2.tlnovelas.net"

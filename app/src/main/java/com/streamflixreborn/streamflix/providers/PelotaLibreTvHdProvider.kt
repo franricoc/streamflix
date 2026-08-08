@@ -23,7 +23,13 @@ import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
 // IptvProvider con TvShow para aprovechar el "Direct Play" o la selección manual según el usuario
-object PelotaLibreTvHdProvider : IptvProvider {
+@StreamflixProvider(
+    name = "PelotaLibreTvHd",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object PelotaLibreTvHdProvider : BaseProvider(), IptvProvider{
     override val name = "Pelota Libre TV"
     override val baseUrl = "https://pelotalibretvhd.live"
     override val logo = "https://i.ibb.co/qYgyrsYS/Pelota-Libre.jpg" // Logo oficial de la página

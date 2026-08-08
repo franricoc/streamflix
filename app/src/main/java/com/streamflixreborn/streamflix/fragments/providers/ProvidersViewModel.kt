@@ -40,7 +40,7 @@ class ProvidersViewModel : ViewModel() {
                     if (isFavoritesFilter) {
                         favorites.contains(it.name)
                     } else {
-                        language == null || it.language == language 
+                        language == null || it.language == language || it.language == "all"
                     }
                 }
                 .sortedBy { it.name }
@@ -49,7 +49,7 @@ class ProvidersViewModel : ViewModel() {
             if (language == null || isFavoritesFilter) {
                 val availableLanguages = Provider.providers.keys.map { it.language }.distinct()
                 availableLanguages.forEach { lang ->
-                    if (lang != "pl") {
+                    if (lang != "pl" && lang != "all") {
                         val tmdbName = "TMDb (${getLanguageDisplayName(lang)})"
                         if (!isFavoritesFilter || favorites.contains(tmdbName)) {
                             providers.add(TmdbProvider(lang))
@@ -57,7 +57,7 @@ class ProvidersViewModel : ViewModel() {
                     }
                 }
             } else {
-                if (language != "pl") {
+                if (language != "pl" && language != "all") {
                     providers.add(TmdbProvider(language))
                 }
             }
@@ -76,7 +76,8 @@ class ProvidersViewModel : ViewModel() {
                     isFavorite = favorites.contains(name)
                 )
             }.sortedWith(
-                compareBy<ModelProvider> { it.provider is TmdbProvider }
+                compareBy<ModelProvider> { it.name != "Super Favoritos" }
+                    .thenBy { it.provider is TmdbProvider }
                     .thenBy { it.name.lowercase(Locale.ROOT) }
             )
 

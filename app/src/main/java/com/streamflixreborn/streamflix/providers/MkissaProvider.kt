@@ -39,7 +39,13 @@ import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-object MkissaProvider : Provider {
+@StreamflixProvider(
+    name = "Mkissa",
+    language = "en",
+    movies = true,
+    tvShows = true
+)
+object MkissaProvider : BaseProvider(){
 
     private const val TAG = "MkissaProvider"
     private const val API_URL = "https://api.allanime.day/"

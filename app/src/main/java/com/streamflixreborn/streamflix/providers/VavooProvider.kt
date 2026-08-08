@@ -9,7 +9,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
-class VavooProvider(override val language: String) : IptvProvider {
+@StreamflixProvider(
+    name = "Vavoo",
+    language = "de",
+    movies = false,
+    tvShows = true
+)
+class VavooProvider(override val language: String) : BaseProvider(), IptvProvider{
 
     companion object {
         private const val TAG = "VavooProvider"

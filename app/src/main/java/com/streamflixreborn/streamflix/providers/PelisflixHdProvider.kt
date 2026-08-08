@@ -24,7 +24,13 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
-object PelisflixHdProvider : Provider {
+@StreamflixProvider(
+    name = "PelisflixHd",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object PelisflixHdProvider : BaseProvider(){
 
     override val name = "PelisflixHD"
     override val baseUrl = "https://pelisflixhd.win"

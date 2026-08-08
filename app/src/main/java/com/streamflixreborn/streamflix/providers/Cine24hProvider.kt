@@ -20,7 +20,13 @@ import org.jsoup.nodes.Document
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
-object Cine24hProvider : Provider {
+@StreamflixProvider(
+    name = "Cine24h",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object Cine24hProvider : BaseProvider(){
 
     override val name = "Cine24h"
     override val baseUrl = "https://cine24h.online"

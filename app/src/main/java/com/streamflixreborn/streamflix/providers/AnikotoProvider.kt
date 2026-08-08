@@ -30,7 +30,13 @@ import java.text.Normalizer
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-object AnikotoProvider : Provider {
+@StreamflixProvider(
+    name = "Anikoto",
+    language = "en",
+    movies = true,
+    tvShows = true
+)
+object AnikotoProvider : BaseProvider(){
 
     override val baseUrl = "https://anikototv.to"
     override val name = "Anikoto"

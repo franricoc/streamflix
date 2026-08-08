@@ -7,7 +7,13 @@ import com.streamflixreborn.streamflix.models.*
 import okhttp3.*
 import java.util.concurrent.TimeUnit
 
-object PlutoTvUsProvider : IptvProvider {
+@StreamflixProvider(
+    name = "PlutoTvUs",
+    language = "en",
+    movies = false,
+    tvShows = true
+)
+object PlutoTvUsProvider : BaseProvider(), IptvProvider{
 
     override val name = "Pluto TV Us"
     override val baseUrl = "https://raw.githubusercontent.com"

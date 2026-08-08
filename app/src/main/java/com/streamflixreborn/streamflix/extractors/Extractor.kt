@@ -230,5 +230,7 @@ abstract class Extractor {
 
             throw Exception("No extractors found for URL: $finalLink")
         }
+
+        fun getAllExtractorsList(): List<Extractor> = extractors
     }
 }

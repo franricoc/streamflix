@@ -28,7 +28,13 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.Locale
 
-object FlixLatamProvider : Provider {
+@StreamflixProvider(
+    name = "FlixLatam",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object FlixLatamProvider : BaseProvider(){
 
     override val name = "FlixLatam"
     override val baseUrl = "https://flixlatam.com"

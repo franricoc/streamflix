@@ -18,7 +18,13 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import android.util.Log
 
-object AnimefenixProvider : Provider {
+@StreamflixProvider(
+    name = "Animefenix",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object AnimefenixProvider : BaseProvider(){
 
     override val name = "Animefenix"
     override val baseUrl = "https://animefenix2.tv"

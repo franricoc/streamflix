@@ -609,6 +609,20 @@ class TvShowViewHolder(
                             setImageDrawable(
                                 ContextCompat.getDrawable(context, newValue.drawable())
                             )
+                            if (newValue) {
+                                animate()
+                                    .scaleX(1.35f)
+                                    .scaleY(1.35f)
+                                    .setDuration(150)
+                                    .withEndAction {
+                                        animate()
+                                            .scaleX(1.0f)
+                                            .scaleY(1.0f)
+                                            .setDuration(150)
+                                            .start()
+                                    }
+                                    .start()
+                            }
                         }
                     }
                 }

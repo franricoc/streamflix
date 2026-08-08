@@ -25,7 +25,13 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
-object SflixProvider : Provider {
+@StreamflixProvider(
+    name = "Sflix",
+    language = "en",
+    movies = true,
+    tvShows = true
+)
+object SflixProvider : BaseProvider(){
 
     private const val URL = "https://sflix.to/"
     override val baseUrl = URL

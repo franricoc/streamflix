@@ -29,7 +29,13 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import retrofit2.http.Url
 
-object KidrazProvider : Provider, ProviderPortalUrl, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "Kidraz",
+    language = "fr",
+    movies = true,
+    tvShows = false
+)
+object KidrazProvider : BaseProvider(), ProviderPortalUrl, ProviderConfigUrl{
 
     override val name = "Kidraz"
 

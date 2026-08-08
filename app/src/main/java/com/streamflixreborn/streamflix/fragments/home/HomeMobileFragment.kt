@@ -147,6 +147,23 @@ class HomeMobileFragment : Fragment() {
                 findNavController().navigate(R.id.providers)
             }
         }
+
+        // Highlight top-left provider logo button if Spotlight is pending
+        if (com.streamflixreborn.streamflix.utils.UserProfileManager.isSpotlightPending) {
+            binding.ivProviderLogo.postDelayed({
+                val activity = activity ?: return@postDelayed
+                val spotlight = com.streamflixreborn.streamflix.ui.SpotlightOverlayView(activity)
+                val rootView = activity.window.decorView as? ViewGroup ?: return@postDelayed
+                rootView.addView(spotlight, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+                spotlight.highlightTarget(
+                    binding.ivProviderLogo,
+                    "¡Puedes cambiar de proveedor en cualquier momento pulsando este botón!"
+                ) {
+                    rootView.removeView(spotlight)
+                    com.streamflixreborn.streamflix.utils.UserProfileManager.setSpotlightPending(activity, false)
+                }
+            }, 700)
+        }
         
         // Ensure background image is hidden on mobile to show theme color
         binding.ivHomeBackground.visibility = View.GONE

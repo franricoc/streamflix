@@ -33,7 +33,13 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 
 
-object SoloLatinoProvider : Provider {
+@StreamflixProvider(
+    name = "SoloLatino",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object SoloLatinoProvider : BaseProvider(){
 
     override val name = "SoloLatino"
     override val baseUrl = "https://sololatino.net"

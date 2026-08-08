@@ -27,7 +27,13 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 
-object PelisplustoProvider : Provider {
+@StreamflixProvider(
+    name = "Pelisplusto",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object PelisplustoProvider : BaseProvider(){
 
     override val name = "Pelisplusto"
     override val baseUrl = "https://pelisplus.to"

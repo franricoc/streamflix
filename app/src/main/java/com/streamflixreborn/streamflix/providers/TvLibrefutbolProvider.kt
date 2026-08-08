@@ -19,7 +19,13 @@ import retrofit2.http.Header
 import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
-object TvLibrefutbolProvider : IptvProvider {
+@StreamflixProvider(
+    name = "TvLibrefutbol",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object TvLibrefutbolProvider : BaseProvider(), IptvProvider{
 
     override val name = "Tv Libre Futbol"
     override val baseUrl = "https://www.librefutbol2.com"

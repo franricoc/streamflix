@@ -38,7 +38,13 @@ import java.text.Normalizer
 import java.util.concurrent.TimeUnit
 import okhttp3.Request
 
-object FilmyOnlineCcProvider : Provider {
+@StreamflixProvider(
+    name = "FilmyOnlineCc",
+    language = "pl",
+    movies = true,
+    tvShows = true
+)
+object FilmyOnlineCcProvider : BaseProvider(){
 
     override val name = "FilmyOnline"
     override val baseUrl = "http://filmyonline.cc"

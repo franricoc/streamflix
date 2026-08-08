@@ -31,7 +31,13 @@ import java.util.concurrent.TimeUnit
 import MyCookieJar
 import com.streamflixreborn.streamflix.utils.TmdbUtils
 
-object MEGAKinoProvider : Provider {
+@StreamflixProvider(
+    name = "MEGAKino",
+    language = "de",
+    movies = true,
+    tvShows = true
+)
+object MEGAKinoProvider : BaseProvider(){
 
     override val name = "MEGAKino"
     override val baseUrl = "https://megakino12.com"

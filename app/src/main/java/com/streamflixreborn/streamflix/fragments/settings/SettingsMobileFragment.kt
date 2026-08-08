@@ -52,6 +52,9 @@ import com.streamflixreborn.streamflix.utils.UserPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.streamflixreborn.streamflix.activities.onboarding.OnboardingActivity
+import com.streamflixreborn.streamflix.ui.ProfileSelectorDialog
+import com.streamflixreborn.streamflix.utils.UserProfileManager
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -230,6 +233,36 @@ class SettingsMobileFragment : PreferenceFragmentCompat() {
     }
 
     private fun displaySettings() {
+        val activeProfile = UserProfileManager.getActiveProfile(requireContext())
+        findPreference<Preference>("key_profile_active")?.apply {
+            summary = activeProfile?.let { "${it.name}${if (it.isKids) " 🧒 (Modo Niños)" else ""}" } ?: "Ninguno"
+        }
+
+        findPreference<Preference>("key_profile_switch")?.setOnPreferenceClickListener {
+            ProfileSelectorDialog(requireContext()) { selected ->
+                Toast.makeText(requireContext(), "Perfil cambiado a ${selected.name}", Toast.LENGTH_SHORT).show()
+                requireActivity().apply {
+                    finish()
+                    startActivity(Intent(this, this::class.java))
+                }
+            }.show()
+            true
+        }
+
+        findPreference<Preference>("key_profile_create")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireContext(), OnboardingActivity::class.java))
+            true
+        }
+
+        findPreference<Preference>("key_profile_backup_export")?.setOnPreferenceClickListener {
+            exportBackupLauncher.launch("streamflix_backup_${System.currentTimeMillis()}.json")
+            true
+        }
+
+        findPreference<Preference>("key_profile_backup_import")?.setOnPreferenceClickListener {
+            importBackupLauncher.launch(arrayOf("application/json"))
+            true
+        }
         updateOverviewLabels()
         updateProviderVisibilityState()
 
@@ -703,10 +736,7 @@ class SettingsMobileFragment : PreferenceFragmentCompat() {
                 if (preference is ListPreference) {
                     preference.value = newTheme
                 }
-                requireActivity().apply {
-                    finish()
-                    startActivity(Intent(this, MainMobileActivity::class.java))
-                }
+                requireActivity().recreate()
                 true
             }
         }

@@ -55,7 +55,13 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-object AniWorldProvider : Provider {
+@StreamflixProvider(
+    name = "AniWorld",
+    language = "de",
+    movies = false,
+    tvShows = true
+)
+object AniWorldProvider : BaseProvider(){
 
 
     private const val URL = "https://aniworld.to/"

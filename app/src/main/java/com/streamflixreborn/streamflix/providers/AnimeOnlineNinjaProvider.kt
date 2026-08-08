@@ -31,7 +31,13 @@ import java.net.URLEncoder
 import java.text.Normalizer
 import java.util.concurrent.ConcurrentHashMap
 
-object AnimeOnlineNinjaProvider : Provider {
+@StreamflixProvider(
+    name = "AnimeOnlineNinja",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object AnimeOnlineNinjaProvider : BaseProvider(){
 
     private const val SITE_BASE_URL = "https://ww3.animeonline.ninja"
 

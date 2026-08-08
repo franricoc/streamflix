@@ -38,7 +38,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-object GuardaSerieProvider : Provider {
+@StreamflixProvider(
+    name = "GuardaSerie",
+    language = "it",
+    movies = true,
+    tvShows = true
+)
+object GuardaSerieProvider : BaseProvider(){
 
     override val name = "GuardaSerie"
     override val baseUrl = "https://guardoserie.study"

@@ -35,6 +35,11 @@ import com.streamflixreborn.streamflix.utils.getCurrentFragment
 import com.streamflixreborn.streamflix.providers.AnimeOnlineNinjaProvider
 import kotlinx.coroutines.launch
 
+import com.streamflixreborn.streamflix.ui.ProfileSelectorTvDialog
+import com.streamflixreborn.streamflix.utils.UserProfileManager
+import com.streamflixreborn.streamflix.models.UserProfile
+import android.view.ViewGroup
+
 class MainTvActivity : FragmentActivity() {
 
     private var _binding: ActivityMainTvBinding? = null
@@ -49,11 +54,24 @@ class MainTvActivity : FragmentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (!com.streamflixreborn.streamflix.utils.DeviceUtils.isTvDevice(this)) {
+            startActivity(Intent(this, MainMobileActivity::class.java))
+            finish()
+            return
+        }
+
         // Il setup delle preferenze è già avvenuto in StreamFlixApp
         setTheme(ThemeManager.tvThemeRes(UserPreferences.selectedTheme))
         
         super.onCreate(savedInstanceState)
         
+        UserProfileManager.init(this)
+        if (!UserProfileManager.hasCompletedOnboarding) {
+            startActivity(Intent(this, com.streamflixreborn.streamflix.activities.onboarding.OnboardingTvActivity::class.java))
+            finish()
+            return
+        }
+
         // Inizializza il provider con il context dell'attività per gestire eventuali bypass visibili
         AnimeOnlineNinjaProvider.init(this)
         Cine24hProvider.init(this)
@@ -80,7 +98,7 @@ class MainTvActivity : FragmentActivity() {
 
         adjustLayoutDelta(null, null)
 
-        if (BuildConfig.APP_LAYOUT == "mobile" || (BuildConfig.APP_LAYOUT != "tv" && !packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))) {
+        if (!com.streamflixreborn.streamflix.utils.DeviceUtils.isTvDevice(this)) {
             finish()
             startActivity(Intent(this, MainMobileActivity::class.java))
             return
@@ -99,16 +117,35 @@ class MainTvActivity : FragmentActivity() {
             binding.navMainFragment.isFocusedByDefault = true
         }
 
+        if (!UserProfileManager.isSessionProfileSelected) {
+            val profiles = UserProfileManager.getProfiles(this)
+            if (profiles.size > 1) {
+                ProfileSelectorTvDialog(this) { selectedProfile ->
+                    UserProfileManager.setActiveProfile(this, selectedProfile.id)
+                    UserProfileManager.isSessionProfileSelected = true
+                    showAppLaunchGreetingTv(selectedProfile)
+                }.apply {
+                    setCanceledOnTouchOutside(false)
+                    show()
+                }
+            } else {
+                UserProfileManager.isSessionProfileSelected = true
+                UserProfileManager.getActiveProfile(this)?.let { showAppLaunchGreetingTv(it) }
+            }
+        }
+
         navController.addOnDestinationChangedListener { _, destination, _ ->
             binding.navMain.headerView?.apply {
                 val header = ContentHeaderMenuMainTvBinding.bind(this)
+                val activeProfile = UserProfileManager.getActiveProfile(this@MainTvActivity)
 
                 Glide.with(context)
                     .load(UserPreferences.currentProvider?.logo?.takeIf { it.isNotEmpty() } ?: R.drawable.ic_provider_default_logo)
                     .error(R.drawable.ic_provider_default_logo)
                     .into(header.ivNavigationHeaderIcon)
-                header.tvNavigationHeaderTitle.text = UserPreferences.currentProvider?.name
-                header.tvNavigationHeaderSubtitle.text = getString(R.string.main_menu_change_provider)
+
+                header.tvNavigationHeaderTitle.text = activeProfile?.name ?: UserPreferences.currentProvider?.name
+                header.tvNavigationHeaderSubtitle.text = UserPreferences.currentProvider?.name ?: getString(R.string.main_menu_change_provider)
                 val palette = ThemeManager.palette(UserPreferences.selectedTheme)
                 header.tvNavigationHeaderTitle.setTextColor(palette.tvHeaderPrimary)
                 header.tvNavigationHeaderSubtitle.setTextColor(palette.tvHeaderSecondary)
@@ -124,8 +161,23 @@ class MainTvActivity : FragmentActivity() {
                 }
 
                 setOnClickListener {
-                    // Navigazione manuale per evitare dipendenza da Safe Args Directions non generate
-                    navController.navigate(R.id.providers)
+                    val options = arrayOf("👤 Cambiar de Perfil", "📺 Cambiar de Proveedor")
+                    android.app.AlertDialog.Builder(this@MainTvActivity)
+                        .setTitle("Cuenta y Proveedor")
+                        .setItems(options) { _, which ->
+                            when (which) {
+                                0 -> {
+                                    UserProfileManager.isSessionProfileSelected = false
+                                    ProfileSelectorTvDialog(this@MainTvActivity) { selectedProfile ->
+                                        UserProfileManager.setActiveProfile(this@MainTvActivity, selectedProfile.id)
+                                        UserProfileManager.isSessionProfileSelected = true
+                                        recreate()
+                                    }.show()
+                                }
+                                1 -> navController.navigate(R.id.providers)
+                            }
+                        }
+                        .show()
                 }
             }
 
@@ -309,5 +361,64 @@ class MainTvActivity : FragmentActivity() {
             )
         }
     }
+
+    private fun showAppLaunchGreetingTv(profile: com.streamflixreborn.streamflix.models.UserProfile? = null) {
+        val activeProfile = profile ?: UserProfileManager.getActiveProfile(this) ?: return
+        val rootView = window.decorView as? ViewGroup ?: return
+
+        val overlay = android.widget.FrameLayout(this).apply {
+            setBackgroundColor(android.graphics.Color.BLACK)
+            elevation = 999f
+        }
+
+        val layout = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            setPadding(48, 48, 48, 48)
+
+            val avatarCard = androidx.cardview.widget.CardView(context).apply {
+                radius = 80f
+                if (activeProfile.avatarType == com.streamflixreborn.streamflix.models.AvatarType.PRESET) {
+                    val color = com.streamflixreborn.streamflix.models.UserProfile.PRESET_AVATARS.find { it.first == activeProfile.avatarValue }?.second ?: 0xFFE50914.toInt()
+                    setCardBackgroundColor(color)
+                } else {
+                    setCardBackgroundColor(android.graphics.Color.TRANSPARENT)
+                }
+            }
+            val avatarParams = android.widget.LinearLayout.LayoutParams(160, 160)
+            avatarCard.layoutParams = avatarParams
+
+            val imgAvatar = android.widget.ImageView(context).apply {
+                scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                if (activeProfile.avatarType == com.streamflixreborn.streamflix.models.AvatarType.CUSTOM_URI) {
+                    setImageURI(android.net.Uri.fromFile(java.io.File(activeProfile.avatarValue)))
+                }
+            }
+            avatarCard.addView(imgAvatar)
+            addView(avatarCard)
+
+            val tvHello = android.widget.TextView(context).apply {
+                text = "¡Hola, ${activeProfile.name}!"
+                setTextColor(android.graphics.Color.WHITE)
+                textSize = 34f
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                gravity = android.view.Gravity.CENTER
+                setPadding(0, 24, 0, 0)
+            }
+            addView(tvHello)
+        }
+
+        overlay.addView(layout, android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER))
+        rootView.addView(overlay, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(1200)
+            val fadeOut = android.animation.ObjectAnimator.ofFloat(overlay, "alpha", 1f, 0f).setDuration(350)
+            fadeOut.start()
+            kotlinx.coroutines.delay(350)
+            rootView.removeView(overlay)
+        }
+    }
 }
+
 

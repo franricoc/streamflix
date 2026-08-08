@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:padding="32dp">
+
+    <!-- STEP 1: Profile Name Input -->
+    <LinearLayout
+        android:id="@+id/step1ContainerTv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bienvenido a Streamflix"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Escribe tu nombre de usuario para crear tu cuenta (presiona Enter al terminar):"
+            android:textColor="#AAAAAA"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/etTvProfileName"
+            android:layout_width="450dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_search_edittext"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:hint="Ej. Casa, TV, Juan..."
+            android:imeOptions="actionDone"
+            android:inputType="textPersonName"
+            android:padding="16dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#777777"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/btnTvConfirmProfileName"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_button_tv"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingHorizontal="32dp"
+            android:paddingVertical="12dp"
+            android:text="Crear y Continuar"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+    <!-- STEP 2: Language Selection -->
+    <LinearLayout
+        android:id="@+id/step2ContainerTv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Selecciona tu Idioma"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Presiona OK en el idioma deseado para continuar"
+            android:textColor="#AAAAAA"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:id="@+id/layoutTvLanguages"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:orientation="horizontal" />
+
+    </LinearLayout>
+
+    <!-- STEP 3: Provider Selection -->
+    <LinearLayout
+        android:id="@+id/step3ContainerTv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Selecciona tu Proveedor Principal"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Elige una fuente de contenido para tu pantalla principal"
+            android:textColor="#AAAAAA"
+            android:textSize="18sp" />
+
+        <ScrollView
+            android:layout_width="600dp"
+            android:layout_height="350dp"
+            android:layout_marginTop="24dp">
+
+            <LinearLayout
+                android:id="@+id/layoutTvProviders"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+    </LinearLayout>
+
+</FrameLayout>

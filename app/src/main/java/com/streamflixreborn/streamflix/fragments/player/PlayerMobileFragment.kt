@@ -277,7 +277,16 @@ class PlayerMobileFragment : Fragment() {
             binding.tvBrightnessPercentage,
             binding.llVolume, 
             binding.pbVolume, 
-            binding.tvVolumePercentage
+            binding.tvVolumePercentage,
+            binding.tvSpeedIndicator,
+            onSpeedChangeRequested = { is2x ->
+                if (::player.isInitialized) {
+                    player.setPlaybackSpeed(if (is2x) 2.0f else 1.0f)
+                }
+            },
+            onDoubleTapSeek = { isForward ->
+                handleDoubleTapSeek(isForward)
+            }
         )
 
         // Stato Video
@@ -1657,5 +1666,38 @@ class PlayerMobileFragment : Fragment() {
                 }
             }
         cookieManager.flush()
+    }
+
+    private var seekIndicatorJob: Job? = null
+
+    private fun handleDoubleTapSeek(isForward: Boolean) {
+        if (!::player.isInitialized) return
+        val currentPos = player.currentPosition
+        val duration = if (player.duration > 0) player.duration else Long.MAX_VALUE
+        val seekDelta = if (isForward) 10_000L else -10_000L
+        val targetPosition = (currentPos + seekDelta).coerceIn(0L, duration)
+        player.seekTo(targetPosition)
+
+        seekIndicatorJob?.cancel()
+        val targetView = if (isForward) binding.tvForwardIndicator else binding.tvRewindIndicator
+        val otherView = if (isForward) binding.tvRewindIndicator else binding.tvForwardIndicator
+        otherView.visibility = View.GONE
+        otherView.animate().cancel()
+
+        targetView.animate().cancel()
+        targetView.alpha = 1.0f
+        targetView.visibility = View.VISIBLE
+
+        seekIndicatorJob = viewLifecycleOwner.lifecycleScope.launch {
+            delay(600)
+            targetView.animate()
+                .alpha(0.0f)
+                .setDuration(200)
+                .withEndAction {
+                    targetView.visibility = View.GONE
+                    targetView.alpha = 1.0f
+                }
+                .start()
+        }
     }
 }

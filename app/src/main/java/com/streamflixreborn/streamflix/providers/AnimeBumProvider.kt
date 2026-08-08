@@ -19,7 +19,13 @@ import retrofit2.http.Url
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-object AnimeBumProvider : Provider {
+@StreamflixProvider(
+    name = "AnimeBum",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object AnimeBumProvider : BaseProvider(){
 
     override val name = "AnimeBum"
     override val baseUrl = "https://www.animebum.net"

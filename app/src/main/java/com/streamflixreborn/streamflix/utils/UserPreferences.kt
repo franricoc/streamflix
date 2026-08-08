@@ -71,15 +71,18 @@ object UserPreferences {
             return Provider.providers.keys.find { it.name == providerName }
         }
         set(value) {
-            // CRITICO: Resetta l'istanza del database prima di cambiare provider
-            // per forzare la creazione di un nuovo database file corretto.
             AppDatabase.resetInstance()
 
             Key.CURRENT_PROVIDER.setString(value?.name)
+            value?.name?.let { providerName ->
+                runCatching {
+                    UserProfileManager.updateActiveProfileProvider(StreamFlixApp.instance, providerName)
+                }
+            }
+            UserProfileManager.isSessionProfileSelected = true
             runCatching {
                 ArtworkRepairScheduler.schedule(StreamFlixApp.instance, value)
             }
-            // Notify all ViewModels that the provider has changed
             ProviderChangeNotifier.notifyProviderChanged()
         }
 
@@ -106,12 +109,18 @@ object UserPreferences {
         }
     }
 
+    var appLayout: String
+        get() = Key.APP_LAYOUT.getString() ?: "auto"
+        set(value) {
+            Key.APP_LAYOUT.setString(value)
+        }
+
     var currentLanguage: String?
         get() = Key.CURRENT_LANGUAGE.getString()
         set(value) = Key.CURRENT_LANGUAGE.setString(value)
 
     var providerLanguage: String?
-        get() = Key.PROVIDER_LANGUAGE.getString()
+        get() = Key.PROVIDER_LANGUAGE.getString() ?: currentLanguage
         set(value) = Key.PROVIDER_LANGUAGE.setString(value)
 
     var captionTextSize: Float
@@ -480,9 +489,15 @@ object UserPreferences {
         set(value) = Key.SCREEN_PADDING_Y.setInt(value)
 
     var favoriteProviders: Set<String>
-        get() = Key.FAVORITE_PROVIDERS.getStringSet() ?: emptySet()
+        get() {
+            val activeId = UserProfileManager.getActiveProfileId(StreamFlixApp.instance)
+            val key = if (activeId.isNullOrEmpty()) Key.FAVORITE_PROVIDERS.name else "${Key.FAVORITE_PROVIDERS.name}_$activeId"
+            return prefs.getStringSet(key, null) ?: emptySet()
+        }
         set(value) {
-            Key.FAVORITE_PROVIDERS.setStringSet(value)
+            val activeId = UserProfileManager.getActiveProfileId(StreamFlixApp.instance)
+            val key = if (activeId.isNullOrEmpty()) Key.FAVORITE_PROVIDERS.name else "${Key.FAVORITE_PROVIDERS.name}_$activeId"
+            prefs.edit { putStringSet(key, value) }
         }
 
     private enum class Key {

@@ -32,7 +32,13 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 import kotlin.math.round
 
-object FrenchMangaProvider : Provider, ProviderPortalUrl, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "FrenchManga",
+    language = "fr",
+    movies = false,
+    tvShows = true
+)
+object FrenchMangaProvider : BaseProvider(), ProviderPortalUrl, ProviderConfigUrl{
     override val name = "FrenchManga"
 
     override val defaultBaseUrl: String = "https://w16.french-manga.net/"

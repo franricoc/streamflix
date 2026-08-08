@@ -55,6 +55,12 @@ import org.json.JSONObject
 import java.util.Base64
 import kotlin.coroutines.resume
 
+import com.streamflixreborn.streamflix.activities.onboarding.OnboardingActivity
+import com.streamflixreborn.streamflix.ui.ProfileSelectorDialog
+import com.streamflixreborn.streamflix.ui.SpotlightOverlayView
+import com.streamflixreborn.streamflix.utils.UserProfileManager
+import android.view.ViewGroup
+
 class MainMobileActivity : FragmentActivity() {
 
     private companion object {
@@ -99,9 +105,21 @@ class MainMobileActivity : FragmentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(ThemeManager.mobileThemeRes(UserPreferences.selectedTheme))
+        if (com.streamflixreborn.streamflix.utils.DeviceUtils.isTvDevice(this)) {
+            startActivity(Intent(this, MainTvActivity::class.java))
+            finish()
+            return
+        }
 
+        setTheme(ThemeManager.mobileThemeRes(UserPreferences.selectedTheme))
         super.onCreate(savedInstanceState)
+
+        UserProfileManager.init(this)
+        if (!UserProfileManager.hasCompletedOnboarding) {
+            startActivity(Intent(this, OnboardingActivity::class.java))
+            finish()
+            return
+        }
 
         AnimeOnlineNinjaProvider.init(this)
         Cine24hProvider.init(this)
@@ -141,10 +159,7 @@ class MainMobileActivity : FragmentActivity() {
             supportFragmentManager.findFragmentById(R.id.nav_main_fragment) as NavHostFragment
         val navController = navHost.navController
 
-        if (BuildConfig.APP_LAYOUT == "tv" ||
-            (BuildConfig.APP_LAYOUT != "mobile" &&
-                packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
-        ) {
+        if (com.streamflixreborn.streamflix.utils.DeviceUtils.isTvDevice(this)) {
             finish()
             startActivity(Intent(this, MainTvActivity::class.java))
             return
@@ -170,6 +185,21 @@ class MainMobileActivity : FragmentActivity() {
         binding.bnvMain.setupWithNavController(navController)
         updateNavigationVisibility()
         updateBottomNavigationVisibility(navController.currentDestination?.id)
+
+        if (!UserProfileManager.isSessionProfileSelected) {
+            val profiles = UserProfileManager.getProfiles(this)
+            if (profiles.size > 1) {
+                ProfileSelectorDialog(this) { selectedProfile ->
+                    // ProfileSelectorDialog performs full-screen zoom & greeting animation
+                }.apply {
+                    setCanceledOnTouchOutside(false)
+                    show()
+                }
+            } else {
+                UserProfileManager.isSessionProfileSelected = true
+                showAppLaunchGreeting(UserProfileManager.getActiveProfile(this))
+            }
+        }
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             updateNavigationVisibility(destination.id)
@@ -658,6 +688,65 @@ class MainMobileActivity : FragmentActivity() {
             String.format(java.util.Locale.getDefault(), "%d:%02d:%02d", hrs, mins % 60, secs)
         } else {
             String.format(java.util.Locale.getDefault(), "%02d:%02d", mins, secs)
+        }
+    }
+
+    private fun showAppLaunchGreeting(profile: com.streamflixreborn.streamflix.models.UserProfile? = null) {
+        val activeProfile = profile ?: UserProfileManager.getActiveProfile(this) ?: return
+        val rootView = window.decorView as? ViewGroup ?: return
+
+        val overlay = android.widget.FrameLayout(this).apply {
+            setBackgroundColor(android.graphics.Color.BLACK)
+            elevation = 999f
+        }
+
+        val layout = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            setPadding(48, 48, 48, 48)
+
+            val avatarCard = com.google.android.material.card.MaterialCardView(context).apply {
+                radius = 60f
+                strokeWidth = 0
+                if (activeProfile.avatarType == com.streamflixreborn.streamflix.models.AvatarType.PRESET) {
+                    val color = com.streamflixreborn.streamflix.models.UserProfile.PRESET_AVATARS.find { it.first == activeProfile.avatarValue }?.second ?: 0xFFE50914.toInt()
+                    setCardBackgroundColor(color)
+                } else {
+                    setCardBackgroundColor(android.graphics.Color.TRANSPARENT)
+                }
+            }
+            val avatarParams = android.widget.LinearLayout.LayoutParams(120, 120)
+            avatarCard.layoutParams = avatarParams
+
+            val imgAvatar = android.widget.ImageView(context).apply {
+                scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                if (activeProfile.avatarType == com.streamflixreborn.streamflix.models.AvatarType.CUSTOM_URI) {
+                    setImageURI(android.net.Uri.fromFile(java.io.File(activeProfile.avatarValue)))
+                }
+            }
+            avatarCard.addView(imgAvatar)
+            addView(avatarCard)
+
+            val tvHello = android.widget.TextView(context).apply {
+                text = "¡Hola, ${activeProfile.name}!"
+                setTextColor(android.graphics.Color.WHITE)
+                textSize = 28f
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                gravity = android.view.Gravity.CENTER
+                setPadding(0, 24, 0, 0)
+            }
+            addView(tvHello)
+        }
+
+        overlay.addView(layout, android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER))
+        rootView.addView(overlay, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(1500)
+            val fadeOut = android.animation.ObjectAnimator.ofFloat(overlay, "alpha", 1f, 0f).setDuration(400)
+            fadeOut.start()
+            kotlinx.coroutines.delay(400)
+            rootView.removeView(overlay)
         }
     }
 }

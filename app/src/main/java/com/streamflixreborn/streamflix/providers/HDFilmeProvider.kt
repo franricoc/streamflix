@@ -37,7 +37,13 @@ import retrofit2.http.POST
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 
-object HDFilmeProvider : Provider {
+@StreamflixProvider(
+    name = "HDFilme",
+    language = "de",
+    movies = true,
+    tvShows = true
+)
+object HDFilmeProvider : BaseProvider(){
 
     override val name: String = "HDFilme"
     override val baseUrl: String = "https://hdfilme.win"

@@ -19,7 +19,13 @@ import retrofit2.http.Url
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-object LatanimeProvider : Provider {
+@StreamflixProvider(
+    name = "Latanime",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object LatanimeProvider : BaseProvider(){
 
     override val name = "Latanime"
     override val baseUrl = "https://latanime.org"

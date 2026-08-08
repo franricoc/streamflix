@@ -32,7 +32,13 @@ import okhttp3.ResponseBody
 import java.util.concurrent.TimeUnit
 import org.json.JSONObject
 
-object CB01Provider : Provider {
+@StreamflixProvider(
+    name = "CB01",
+    language = "it",
+    movies = true,
+    tvShows = true
+)
+object CB01Provider : BaseProvider(){
 
     override val name = "CB01"
     override val baseUrl = "https://cb01official.uno"

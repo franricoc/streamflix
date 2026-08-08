@@ -27,7 +27,13 @@ import java.net.URLDecoder
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-object SeriesFlixProvider : Provider {
+@StreamflixProvider(
+    name = "SeriesFlix",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object SeriesFlixProvider : BaseProvider(){
 
     override val name = "SeriesFlix"
     override val baseUrl = "https://seriesflixhd.lol"

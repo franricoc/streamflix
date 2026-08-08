@@ -31,7 +31,13 @@ import java.net.URLDecoder
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-object AnimeWorldProvider : Provider {
+@StreamflixProvider(
+    name = "AnimeWorld",
+    language = "it",
+    movies = true,
+    tvShows = true
+)
+object AnimeWorldProvider : BaseProvider(){
 
     private const val URL = "https://www.animeworld.ac"
     override val baseUrl = URL

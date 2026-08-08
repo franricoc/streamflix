@@ -18,7 +18,13 @@ import retrofit2.http.Header
 import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
-object TvporinternetHDProvider : IptvProvider {
+@StreamflixProvider(
+    name = "TvporinternetHD",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object TvporinternetHDProvider : BaseProvider(), IptvProvider{
 
     override val name = "TvporinternetHD"
     override val baseUrl = "https://www.tvporinternet2.com"

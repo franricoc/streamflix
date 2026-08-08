@@ -26,7 +26,13 @@ import java.io.File
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
-object LaCartoonsProvider : Provider {
+@StreamflixProvider(
+    name = "LaCartoons",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object LaCartoonsProvider : BaseProvider(){
 
     override val name = "La Cartoons"
     override val baseUrl = "https://www.lacartoons.com"

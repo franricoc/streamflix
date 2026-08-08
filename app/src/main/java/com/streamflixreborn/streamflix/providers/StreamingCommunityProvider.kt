@@ -38,7 +38,13 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jsoup.Jsoup
 
-class StreamingCommunityProvider(private val _language: String? = null) : Provider {
+@StreamflixProvider(
+    name = "StreamingCommunity",
+    language = "it",
+    movies = true,
+    tvShows = true
+)
+class StreamingCommunityProvider(private val _language: String? = null) : BaseProvider(){
 
     private val mutex = Mutex()
     private val totalCounts = mutableMapOf<String, Int>()

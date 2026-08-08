@@ -33,7 +33,13 @@ import org.json.JSONObject
 import com.tanasi.retrofit_jsoup.converter.JsoupConverterFactory
 import java.util.concurrent.TimeUnit
 
-object AnimeUnityProvider : Provider {
+@StreamflixProvider(
+    name = "AnimeUnity",
+    language = "it",
+    movies = true,
+    tvShows = true
+)
+object AnimeUnityProvider : BaseProvider(){
     override val name = "AnimeUnity"
     override val baseUrl = "https://www.animeunity.so"
     override val logo: String get() = "$baseUrl/images/scritta2.png"

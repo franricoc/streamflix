@@ -25,7 +25,13 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
-object OtakufrProvider : Provider {
+@StreamflixProvider(
+    name = "Otakufr",
+    language = "fr",
+    movies = false,
+    tvShows = true
+)
+object OtakufrProvider : BaseProvider(){
 
     private const val URL = "https://otakufr.cc/"
     override val baseUrl = URL

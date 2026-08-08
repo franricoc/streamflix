@@ -56,9 +56,17 @@ object NetworkClient {
         }
     }
 
-    val default: OkHttpClient by lazy { buildClient(DnsResolver.doh) }
-    val systemDns: OkHttpClient by lazy { buildClient(Dns.SYSTEM) }
-    val noRedirects: OkHttpClient by lazy { buildClient(DnsResolver.doh) { it.followRedirects(false).followSslRedirects(false) } }
+    private val baseClient: OkHttpClient by lazy { createBaseClient() }
+
+    val default: OkHttpClient by lazy { baseClient.newBuilder().dns(DnsResolver.doh).build() }
+    val systemDns: OkHttpClient by lazy { baseClient.newBuilder().dns(Dns.SYSTEM).build() }
+    val noRedirects: OkHttpClient by lazy {
+        baseClient.newBuilder()
+            .dns(DnsResolver.doh)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build()
+    }
 
     val trustAll: OkHttpClient by lazy {
         val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
@@ -67,13 +75,14 @@ object NetworkClient {
             override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
         })
         val sslContext = SSLContext.getInstance("TLS").apply { init(null, trustAllCerts, SecureRandom()) }
-        buildClient(DnsResolver.doh) {
-            it.sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-              .hostnameVerifier { _, _ -> true }
-        }
+        baseClient.newBuilder()
+            .dns(DnsResolver.doh)
+            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }
+            .build()
     }
 
-    private fun buildClient(dns: Dns, customizer: ((OkHttpClient.Builder) -> Unit)? = null): OkHttpClient {
+    private fun createBaseClient(): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val original = chain.request()
@@ -100,7 +109,7 @@ object NetworkClient {
             .cookieJar(cookieJar)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-            .dns(dns)
+            .dns(DnsResolver.doh)
 
         // Modern and compatible TLS configuration
         val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
@@ -174,7 +183,6 @@ object NetworkClient {
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(loggingInterceptor)
         }
-        customizer?.invoke(builder)
         return builder.build()
     }
 }

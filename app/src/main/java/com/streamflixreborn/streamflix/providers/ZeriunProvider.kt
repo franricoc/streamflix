@@ -24,7 +24,13 @@ import retrofit2.http.GET
 import retrofit2.http.Url
 import java.util.concurrent.TimeUnit
 
-object ZeriunProvider : Provider {
+@StreamflixProvider(
+    name = "Zeriun",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object ZeriunProvider : BaseProvider(){
 
     override val name = "Zeriun"
     override val baseUrl = "https://zeriun.cc"

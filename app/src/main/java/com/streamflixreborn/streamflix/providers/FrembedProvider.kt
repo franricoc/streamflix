@@ -35,7 +35,13 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 import kotlin.collections.map
 
-object FrembedProvider : Provider, ProviderPortalUrl, ProviderConfigUrl {
+@StreamflixProvider(
+    name = "Frembed",
+    language = "fr",
+    movies = true,
+    tvShows = true
+)
+object FrembedProvider : BaseProvider(), ProviderPortalUrl, ProviderConfigUrl{
     override val name = "Frembed"
 
     override val defaultPortalUrl: String = "https://audin213.com/"

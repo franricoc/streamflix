@@ -30,7 +30,13 @@ import org.json.JSONObject
 import org.json.JSONArray
 import java.util.concurrent.TimeUnit
 
-object EinschaltenProvider : Provider {
+@StreamflixProvider(
+    name = "Einschalten",
+    language = "de",
+    movies = true,
+    tvShows = false
+)
+object EinschaltenProvider : BaseProvider(){
 
     override val name = "Einschalten"
     override val baseUrl = "https://einschalten.in"

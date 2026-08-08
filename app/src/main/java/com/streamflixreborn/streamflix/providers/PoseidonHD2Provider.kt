@@ -20,7 +20,13 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.*
 
-object PoseidonHD2Provider : Provider {
+@StreamflixProvider(
+    name = "PoseidonHD2",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object PoseidonHD2Provider : BaseProvider(){
 
     override val baseUrl: String get() = "https://${UserPreferences.poseidonDomain}"
     override val name = "Poseidonhd2"

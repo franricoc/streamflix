@@ -22,7 +22,13 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
-object HiAnimeProvider : Provider {
+@StreamflixProvider(
+    name = "HiAnime",
+    language = "en",
+    movies = true,
+    tvShows = true
+)
+object HiAnimeProvider : BaseProvider(){
 
     private const val URL = "https://hianime.cv/"
     override val baseUrl = URL

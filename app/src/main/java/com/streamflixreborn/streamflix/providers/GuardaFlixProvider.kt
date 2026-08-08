@@ -29,7 +29,13 @@ import java.util.concurrent.TimeUnit
 import java.net.URLEncoder
 import java.util.Base64
 
-object GuardaFlixProvider : Provider {
+@StreamflixProvider(
+    name = "GuardaFlix",
+    language = "it",
+    movies = true,
+    tvShows = false
+)
+object GuardaFlixProvider : BaseProvider(){
 
     override val name: String = "GuardaFlix"
     override val baseUrl: String = "https://guardaplay.store"

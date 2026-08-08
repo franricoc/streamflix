@@ -17,7 +17,13 @@ import java.net.URLEncoder
 private fun JsonElement?.safeAsObject(): JsonObject? =
     if (this != null && !this.isJsonNull && this.isJsonObject) this.asJsonObject else null
 
-object LamovieProvider : Provider {
+@StreamflixProvider(
+    name = "Lamovie",
+    language = "es",
+    movies = true,
+    tvShows = true
+)
+object LamovieProvider : BaseProvider(){
 
     override val name = "LaMovie"
     override val baseUrl = "https://lamovie.org"

@@ -1,416 +1,235 @@
 package com.streamflixreborn.streamflix.providers
 
-import com.tanasi.retrofit_jsoup.converter.JsoupConverterFactory
+import android.util.Base64
 import com.streamflixreborn.streamflix.adapters.AppAdapter
-import com.streamflixreborn.streamflix.extractors.Extractor
+import com.streamflixreborn.streamflix.extractors.ExtractorChain
 import com.streamflixreborn.streamflix.models.*
-import com.streamflixreborn.streamflix.models.animeflv.ServerModel
-import com.streamflixreborn.streamflix.utils.DnsResolver
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.Cache
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.dnsoverhttps.DnsOverHttps
-import org.jsoup.nodes.Document
-import retrofit2.Retrofit
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
-import retrofit2.http.Url
-import java.io.File
-import java.util.concurrent.TimeUnit
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
-object AnimeFlvProvider : Provider {
+@StreamflixProvider(
+    name = "AnimeFLV",
+    language = "es",
+    movies = false,
+    tvShows = true
+)
+object AnimeFlvProvider : BaseProvider() {
 
     override val name = "AnimeFLV"
-    override val baseUrl = "https://www3.animeflv.net"
+    override val baseUrl = "https://animeflv.or.at"
     override val language = "es"
-    override val logo = "https://www3.animeflv.net/assets/animeflv/img/logo.png"
+    override val logo = "https://animeflv.or.at/wp-content/themes/animeflv/assets/img/animeflv.png"
 
-    private val client = getOkHttpClient()
-
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(baseUrl)
-        .addConverterFactory(JsoupConverterFactory.create())
-        .client(client)
-        .build()
-
-    private val service = retrofit.create(AnimeFlvService::class.java)
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-    }
-
-    private fun getOkHttpClient(): OkHttpClient {
-        val appCache = Cache(File("cacheDir", "okhttpcache"), 10 * 1024 * 1024)
-
-        val clientBuilder = OkHttpClient.Builder()
-            .cache(appCache)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .connectTimeout(30, TimeUnit.SECONDS)
-
-        return clientBuilder.dns(DnsResolver.doh).build()
-    }
-
-    private fun getEpisodePoster(animeId: String, episodeNum: String): String {
-        return "https://cdn.animeflv.net/screenshots/$animeId/$episodeNum/th_3.jpg"
-    }
-
-    private interface AnimeFlvService {
-        @GET
-        suspend fun getPage(@Url url: String): Document
-
-        @GET("browse")
-        suspend fun search(@Query("q") query: String, @Query("page") page: Int): Document
-
-        @GET("browse")
-        suspend fun getTvShows(@Query("order") order: String = "rating", @Query("page") page: Int): Document
-
-        @GET("browse")
-        suspend fun getMovies(@Query("type[]") type: String = "movie", @Query("page") page: Int): Document
-
-        @GET("browse")
-        suspend fun getGenre(@Query("genre[]") genre: String, @Query("page") page: Int): Document
-
-        @GET("anime/{id}")
-        suspend fun getShowDetails(@Path("id") id: String): Document
-    }
-
-    override suspend fun getHome(): List<Category> {
+    private fun decodeBase64IfNeeded(str: String): String {
+        if (str.startsWith("http://") || str.startsWith("https://")) return str
         return try {
-            coroutineScope {
-                val homeDeferred = async { service.getPage(baseUrl) }
-                val addedDeferred = async { service.getPage("$baseUrl/browse?order=added&page=1") }
-                val airingDeferred = async { service.getPage("$baseUrl/browse?status[]=1&page=1") }
-
-                val categories = mutableListOf<Category>()
-
-                try {
-                    val addedDocument = addedDeferred.await()
-                    val bannerShows = addedDocument.select("ul.ListAnimes li article").mapNotNull { element ->
-                        val url = element.selectFirst("div.Description a.Button")?.attr("href") ?: return@mapNotNull null
-                        val posterUrl = element.selectFirst("a div.Image figure img")?.attr("src")
-                        val finalPoster = if (posterUrl?.startsWith("http") == true) posterUrl else posterUrl?.let { "$baseUrl$it" }
-
-                        TvShow(
-                            id = url.substringAfterLast("/"),
-                            title = element.selectFirst("a h3")?.text() ?: "",
-                            banner = finalPoster
-                        )
-                    }
-                    if (bannerShows.isNotEmpty()) {
-                        categories.add(Category(Category.FEATURED, bannerShows))
-                    }
-                } catch (e: Exception) { /* No-op */ }
-
-                try {
-                    val homeDocument = homeDeferred.await()
-                    val latestEpisodes = homeDocument.select("ul.ListEpisodios li")
-                        .mapNotNull { element ->
-                            val linkElement = element.selectFirst("a") ?: return@mapNotNull null
-                            val showUrl = linkElement.attr("href")
-                                .replace("/ver/", "/anime/")
-                                .substringBeforeLast("-")
-
-                            if (showUrl.isBlank()) return@mapNotNull null
-                            val imageUrl = element.selectFirst("span.Image img")?.attr("src")
-                            TvShow(
-                                id = showUrl.substringAfterLast("/"),
-                                title = element.selectFirst("strong.Title")?.text() ?: "",
-                                poster = imageUrl?.let { "$baseUrl$it" }?.replace("thumbs", "covers")
-                            )
-                        }
-                        .distinctBy { it.id }
-                    if (latestEpisodes.isNotEmpty()) {
-                        categories.add(Category("Últimos Episodios", latestEpisodes))
-                    }
-                } catch (e: Exception) { /* No-op */ }
-
-                try {
-                    val airingDocument = airingDeferred.await()
-                    val airingShows = airingDocument.select("ul.ListAnimes li article").mapNotNull { element ->
-                        val url = element.selectFirst("div.Description a.Button")?.attr("href") ?: return@mapNotNull null
-                        val posterUrl = element.selectFirst("a div.Image figure img")?.attr("src")
-                        val finalPoster = if (posterUrl?.startsWith("http") == true) posterUrl else posterUrl?.let { "$baseUrl$it" }
-
-                        TvShow(
-                            id = url.substringAfterLast("/"),
-                            title = element.selectFirst("a h3")?.text() ?: "",
-                            poster = finalPoster
-                        )
-                    }
-                    if (airingShows.isNotEmpty()) {
-                        categories.add(Category("Animes en Emisión", airingShows))
-                    }
-                } catch (e: Exception) { /* No-op */ }
-
-                return@coroutineScope categories
-            }
+            val decodedBytes = Base64.decode(str, Base64.DEFAULT)
+            val decodedStr = String(decodedBytes, Charsets.UTF_8)
+            if (decodedStr.startsWith("http")) decodedStr else str
         } catch (e: Exception) {
-            return emptyList()
+            str
+        }
+    }
+
+    override suspend fun getHome(): List<Category> = safeFetchList("getHome") {
+        coroutineScope {
+            val doc = baseService.getPage(baseUrl)
+            val categories = mutableListOf<Category>()
+
+            // 1. Últimos episodios en portada
+            val episodes = doc.select(".List-Episodes .Episode, div.Episode").mapNotNull { element ->
+                val link = element.selectFirst("a")?.attr("href") ?: return@mapNotNull null
+                val title = element.selectFirst(".Title, h2, h3")?.text()?.trim() ?: return@mapNotNull null
+                val poster = element.selectFirst("img")?.firstAttr("src", "data-src")?.toAbsoluteUrl(baseUrl)
+                TvShow(
+                    id = link,
+                    title = title,
+                    poster = poster
+                )
+            }
+
+            if (episodes.isNotEmpty()) {
+                categories.add(Category("Últimos Episodios", episodes))
+            }
+
+            // 2. Animes en emisión (Sidebar)
+            val airingShows = doc.select("li.sidebar-cat-item a").mapNotNull { element ->
+                val link = element.attr("href")
+                val title = element.selectFirst(".sidebar-cat-name")?.text()?.trim()
+                    ?: element.attr("title").trim()
+                if (link.isNotBlank() && title.isNotBlank()) {
+                    TvShow(
+                        id = link,
+                        title = title
+                    )
+                } else null
+            }
+
+            if (airingShows.isNotEmpty()) {
+                categories.add(Category("Animes en Emisión", airingShows))
+            }
+
+            categories
         }
     }
 
     override suspend fun search(query: String, page: Int): List<AppAdapter.Item> {
-        if (query.isBlank()) {
-            return listOf(
-                Genre("accion", "Acción"),
-                Genre("artes-marciales", "Artes Marciales"),
-                Genre("aventura", "Aventuras"),
-                Genre("carreras", "Carreras"),
-                Genre("ciencia-ficcion", "Ciencia Ficción"),
-                Genre("comedia", "Comedia"),
-                Genre("demencia", "Demencia"),
-                Genre("demonios", "Demonios"),
-                Genre("deportes", "Deportes"),
-                Genre("drama", "Drama"),
-                Genre("ecchi", "Ecchi"),
-                Genre("escolares", "Escolares"),
-                Genre("espacial", "Espacial"),
-                Genre("fantasia", "Fantasía"),
-                Genre("harem", "Harem"),
-                Genre("historico", "Histórico"),
-                Genre("infantil", "Infantil"),
-                Genre("josei", "Josei"),
-                Genre("juegos", "Juegos"),
-                Genre("magia", "Magia"),
-                Genre("mecha", "Mecha"),
-                Genre("militar", "Militar"),
-                Genre("misterio", "Misterio"),
-                Genre("musica", "Música"),
-                Genre("parodia", "Parodia"),
-                Genre("policia", "Policía"),
-                Genre("psicologico", "Psicológico"),
-                Genre("recuentos-de-la-vida", "Recuentos de la vida"),
-                Genre("romance", "Romance"),
-                Genre("samurai", "Samurai"),
-                Genre("seinen", "Seinen"),
-                Genre("shoujo", "Shojo"),
-                Genre("shounen", "Shounen"),
-                Genre("sobrenatural", "Sobrenatural"),
-                Genre("superpoderes", "Superpoderes"),
-                Genre("suspenso", "Suspenso"),
-                Genre("terror", "Terror"),
-                Genre("vampiros", "Vampiros"),
-                Genre("yaoi", "Yaoi"),
-                Genre("yuri", "Yuri")
-            )
-        }
-
-        return try {
-            if (page > 1) return emptyList()
-
-            val document = service.search(query, page)
-
-            document.select("ul.ListAnimes li article").mapNotNull { element ->
-                val url = element.selectFirst("div.Description a.Button")?.attr("href") ?: return@mapNotNull null
-                val id = url.substringAfterLast("/")
-                val title = element.selectFirst("a h3")?.text() ?: ""
-                val posterUrl = element.selectFirst("a div.Image figure img")?.attr("src")
-                val type = element.selectFirst("span.Type")?.text()
-
-                val finalPoster = if (posterUrl?.startsWith("http") == true) {
-                    posterUrl
-                } else {
-                    posterUrl?.let { "$baseUrl$it" }
-                }
-
-                if (type == "Película") {
-                    Movie(id = id, title = title, poster = finalPoster)
-                } else {
-                    TvShow(id = id, title = title, poster = finalPoster)
-                }
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    override suspend fun getTvShows(page: Int): List<TvShow> {
-        return try {
-            val document = service.getTvShows(page = page)
-            document.select("ul.ListAnimes li article").mapNotNull { element ->
-                val url = element.selectFirst("div.Description a.Button")?.attr("href") ?: return@mapNotNull null
-                val posterUrl = element.selectFirst("a div.Image figure img")?.attr("src")
-                val finalPoster = if (posterUrl?.startsWith("http") == true) posterUrl else posterUrl?.let { "$baseUrl$it" }
-
+        if (query.isBlank()) return emptyList()
+        return safeFetchList("search") {
+            val url = if (page > 1) "$baseUrl/page/$page/?s=$query" else "$baseUrl/?s=$query"
+            val doc = baseService.getPage(url)
+            doc.select(".List-Episodes .Episode, div.Episode, article, .item").mapNotNull { element ->
+                val link = element.selectFirst("a")?.attr("href") ?: return@mapNotNull null
+                val title = element.selectFirst(".Title, h2, h3, .title")?.text()?.trim() ?: return@mapNotNull null
+                val poster = element.selectFirst("img")?.firstAttr("src", "data-src")?.toAbsoluteUrl(baseUrl)
                 TvShow(
-                    id = url.substringAfterLast("/"),
-                    title = element.selectFirst("a h3")?.text() ?: "",
-                    poster = finalPoster
+                    id = link,
+                    title = title,
+                    poster = poster
                 )
             }
-        } catch (e: Exception) {
-            emptyList()
         }
     }
 
-    override suspend fun getMovies(page: Int): List<Movie> {
-        return try {
-            val document = service.getMovies(page = page)
-            document.select("ul.ListAnimes li article").mapNotNull { element ->
-                val url = element.selectFirst("div.Description a.Button")?.attr("href") ?: return@mapNotNull null
-                val posterUrl = element.selectFirst("a div.Image figure img")?.attr("src")
-                val finalPoster = if (posterUrl?.startsWith("http") == true) posterUrl else posterUrl?.let { "$baseUrl$it" }
+    override suspend fun getMovies(page: Int) = emptyList<Movie>()
+    override suspend fun getMovie(id: String) = Movie(id, "No soportado")
 
-                Movie(
-                    id = url.substringAfterLast("/"),
-                    title = element.selectFirst("a h3")?.text() ?: "",
-                    poster = finalPoster
-                )
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    override suspend fun getTvShow(id: String): TvShow {
-        return try {
-            val document = service.getShowDetails(id)
-
-            val title = document.selectFirst("div.Ficha.fchlt div.Container .Title")?.text() ?: ""
-            val overview = document.selectFirst("div.Description")?.text()?.removeSurrounding("\"")
-            val poster = document.selectFirst("div.AnimeCover div.Image figure img")?.attr("src")
-            val rating = document.selectFirst("span.vtprmd#votes_prmd")?.text()?.toDoubleOrNull()
-            val genres = document.select("nav.Nvgnrs a").map {
-                Genre(id = it.attr("href").substringAfterLast("/"), name = it.text())
-            }
-
-            val script = document.select("script")
-                .firstOrNull { it.data().contains("var episodes =") }
-                ?.data() ?: ""
-
-            val episodesData = script.substringAfter("var episodes = [").substringBefore("];")
-            val animeInfoJson = Regex("""var\s+anime_info\s*=\s*(\[[^\]]+])""").find(script)?.groupValues?.get(1)
-            val animeInfo = animeInfoJson?.let { json.decodeFromString<List<String>>(it) }
-            val animeId = animeInfo?.getOrNull(0) ?: ""
-            val animeUri = animeInfo?.getOrNull(2) ?: ""
-
-            val episodes = episodesData.split("],[").mapNotNull {
-                val episodeNum = it.replace("[", "").replace("]", "").split(",")[0]
-                if (episodeNum.isNotBlank() && animeId.isNotBlank()) {
-                    Episode(
-                        id = "ver/$animeUri-$episodeNum",
-                        number = episodeNum.toIntOrNull() ?: 0,
-                        title = "Episodio $episodeNum",
-                        poster = "https://cdn.animeflv.net/screenshots/$animeId/$episodeNum/th_3.jpg"
-                    )
-                } else {
-                    null
-                }
-            }.reversed()
-
-            val seasons = listOf(
-                Season(
-                    id = id,
-                    number = 1,
-                    title = "Episodios",
-                    episodes = episodes
-                )
-            )
-
+    override suspend fun getTvShows(page: Int): List<TvShow> = safeFetchList("getTvShows") {
+        val url = if (page > 1) "$baseUrl/anime/page/$page/" else "$baseUrl/anime/"
+        val doc = baseService.getPage(url)
+        doc.select(".List-Episodes .Episode, div.Episode, article, .item, li.sidebar-cat-item").mapNotNull { element ->
+            val link = element.selectFirst("a")?.attr("href") ?: element.attr("href")
+            if (link.isBlank()) return@mapNotNull null
+            val title = element.selectFirst(".Title, .sidebar-cat-name, h2, h3")?.text()?.trim()
+                ?: element.attr("title").trim()
+            if (title.isBlank()) return@mapNotNull null
+            val poster = element.selectFirst("img")?.firstAttr("src", "data-src")?.toAbsoluteUrl(baseUrl)
             TvShow(
-                id = id,
+                id = link,
                 title = title,
-                overview = overview,
-                poster = poster?.let { "$baseUrl$it" },
-                rating = rating,
-                genres = genres,
-                seasons = seasons
+                poster = poster
             )
-        } catch (e: Exception) {
-            TvShow(id = id, title = "Error al cargar")
         }
     }
 
-    override suspend fun getMovie(id: String): Movie {
-        val show = getTvShow(id)
-        return Movie(
-            id = show.id,
-            title = show.title,
-            overview = show.overview,
-            poster = show.poster,
-            rating = show.rating,
-            genres = show.genres,
-            cast = emptyList(),
-            recommendations = emptyList()
+    override suspend fun getTvShow(id: String): TvShow = safeFetch("getTvShow", TvShow(id, "Error")) {
+        val url = if (id.startsWith("http")) id else "$baseUrl/anime/$id"
+        val doc = baseService.getPage(url)
+        val title = doc.selectFirst("h1.anime-title, h1.Title, h1, .entry-title")?.text()?.trim() ?: ""
+        val poster = doc.selectFirst(".poster-image")?.attr("src")
+            ?: doc.selectFirst("meta[property=og:image]")?.firstAttr("content")
+            ?: doc.selectFirst(".Image img, div.thumb img, figure img")?.firstAttr("src", "data-src")
+        val overview = doc.selectFirst(".anime-synopsis p")?.text()?.trim()
+            ?: doc.selectFirst("meta[property=og:description]")?.let { it.attr("content").ifBlank { it.text() } }
+        val rating = doc.selectFirst(".rating-score")?.text()?.toDoubleOrNull()
+        val genres = doc.select(".genre-tag").toGenres()
+
+        // 1. Extraer episodios desde script JSON (class=animeflv-episodes-data)
+        val episodes = mutableListOf<Episode>()
+        val jsonScript = doc.selectFirst("script.animeflv-episodes-data")?.data()
+        if (!jsonScript.isNullOrBlank()) {
+            try {
+                val jsonElement = Json.parseToJsonElement(jsonScript)
+                val jsonArray = jsonElement.jsonArray
+                for (item in jsonArray) {
+                    val obj = item.jsonObject
+                    val permalink = obj["permalink"]?.jsonPrimitive?.content ?: continue
+                    val num = obj["number"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+                    episodes.add(
+                        Episode(
+                            id = permalink,
+                            number = num,
+                            title = "Episodio $num",
+                            poster = poster?.toAbsoluteUrl(baseUrl)
+                        )
+                    )
+                }
+            } catch (e: Exception) { /* Fallback */ }
+        }
+
+        // Fallback: si no hay script JSON, buscar en el DOM
+        if (episodes.isEmpty()) {
+            val episodeElements = doc.select(".ListEpisodes li, .List-Episodes .Episode, ul.episodios li, div.Episode")
+            episodeElements.mapNotNullTo(episodes) { ep ->
+                val link = ep.selectFirst("a")?.attr("href") ?: return@mapNotNullTo null
+                val epTitle = ep.selectFirst(".Title, h2, h3, a")?.text()?.trim() ?: "Episodio"
+                val epNum = epTitle.substringAfterLast(" ").toIntOrNull() ?: 0
+                val epPoster = ep.selectFirst("img")?.firstAttr("src", "data-src")
+                Episode(
+                    id = link,
+                    number = epNum,
+                    title = epTitle,
+                    poster = epPoster?.toAbsoluteUrl(baseUrl)
+                )
+            }
+        }
+
+        val seasons = if (episodes.isNotEmpty()) {
+            listOf(Season(id = id, number = 1, title = "Episodios", episodes = episodes))
+        } else emptyList()
+
+        TvShow(
+            id = id,
+            title = title,
+            poster = poster?.toAbsoluteUrl(baseUrl),
+            overview = overview,
+            rating = rating,
+            genres = genres,
+            seasons = seasons
         )
     }
 
-    override suspend fun getEpisodesBySeason(seasonId: String): List<Episode> {
+    override suspend fun getEpisodesBySeason(seasonId: String): List<Episode> = safeFetchList("getEpisodes") {
         val show = getTvShow(seasonId)
-        return show.seasons.firstOrNull()?.episodes ?: emptyList()
+        show.seasons.firstOrNull()?.episodes ?: emptyList()
     }
 
-    override suspend fun getGenre(id: String, page: Int): Genre {
-        val genreName = id.replace("-", " ").replaceFirstChar { it.uppercase() }
-        return try {
-            val document = service.getGenre(genre = id, page = page)
+    override suspend fun getServers(id: String, videoType: Video.Type): List<Video.Server> = safeFetchList("getServers") {
+        val url = if (id.startsWith("http")) id else "$baseUrl/$id"
+        val doc = baseService.getPage(url)
 
-            val shows = document.select("ul.ListAnimes li article").mapNotNull { element ->
-                val url = element.selectFirst("div.Description a.Button")?.attr("href") ?: return@mapNotNull null
-                val showId = url.substringAfterLast("/")
-                val title = element.selectFirst("a h3")?.text() ?: ""
-                val posterUrl = element.selectFirst("a div.Image figure img")?.attr("src")
-                val type = element.selectFirst("span.Type")?.text()
+        val servers = mutableListOf<Video.Server>()
 
-                val finalPoster = if (posterUrl?.startsWith("http") == true) posterUrl else posterUrl?.let { "$baseUrl$it" }
+        // 1. Extraer botones en .server-frames o div.button-container
+        doc.select(".server-frames .button-container, div.button-container").forEach { container ->
+            val button = container.selectFirst("button[data-src], a[data-src], [data-src]") ?: return@forEach
+            val rawDataSrc = button.attr("data-src")
+            val realUrl = decodeBase64IfNeeded(rawDataSrc)
 
-                if (type == "Película") {
-                    Movie(id = showId, title = title, poster = finalPoster)
-                } else {
-                    TvShow(id = showId, title = title, poster = finalPoster)
-                }
+            if (realUrl.isNotBlank() && !realUrl.contains("youtube.com")) {
+                val serverName = container.selectFirst(".tooltip-text")?.text()?.trim()
+                    ?: button.text().trim().ifBlank { "Servidor" }
+                servers.add(Video.Server(id = realUrl, name = serverName))
             }
-
-            Genre(id = id, name = genreName, shows = shows)
-        } catch (e: Exception) {
-            Genre(id = id, name = genreName, shows = emptyList())
         }
-    }
 
-    override suspend fun getPeople(id: String, page: Int): People {
-        throw Exception("Not implemented for this provider")
-    }
-
-    override suspend fun getServers(id: String, videoType: Video.Type): List<Video.Server> {
-        return try {
-            val url = when (videoType) {
-                is Video.Type.Movie -> {
-                    val movieDetailsPage = service.getPage("$baseUrl/anime/$id")
-                    val script = movieDetailsPage.selectFirst("script:containsData(var episodes =)")?.data() ?: return emptyList()
-                    val animeInfoJson = Regex("""var\s+anime_info\s*=\s*(\[[^\]]+])""").find(script)?.groupValues?.get(1)
-                    val animeUri = animeInfoJson?.let { json.decodeFromString<List<String>>(it).getOrNull(2) } ?: ""
-                    "$baseUrl/ver/$animeUri-1"
-                }
-                is Video.Type.Episode -> "$baseUrl/$id"
+        // 2. Extraer iframeHolder data-default-src
+        doc.select("#iframeHolder[data-default-src]").firstOrNull()?.let { holder ->
+            val rawSrc = holder.attr("data-default-src")
+            val realUrl = decodeBase64IfNeeded(rawSrc)
+            if (realUrl.isNotBlank() && !realUrl.contains("youtube.com")) {
+                servers.add(Video.Server(id = realUrl, name = "Opción Principal"))
             }
-
-            val document = service.getPage(url)
-            val script = document.selectFirst("script:containsData(var videos = {)")?.data() ?: return emptyList()
-            val jsonString = script.substringAfter("var videos =").substringBefore(";").trim()
-            val serverModel = json.decodeFromString<ServerModel>(jsonString)
-
-            serverModel.sub.mapNotNull { sub ->
-                if (sub.code.isNotBlank()) {
-                    Video.Server(
-                        id = sub.code,
-                        name = sub.title ?: "Servidor Desconocido"
-                    )
-                } else {
-                    null
-                }
-            }
-        } catch (e: Exception) {
-            emptyList()
         }
+
+        // 3. Extraer enlaces de descarga en .download-link table
+        doc.select(".download-link table tbody tr").forEach { row ->
+            val link = row.selectFirst("a[href]")?.attr("href") ?: return@forEach
+            val serverName = row.selectFirst("td")?.text()?.trim() ?: "Descarga"
+            if (link.isNotBlank()) {
+                servers.add(Video.Server(id = link, name = "$serverName (Descarga)"))
+            }
+        }
+
+        servers.distinctBy { it.id }
     }
 
-    override suspend fun getVideo(server: Video.Server): Video {
-        return Extractor.extract(server.id, server)
-    }
+    override suspend fun getVideo(server: Video.Server): Video = ExtractorChain.extract(server.id, server)
+
+    override suspend fun getGenre(id: String, page: Int) = Genre(id = id, name = "", shows = emptyList())
+    override suspend fun getPeople(id: String, page: Int) = People(id = id, name = "", filmography = emptyList())
 }

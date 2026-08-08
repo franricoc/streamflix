@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Avatar Container Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardProfileAvatar"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:clickable="false"
+        android:focusable="false"
+        app:cardCornerRadius="70dp"
+        app:cardElevation="8dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/imgProfileAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                tools:ignore="ContentDescription" />
+
+            <!-- Add Plus Icon (used for Add Profile card) -->
+            <ImageView
+                android:id="@+id/imgAddIcon"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_input_add"
+                android:visibility="gone"
+                app:tint="#FFFFFF"
+                tools:ignore="ContentDescription" />
+        </FrameLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Profile Name -->
+    <TextView
+        android:id="@+id/tvProfileName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:maxWidth="160dp"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:text="Usuario" />
+
+    <!-- Badge for Kids Mode -->
+    <TextView
+        android:id="@+id/tvProfileKidsBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_badge_glass"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="2dp"
+        android:text="🧒 Niños"
+        android:textColor="#FFD700"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+</LinearLayout>

@@ -77,15 +77,22 @@
         android:usesCleartextTraffic="true">
 
         <activity
+            android:name=".activities.main.AppLauncherActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme.SplashScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".activities.main.MainMobileActivity"
             android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:supportsPictureInPicture="true"
             android:theme="@style/AppTheme.SplashScreen">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
 
@@ -108,14 +115,19 @@
             android:theme="@style/AppTheme.Mobile" />
 
         <activity
+            android:name=".activities.onboarding.OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.Mobile" />
+
+        <activity
+            android:name=".activities.onboarding.OnboardingTvActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.Tv" />
+
+        <activity
             android:name=".activities.main.MainTvActivity"
             android:exported="true"
-            android:theme="@style/AppTheme.Tv">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:theme="@style/AppTheme.Tv" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

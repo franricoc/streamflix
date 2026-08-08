@@ -523,4 +523,7 @@
     <string name="settings_parental_tmdb_disable_blocked">You must unlock parental controls before disabling TMDb.</string>
     <string name="settings_force_extra_buffer_title">Global Extra Buffering</string>
     <string name="settings_force_extra_buffer_summary">Enable extra buffering for all servers by default</string>
+
+    <string name="super_favorites_provider_name">Super Favoritos</string>
+    <string name="super_favorites_empty_state">No tienes proveedores marcados como favoritos. Mantén presionado un proveedor para marcarlo como favorito.</string>
 </resources>

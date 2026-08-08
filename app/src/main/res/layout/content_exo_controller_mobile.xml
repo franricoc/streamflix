@@ -105,15 +105,6 @@
             app:tint="#FFFFFF" />
 
         <ImageView
-            android:id="@+id/exo_rew"
-            android:layout_width="60dp"
-            android:layout_height="match_parent"
-            android:padding="10dp"
-            android:src="@drawable/exo_styled_controls_rewind"
-            android:tint="#FFFFFF"
-            tools:ignore="ContentDescription,PrivateResource,UseAppTint" />
-
-        <ImageView
             android:id="@+id/exo_replay"
             android:layout_width="60dp"
             android:layout_height="match_parent"
@@ -128,15 +119,6 @@
             android:layout_height="match_parent"
             android:padding="15dp"
             android:src="@drawable/exo_styled_controls_play"
-            android:tint="#FFFFFF"
-            tools:ignore="ContentDescription,PrivateResource,UseAppTint" />
-
-        <ImageView
-            android:id="@+id/exo_ffwd"
-            android:layout_width="60dp"
-            android:layout_height="match_parent"
-            android:padding="10dp"
-            android:src="@drawable/exo_styled_controls_fastforward"
             android:tint="#FFFFFF"
             tools:ignore="ContentDescription,PrivateResource,UseAppTint" />
 

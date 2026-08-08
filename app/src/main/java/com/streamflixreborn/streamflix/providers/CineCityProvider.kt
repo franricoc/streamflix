@@ -7,7 +7,13 @@ import com.streamflixreborn.streamflix.models.*
 import okhttp3.*
 import java.util.concurrent.TimeUnit
 
-object CineCityProvider : IptvProvider {
+@StreamflixProvider(
+    name = "CineCity",
+    language = "it",
+    movies = false,
+    tvShows = true
+)
+object CineCityProvider : BaseProvider(), IptvProvider{
 
     override val name = "MAGISTV"
     override val baseUrl = "https://raw.githubusercontent.com"
