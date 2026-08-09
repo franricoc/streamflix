@@ -156,6 +156,11 @@ object PlaybackSession {
             p.pause()
             p.clearMediaItems()
         }
+        // Forget the last session so a stale notification tap can't reopen a stopped session.
+        resumeData = null
+        lastVideo = null
+        lastServer = null
+        lastServers = emptyList()
         context.stopService(Intent(context, PlaybackService::class.java))
     }
 

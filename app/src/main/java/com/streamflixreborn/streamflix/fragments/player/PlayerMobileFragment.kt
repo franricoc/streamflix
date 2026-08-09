@@ -268,15 +268,21 @@ class PlayerMobileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // The notification tap navigates here with the same args that started playback.
+        val activePlayer = PlaybackSession.player
+        // Only re-attach to a live session when the requested content matches what is actually
+        // playing (media notification tap, config change). A next/previous-episode navigation
+        // arrives with different args and must start fresh instead of continuing the old media.
+        val resumeOnly =
+            activePlayer?.currentMediaItem != null &&
+                PlaybackSession.resumeData?.id == args.id &&
+                PlaybackSession.resumeData?.videoType == args.videoType
+        // Keep the last-played content here so tapping the media notification reopens the player.
         PlaybackSession.resumeData = PlaybackSession.ResumeData(
             id = args.id,
             title = args.title,
             subtitle = args.subtitle,
             videoType = args.videoType,
         )
-        val activePlayer = PlaybackSession.player
-        val resumeOnly = activePlayer?.currentMediaItem != null
         if (resumeOnly) {
             // Re-opening the player while the service is still playing (media notification tap
             // or config change): attach to the live player without restarting playback.
@@ -624,7 +630,13 @@ class PlayerMobileFragment : Fragment() {
         binding.settings.isVisible -> {
             binding.settings.onBackPressed()
         }
-        else -> false
+        else -> {
+            // Back leaves the player: save the position, then stop background playback
+            // entirely. Home/multitasking (and PiP) still keep it playing via PlaybackService.
+            savePlaybackProgressForResume()
+            PlaybackService.stop(requireContext())
+            false
+        }
     }
 
 
@@ -692,6 +704,9 @@ class PlayerMobileFragment : Fragment() {
         setupEpisodeNavigationButtons()
 
         binding.pvPlayer.controller.binding.btnExoBack.setOnClickListener {
+            // Back arrow = leaving the player: save the position, then stop playback entirely.
+            savePlaybackProgressForResume()
+            PlaybackService.stop(requireContext())
             findNavController().navigateUp()
         }
 
@@ -761,6 +776,9 @@ class PlayerMobileFragment : Fragment() {
                             title = title,
                             subtitle = subtitleText
                         )
+                        // The phone hands playback off to the TV: stop the local media session so
+                        // no stale notification or audio remains on the phone.
+                        PlaybackService.stop(requireContext())
                         findNavController().navigateUp()
                     },
 
@@ -1635,7 +1653,9 @@ class PlayerMobileFragment : Fragment() {
         binding.settings.player = null
         binding.settings.subtitleView = null
         playerListener?.let {
-            if (::player.isInitialized) {
+            // The service-owned player may already be released (back stopped playback); the
+            // fragment's reference then points to a dead player, so skip touching it.
+            if (::player.isInitialized && PlaybackSession.player === player) {
                 player.removeListener(it)
             }
         }
@@ -1704,7 +1724,10 @@ class PlayerMobileFragment : Fragment() {
      * position on the way out (watch history is otherwise only saved when playback pauses).
      */
     private fun savePlaybackProgressForResume() {
-        if (!::player.isInitialized || !player.isPlaying) return
+        // The service-owned player may already be released when back stopped playback; the
+        // fragment's reference then points to a dead player, so bail out.
+        if (!::player.isInitialized || PlaybackSession.player !== player) return
+        if (!player.isPlaying) return
         val duration = player.duration
         if (duration <= 0L) return
         val videoType = args.videoType
