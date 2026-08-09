@@ -28,7 +28,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -39,12 +38,8 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.DefaultRenderersFactory
-import androidx.media3.session.MediaSession
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.SubtitleView
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.streamflixreborn.streamflix.R
@@ -58,6 +53,8 @@ import com.streamflixreborn.streamflix.models.Season
 import com.streamflixreborn.streamflix.models.TvShow
 import com.streamflixreborn.streamflix.models.Video
 import com.streamflixreborn.streamflix.models.WatchItem
+import com.streamflixreborn.streamflix.player.PlaybackService
+import com.streamflixreborn.streamflix.player.PlaybackSession
 import com.streamflixreborn.streamflix.providers.SerienStreamProvider
 import com.streamflixreborn.streamflix.ui.PlayerMobileView
 import com.streamflixreborn.streamflix.utils.MediaServer
@@ -122,10 +119,10 @@ class PlayerMobileFragment : Fragment() {
     private lateinit var player: ExoPlayer
     private lateinit var httpDataSource: HttpDataSource.Factory
     private lateinit var dataSourceFactory: DataSource.Factory
-    private lateinit var mediaSession: MediaSession
     private lateinit var progressHandler: android.os.Handler
     private lateinit var progressRunnable: Runnable
     private lateinit var gestureHelper: PlayerGestureHelper
+    private var playerListener: Player.Listener? = null
 
     private var servers = listOf<Video.Server>()
     private var zoomToast: Toast? = null
@@ -247,6 +244,10 @@ class PlayerMobileFragment : Fragment() {
         }
         isIgnoringPip = false
         if (::player.isInitialized) {
+            if (PlaybackSession.player !== player) {
+                // The service-owned player was released (service stopped while we were away).
+                initializePlayer(currentExtraBuffering, currentSoftwareDecoder)
+            }
             binding.pvPlayer.useController = true
             // Resume playback after returning from bypass or any pause
             if (!player.isPlaying) {
@@ -571,9 +572,8 @@ class PlayerMobileFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        if (::player.isInitialized) {
-            player.pause()
-        }
+        // Playback intentionally keeps running in the background: the player is owned by
+        // PlaybackService, which continues playback with the media notification + lock screen.
     }
 
     override fun onDestroyView() {
@@ -591,6 +591,7 @@ class PlayerMobileFragment : Fragment() {
             show(WindowInsetsCompat.Type.systemBars())
         }
         requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        savePlaybackProgressForResume()
         releasePlayer()
         try {
             requireContext().unregisterReceiver(chooserReceiver)
@@ -1007,6 +1008,9 @@ class PlayerMobileFragment : Fragment() {
     private fun displayVideo(video: Video, server: Video.Server) {
         currentVideo = video
         currentServer = server
+        // App-scoped so the service-owned player's interceptor doesn't capture this fragment
+        // (it must survive background playback after the fragment is destroyed).
+        TokenManager.maintainToken = video.maintainToken
         updatePlayerHeader()
 
         val isOfflinePlayback = arguments?.getBoolean("is_offline_playback", false) ?: false
@@ -1076,6 +1080,8 @@ class PlayerMobileFragment : Fragment() {
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setMediaServerId(server.id)
+                        .setTitle(resolvePlayerTitle())
+                        .setArtist(resolvePlayerSubtitle())
                         .build()
                 )
                 .build()
@@ -1083,7 +1089,12 @@ class PlayerMobileFragment : Fragment() {
 
         binding.pvPlayer.controller.binding.btnExoExternalPlayer.setOnClickListener {
             isIgnoringPip = true
-            
+            // onStop no longer pauses (background playback), so pause here while the external
+            // player takes over to avoid double audio.
+            if (::player.isInitialized) {
+                player.pause()
+            }
+
             val videoTitle = when (val type = args.videoType) {
                 is Video.Type.Movie -> type.title
                 is Video.Type.Episode -> "${type.tvShow.title} • S${type.season.number} E${type.number}"
@@ -1158,7 +1169,8 @@ class PlayerMobileFragment : Fragment() {
                 startActivity(Intent.createChooser(intent, getString(R.string.player_external_player_title)))
             }
         }
-        player.addListener(object : Player.Listener {
+        playerListener?.let { player.removeListener(it) }
+        val listener = object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
                 binding.pvPlayer.keepScreenOn = isPlaying || UserPreferences.keepScreenOnWhenPaused
@@ -1254,7 +1266,9 @@ class PlayerMobileFragment : Fragment() {
                     viewModel.getVideo(nextServer)
                 }
             }
-        })
+        }
+        player.addListener(listener)
+        this.playerListener = listener
 
         if (currentPosition == 0L) {
             val videoType = args.videoType
@@ -1521,36 +1535,6 @@ class PlayerMobileFragment : Fragment() {
     private var currentExtraBuffering = false
     private var currentSoftwareDecoder = false
 
-    private fun buildPlayer(extraBuffering: Boolean): ExoPlayer {
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-                if (extraBuffering) 300_000 else DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
-                DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-                DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
-            )
-            .build()
-
-        val baseBuilder = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1 && !currentSoftwareDecoder) {
-            ExoPlayer.Builder(requireContext())
-        } else {
-            val renderersFactory = DefaultRenderersFactory(requireContext()).apply {
-                setEnableDecoderFallback(true)
-                if (currentSoftwareDecoder) {
-                    setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-                }
-            }
-            ExoPlayer.Builder(requireContext(), renderersFactory)
-        }
-
-        return baseBuilder
-            .setSeekBackIncrementMs(10_000)
-            .setSeekForwardIncrementMs(10_000)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
-            .setLoadControl(loadControl)
-            .build()
-    }
-
     private fun initializePlayer(extraBuffering: Boolean, softwareDecoder: Boolean = currentSoftwareDecoder) {
         releasePlayer()
         currentExtraBuffering = extraBuffering
@@ -1561,7 +1545,7 @@ class PlayerMobileFragment : Fragment() {
             .addInterceptor { chain ->
                 var request = chain.request()
                 
-                if (currentVideo?.maintainToken == true) {
+                if (TokenManager.maintainToken) {
                     val latestQuery = TokenManager.latestQuery
                     if (latestQuery != null) {
                         val origHttpUrl = request.url
@@ -1582,30 +1566,19 @@ class PlayerMobileFragment : Fragment() {
         httpDataSource = OkHttpDataSource.Factory(okHttpClient)
         val isOffline = arguments?.getBoolean("is_offline_playback", false) ?: false
         if (isOffline) {
-            dataSourceFactory = com.streamflixreborn.streamflix.offline.DownloadModule.getCacheDataSourceFactory(requireContext())
+            dataSourceFactory = com.streamflixreborn.streamflix.offline.DownloadModule.getCacheDataSourceFactory(requireContext().applicationContext)
         } else {
-            dataSourceFactory = DefaultDataSource.Factory(requireContext(), httpDataSource)
+            dataSourceFactory = DefaultDataSource.Factory(requireContext().applicationContext, httpDataSource)
         }
 
-        player = buildPlayer(extraBuffering).also { player ->
-                player.setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(C.USAGE_MEDIA)
-                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                        .build(),
-                    true,
-                )
-
-                val lang = UserPreferences.currentProvider?.language?.substringBefore("-")
-                if (lang == "es") {
-                    player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
-                        .setPreferredAudioLanguage("spa")
-                        .build()
-                }
-
-                mediaSession = MediaSession.Builder(requireContext(), player)
-                    .build()
-            }
+        // The ExoPlayer (and its MediaSession) is owned by PlaybackService: playback keeps
+        // running in the background and is exposed via the media notification / lock screen.
+        player = PlaybackService.reinitPlayer(
+            requireContext(),
+            extraBuffering,
+            softwareDecoder,
+            dataSourceFactory,
+        )
 
         binding.pvPlayer.player = player
         binding.settings.player = player
@@ -1620,11 +1593,41 @@ class PlayerMobileFragment : Fragment() {
         binding.pvPlayer.player = null
         binding.settings.player = null
         binding.settings.subtitleView = null
-        if (::player.isInitialized) {
-            player.release()
+        playerListener?.let {
+            if (::player.isInitialized) {
+                player.removeListener(it)
+            }
         }
-        if (::mediaSession.isInitialized) {
-            mediaSession.release()
+        playerListener = null
+        // The ExoPlayer + MediaSession belong to PlaybackService and keep playing in the
+        // background (media notification, lock screen, PiP). Nothing is released here.
+    }
+
+    /**
+     * Background playback continues after this fragment is destroyed, so persist the exact
+     * position on the way out (watch history is otherwise only saved when playback pauses).
+     */
+    private fun savePlaybackProgressForResume() {
+        if (!::player.isInitialized || !player.isPlaying) return
+        val duration = player.duration
+        if (duration <= 0L) return
+        val videoType = args.videoType
+        val watchItem = when (videoType) {
+            is Video.Type.Movie -> database.movieDao().getById(videoType.id)
+            is Video.Type.Episode -> database.episodeDao().getById(videoType.id)
+        } ?: return
+        watchItem.apply {
+            isWatched = false
+            watchedDate = null
+            watchHistory = WatchItem.WatchHistory(
+                lastEngagementTimeUtcMillis = System.currentTimeMillis(),
+                lastPlaybackPositionMillis = player.currentPosition,
+                durationMillis = duration,
+            )
+        }
+        when (videoType) {
+            is Video.Type.Movie -> database.movieDao().update(watchItem as Movie)
+            is Video.Type.Episode -> database.episodeDao().update(watchItem as Episode)
         }
     }
 

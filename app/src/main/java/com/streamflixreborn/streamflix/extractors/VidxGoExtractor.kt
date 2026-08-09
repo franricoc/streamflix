@@ -13,6 +13,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 
 object TokenManager {
     var latestQuery: String? = null
+    /** Whether the current playback URL requires the token query to be re-applied to each request. */
+    var maintainToken: Boolean = false
 }
 
 class VidxGoExtractor : Extractor() {

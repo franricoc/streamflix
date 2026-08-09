@@ -36,7 +36,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -49,12 +48,8 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.DefaultRenderersFactory
-import androidx.media3.session.MediaSession
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.SubtitleView
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -71,6 +66,8 @@ import com.streamflixreborn.streamflix.models.Season
 import com.streamflixreborn.streamflix.models.TvShow
 import com.streamflixreborn.streamflix.models.Video
 import com.streamflixreborn.streamflix.models.WatchItem
+import com.streamflixreborn.streamflix.player.PlaybackService
+import com.streamflixreborn.streamflix.player.PlaybackSession
 import com.streamflixreborn.streamflix.providers.SerienStreamProvider
 import com.streamflixreborn.streamflix.ui.PlayerTvView
 import com.streamflixreborn.streamflix.utils.DnsResolver
@@ -141,10 +138,10 @@ class PlayerTvFragment : Fragment() {
     private lateinit var player: ExoPlayer
     private lateinit var httpDataSource: HttpDataSource.Factory
     private lateinit var dataSourceFactory: DataSource.Factory
-    private lateinit var mediaSession: MediaSession
     private lateinit var progressHandler: android.os.Handler
     private lateinit var progressRunnable: Runnable
     private lateinit var gestureHelper: PlayerGestureHelper
+    private var playerListener: Player.Listener? = null
 
     private var servers = listOf<Video.Server>()
     private var zoomToast: Toast? = null
@@ -230,6 +227,11 @@ class PlayerTvFragment : Fragment() {
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             insetsController.hide(WindowInsetsCompat.Type.systemBars())
             isSetupDone = true
+        }
+
+        if (::player.isInitialized && PlaybackSession.player !== player) {
+            // The service-owned player was released (service stopped while we were away).
+            initializePlayer(currentExtraBuffering, currentSoftwareDecoder)
         }
 
         try {
@@ -662,6 +664,8 @@ class PlayerTvFragment : Fragment() {
             nextEpisodePrefetchJob?.cancel()
             clearBypassSession(dismissDialog = true)
             releasePlayer()
+            // Unlike mobile, leaving the TV player stops playback entirely.
+            PlaybackService.stop(requireContext())
             try {
                 requireContext().unregisterReceiver(chooserReceiver)
             } catch (ignored: Exception) {
@@ -1071,6 +1075,9 @@ class PlayerTvFragment : Fragment() {
         ) {
             currentVideo = video
             currentServer = server
+            // App-scoped so the service-owned player's interceptor doesn't capture this fragment
+            // (it must survive background playback after the fragment is destroyed).
+            TokenManager.maintainToken = video.maintainToken
             updatePlayerHeader()
             val extraBuffering = PlayerSettingsView.Settings.ExtraBuffering.isEnabled
             val softwareDecoder = PlayerSettingsView.Settings.SoftwareDecoder.isEnabled
@@ -1106,12 +1113,13 @@ class PlayerTvFragment : Fragment() {
                             .setLabel(subtitle.label)
                             .setSelectionFlags(if (subtitle.default) C.SELECTION_FLAG_DEFAULT else 0)
                             .build()
-                    })
-                    .setMediaMetadata(
-                        MediaMetadata.Builder()
-                            .setMediaServerId(server.id)
-                            .build()
-                    )
+                    })                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setMediaServerId(server.id)
+                                .setTitle(resolvePlayerTitle())
+                                .setArtist(resolvePlayerSubtitle())
+                                .build()
+                        )
                     .build()
             )
 
@@ -1217,7 +1225,8 @@ class PlayerTvFragment : Fragment() {
                 }
             }
 
-            player.addListener(object : Player.Listener {
+            playerListener?.let { player.removeListener(it) }
+            val listener = object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     super.onPlaybackStateChanged(playbackState)
 
@@ -1350,7 +1359,9 @@ class PlayerTvFragment : Fragment() {
                         viewModel.getVideo(nextServer)
                     }
                 }
-            })
+            }
+            player.addListener(listener)
+            this.playerListener = listener
 
             if (startPositionMs != null) {
                 player.seekTo(startPositionMs)
@@ -1673,34 +1684,6 @@ class PlayerTvFragment : Fragment() {
         private var currentExtraBuffering = false
         private var currentSoftwareDecoder = false
 
-        private fun buildPlayer(extraBuffering: Boolean): ExoPlayer {
-            val loadControl = DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-                    if (extraBuffering) 300_000 else DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
-                    DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-                    DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
-                )
-                .build()
-
-            val baseBuilder = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1 && !currentSoftwareDecoder) {
-                ExoPlayer.Builder(requireContext())
-            } else {
-                val renderersFactory = DefaultRenderersFactory(requireContext()).apply {
-                    setEnableDecoderFallback(true)
-                    if (currentSoftwareDecoder) {
-                        setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-                    }
-                }
-                ExoPlayer.Builder(requireContext(), renderersFactory)
-            }
-
-            return baseBuilder
-                .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
-                .setLoadControl(loadControl)
-                .build()
-        }
-
         private fun initializePlayer(extraBuffering: Boolean, softwareDecoder: Boolean = currentSoftwareDecoder) {
             releasePlayer()
             currentExtraBuffering = extraBuffering
@@ -1712,7 +1695,7 @@ class PlayerTvFragment : Fragment() {
                 .addInterceptor { chain ->
                     var request = chain.request()
                     
-                    if (currentVideo?.maintainToken == true) {
+                    if (TokenManager.maintainToken) {
                         val latestQuery = TokenManager.latestQuery
                         if (latestQuery != null) {
                             val origHttpUrl = request.url
@@ -1732,28 +1715,15 @@ class PlayerTvFragment : Fragment() {
                 .build()
             httpDataSource = OkHttpDataSource.Factory(okHttpClient)
 
-            dataSourceFactory = DefaultDataSource.Factory(requireContext(), httpDataSource)
+            dataSourceFactory = DefaultDataSource.Factory(requireContext().applicationContext, httpDataSource)
 
-            player = buildPlayer(extraBuffering).also { player ->
-                    player.setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(C.USAGE_MEDIA)
-                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                            .build(),
-                        true,
-                    )
-
-                    val lang = UserPreferences.currentProvider?.language?.substringBefore("-")
-                    if (lang == "es") {
-                        player.trackSelectionParameters =
-                            player.trackSelectionParameters.buildUpon()
-                                .setPreferredAudioLanguage("spa")
-                                .build()
-                    }
-
-                    mediaSession = MediaSession.Builder(requireContext(), player)
-                        .build()
-                }
+            // The ExoPlayer (and its MediaSession) is owned by PlaybackService.
+            player = PlaybackService.reinitPlayer(
+                requireContext(),
+                extraBuffering,
+                softwareDecoder,
+                dataSourceFactory,
+            )
 
             binding.pvPlayer.player = player
             binding.settings.player = player
@@ -1768,12 +1738,13 @@ class PlayerTvFragment : Fragment() {
             binding.pvPlayer.player = null
             binding.settings.player = null
             binding.settings.subtitleView = null
-            if (::player.isInitialized) {
-                player.release()
+            playerListener?.let {
+                if (::player.isInitialized) {
+                    player.removeListener(it)
+                }
             }
-            if (::mediaSession.isInitialized) {
-                mediaSession.release()
-            }
+            playerListener = null
+            // The ExoPlayer + MediaSession belong to PlaybackService.
         }
 
     private fun showQrDialog(content: String) {
@@ -1936,17 +1907,14 @@ class PlayerTvFragment : Fragment() {
         val okHttpClient = NetworkClient.default
         httpDataSource = OkHttpDataSource.Factory(okHttpClient)
 
-        dataSourceFactory = DefaultDataSource.Factory(requireContext(), httpDataSource)
+        dataSourceFactory = DefaultDataSource.Factory(requireContext().applicationContext, httpDataSource)
 
-        player = buildPlayer(extraBuffering).also { player ->
-                player.setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(C.USAGE_MEDIA)
-                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                        .build(),
-                    true,
-                )
-            }
+        player = PlaybackService.reinitPlayer(
+            requireContext(),
+            extraBuffering,
+            currentSoftwareDecoder,
+            dataSourceFactory,
+        )
 
         // Bind new player to UI view
         binding.pvPlayer.player = player
