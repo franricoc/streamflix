@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy backup rules for Android 7.0-11 (API 21-30).
+  Providing include rules switches to whitelist mode: only preferences and
+  databases are backed up. Offline videos and caches (files domain) are excluded.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="." />
+    <include domain="database" path="." />
+</full-backup-content>

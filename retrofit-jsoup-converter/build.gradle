@@ -29,6 +29,10 @@ android {
         jvmTarget = '17'
         freeCompilerArgs += ["-nowarn"]
     }
+
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 }
 
 dependencies {

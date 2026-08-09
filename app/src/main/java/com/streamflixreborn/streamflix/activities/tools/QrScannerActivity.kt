@@ -16,6 +16,7 @@ import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.Image
 import android.media.ImageReader
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -126,7 +127,12 @@ class QrScannerActivity : AppCompatActivity() {
         setContentView(binding.root)
         applyThemeWindowChrome()
 
-        cameraManager = getSystemService(CameraManager::class.java)
+        cameraManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getSystemService(CameraManager::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        }
 
         binding.qrScannerClose.setOnClickListener { finish() }
         binding.qrScannerPreview.surfaceTextureListener = textureListener

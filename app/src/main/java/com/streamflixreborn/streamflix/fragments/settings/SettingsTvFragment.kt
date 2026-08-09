@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.text.InputType
@@ -72,6 +73,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.OutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -1121,6 +1123,35 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
         }
     }
 
+    /**
+     * Saves [fileName] to the Downloads folder using the MediaStore API (Android 10+)
+     * or the app-specific external files dir on older devices (no storage permission needed).
+     * Returns the user-facing path of the saved file.
+     */
+    private fun saveToDownloads(fileName: String, mimeType: String, write: (OutputStream) -> Unit): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                put(MediaStore.Downloads.MIME_TYPE, mimeType)
+                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/StreamFlix")
+            }
+            val uri = requireContext().contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: error("Unable to create download entry")
+            requireContext().contentResolver.openOutputStream(uri)?.use(write)
+                ?: error("Unable to open output stream")
+            "Downloads/StreamFlix/$fileName"
+        } else {
+            @Suppress("DEPRECATION")
+            val baseDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                ?: error("External storage unavailable")
+            val dir = File(baseDir, "StreamFlix")
+            dir.mkdirs()
+            val file = File(dir, fileName)
+            file.outputStream().use(write)
+            file.absolutePath
+        }
+    }
+
     private fun exportBackupToDownloads(fileName: String) {
         viewLifecycleOwner.lifecycleScope.launch {
             withBackupLoading(R.string.backup_export_title) {
@@ -1133,20 +1164,13 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
                 }
 
                 runCatching {
-                    val values = ContentValues().apply {
-                        put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-                        put(MediaStore.Downloads.MIME_TYPE, "application/json")
-                        put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/StreamFlix")
-                    }
-                    val uri = requireContext().contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                        ?: error("Unable to create download entry")
-                    requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    val savedPath = saveToDownloads(fileName, "application/json") { outputStream ->
                         outputStream.writer().use { it.write(jsonData) }
-                    } ?: error("Unable to open output stream")
+                    }
 
                     Toast.makeText(
                         requireContext(),
-                        getString(R.string.backup_export_saved_to, "Downloads/StreamFlix/$fileName"),
+                        getString(R.string.backup_export_saved_to, savedPath),
                         Toast.LENGTH_LONG
                     ).show()
                 }.onFailure { error ->
@@ -1200,20 +1224,13 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
                 }
 
                 runCatching {
-                    val values = ContentValues().apply {
-                        put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-                        put(MediaStore.Downloads.MIME_TYPE, "application/zip")
-                        put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/StreamFlix")
-                    }
-                    val uri = requireContext().contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                        ?: error("Unable to create download entry")
-                    requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    val savedPath = saveToDownloads(fileName, "application/zip") { outputStream ->
                         outputStream.write(zipData)
-                    } ?: error("Unable to open output stream")
+                    }
 
                     Toast.makeText(
                         requireContext(),
-                        getString(R.string.backup_export_saved_to, "Downloads/StreamFlix/$fileName"),
+                        getString(R.string.backup_export_saved_to, savedPath),
                         Toast.LENGTH_LONG
                     ).show()
                 }.onFailure { error ->

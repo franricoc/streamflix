@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="AppTheme.Mobile" parent="Theme.MaterialComponents.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -202,7 +202,7 @@
         <item name="android:windowBackground">@drawable/bg_splash_screen_amoled</item>
         <item name="android:colorBackground">#000000</item>
         <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackgroundFallback">#000000</item>
+        <item name="android:windowBackgroundFallback" tools:targetApi="24">#000000</item>
         <item name="colorAccent">#FFFFFF</item>
         <item name="colorControlActivated">#FFFFFF</item>
         <item name="colorControlNormal">#BDBDBD</item>
