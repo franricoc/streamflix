@@ -89,6 +89,9 @@ object BackgroundLinkResolver {
                 posterUrl = posterUrl,
                 streamUrl = video.source,
                 headers = video.headers,
+                mimeType = video.type,
+                maintainToken = video.maintainToken,
+                tokenQuery = if (video.maintainToken) com.streamflixreborn.streamflix.extractors.TokenManager.latestQuery else null,
                 subtitles = subtitlesList,
                 startPositionMs = 0L,
                 isOfflineDownload = false

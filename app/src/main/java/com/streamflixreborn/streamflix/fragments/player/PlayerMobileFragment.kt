@@ -737,6 +737,9 @@ class PlayerMobileFragment : Fragment() {
                 posterUrl = posterUrl,
                 streamUrl = vid.source,
                 headers = vid.headers,
+                mimeType = vid.type,
+                maintainToken = vid.maintainToken,
+                tokenQuery = if (vid.maintainToken) TokenManager.latestQuery else null,
                 subtitles = subtitlesList,
                 startPositionMs = currentPos,
                 isOfflineDownload = false

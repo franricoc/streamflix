@@ -70,7 +70,6 @@ import com.streamflixreborn.streamflix.player.PlaybackService
 import com.streamflixreborn.streamflix.player.PlaybackSession
 import com.streamflixreborn.streamflix.providers.SerienStreamProvider
 import com.streamflixreborn.streamflix.ui.PlayerTvView
-import com.streamflixreborn.streamflix.utils.DnsResolver
 import com.streamflixreborn.streamflix.utils.NetworkClient
 import com.streamflixreborn.streamflix.utils.EpisodeManager
 import com.streamflixreborn.streamflix.utils.MediaServer
@@ -86,7 +85,6 @@ import com.streamflixreborn.streamflix.utils.setMediaServers
 import com.streamflixreborn.streamflix.utils.toSubtitleMimeType
 import com.streamflixreborn.streamflix.utils.viewModelsFactory
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import okhttp3.internal.userAgent
 import java.util.Calendar
 import kotlin.time.Duration.Companion.minutes
@@ -259,9 +257,21 @@ class PlayerTvFragment : Fragment() {
     fun onNewCastPayload(payload: com.streamflixreborn.streamflix.cast.CastPayload) {
         if (payload.streamUrl.isNotEmpty()) {
             isCastPlayback = true
+            // Restore the token state the phone was using, so the player's interceptor keeps
+            // injecting the query into HLS segments the same way the phone did.
+            TokenManager.maintainToken = payload.maintainToken
+            if (payload.maintainToken) {
+                payload.tokenQuery?.let { TokenManager.latestQuery = it }
+            }
+
+            // Pass the source exactly as the phone plays it: ExoPlayer handles data: URIs
+            // natively, and manually extracting a URL from an embedded playlist is unreliable
+            // (it could pick a segment or the encryption-key URI instead of the playlist).
             val castVideo = com.streamflixreborn.streamflix.models.Video(
                 source = payload.streamUrl,
+                type = payload.mimeType,
                 headers = payload.headers,
+                maintainToken = payload.maintainToken,
                 subtitles = payload.subtitles.map {
                     com.streamflixreborn.streamflix.models.Video.Subtitle(label = it.label, file = it.url, default = it.default)
                 }
@@ -1690,8 +1700,9 @@ class PlayerTvFragment : Fragment() {
             currentSoftwareDecoder = softwareDecoder
 
             var tokenLogged = false
-            val okHttpClient = OkHttpClient.Builder()
-                .dns(DnsResolver.doh)
+            // Use the app-wide NetworkClient (cookies + browser-like headers) so cast streams
+            // served to the TV authenticate exactly like they do on the phone.
+            val okHttpClient = NetworkClient.default.newBuilder()
                 .addInterceptor { chain ->
                     var request = chain.request()
                     
