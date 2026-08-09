@@ -520,6 +520,11 @@ class MainMobileActivity : FragmentActivity() {
     }
 
     private fun handleIntent(intent: Intent): Boolean {
+        if (intent.action == com.streamflixreborn.streamflix.player.PlaybackService.ACTION_OPEN_PLAYER) {
+            resumePlayerFromNotification()
+            return true
+        }
+
         val data = intent.data ?: return false
 
         if (data.scheme == "streamflix" && data.host == "resolve") {
@@ -533,6 +538,35 @@ class MainMobileActivity : FragmentActivity() {
         }
 
         return false
+    }
+
+    /**
+     * Reopens the player for the content still playing in [com.streamflixreborn.streamflix.player.PlaybackService]
+     * when the media notification is tapped. Uses the args stored at playback start so the
+     * fragment re-attaches to the live session instead of launching a new one.
+     */
+    private fun resumePlayerFromNotification() {
+        val resume = com.streamflixreborn.streamflix.player.PlaybackSession.resumeData ?: return
+        val navHost = supportFragmentManager
+            .findFragmentById(R.id.nav_main_fragment) as? NavHostFragment ?: return
+        val navController = navHost.navController
+
+        // Already on the player screen: nothing to do.
+        if (navController.currentDestination?.id == R.id.player) return
+
+        navController.navigate(
+            R.id.player,
+            com.streamflixreborn.streamflix.fragments.player.PlayerMobileFragmentArgs(
+                id = resume.id,
+                title = resume.title,
+                subtitle = resume.subtitle,
+                videoType = resume.videoType,
+            ).toBundle(),
+            navOptions {
+                launchSingleTop = true
+                popUpTo(R.id.home) { inclusive = false }
+            }
+        )
     }
 
     private fun resolve(ws: String, token: String) {

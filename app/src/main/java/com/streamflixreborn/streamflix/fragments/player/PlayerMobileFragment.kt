@@ -268,8 +268,24 @@ class PlayerMobileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initializePlayer(false)
-        initializeVideo()
+        // The notification tap navigates here with the same args that started playback.
+        PlaybackSession.resumeData = PlaybackSession.ResumeData(
+            id = args.id,
+            title = args.title,
+            subtitle = args.subtitle,
+            videoType = args.videoType,
+        )
+        val activePlayer = PlaybackSession.player
+        val resumeOnly = activePlayer?.currentMediaItem != null
+        if (resumeOnly) {
+            // Re-opening the player while the service is still playing (media notification tap
+            // or config change): attach to the live player without restarting playback.
+            attachToActivePlayer()
+            initializeVideo()
+        } else {
+            initializePlayer(false)
+            initializeVideo()
+        }
         gestureHelper = PlayerGestureHelper(
             requireContext(), 
             binding.pvPlayer, 
@@ -292,7 +308,7 @@ class PlayerMobileFragment : Fragment() {
 
         // Stato Video
         val isOfflinePlayback = arguments?.getBoolean("is_offline_playback", false) ?: false
-        if (!isOfflinePlayback) {
+        if (!resumeOnly && !isOfflinePlayback) {
             viewLifecycleOwner.lifecycleScope.launch { 
                 viewModel.state.flowWithLifecycle(lifecycle, Lifecycle.State.CREATED).collect { state ->
                 when (state) {
@@ -416,7 +432,7 @@ class PlayerMobileFragment : Fragment() {
         }
 
         // Stato Sottotitoli
-        viewLifecycleOwner.lifecycleScope.launch {
+        if (!resumeOnly) viewLifecycleOwner.lifecycleScope.launch {
             viewModel.subtitleState.flowWithLifecycle(lifecycle, Lifecycle.State.CREATED).collect { state ->
                 when (state) {
                     PlayerViewModel.SubtitleState.Loading -> {}
@@ -502,7 +518,7 @@ class PlayerMobileFragment : Fragment() {
                 }
             }
         }
-        } else {
+        } else if (!resumeOnly) {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 val entity = com.streamflixreborn.streamflix.offline.database.OfflineDatabase.getInstance(requireContext())
                     .offlineDao().getById(args.id)
@@ -529,7 +545,7 @@ class PlayerMobileFragment : Fragment() {
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        if (!resumeOnly) viewLifecycleOwner.lifecycleScope.launch {
                 viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     viewModel.playPreviousOrNextEpisode.collect { nextEpisode ->
                     releasePlayer()
@@ -1008,6 +1024,11 @@ class PlayerMobileFragment : Fragment() {
     private fun displayVideo(video: Video, server: Video.Server) {
         currentVideo = video
         currentServer = server
+        // Keep the active content in PlaybackSession so a fragment re-attached from the media
+        // notification (or a config change) can restore Cast / Download / server switching.
+        PlaybackSession.lastVideo = video
+        PlaybackSession.lastServer = server
+        PlaybackSession.lastServers = servers
         // App-scoped so the service-owned player's interceptor doesn't capture this fragment
         // (it must survive background playback after the fragment is destroyed).
         TokenManager.maintainToken = video.maintainToken
@@ -1169,8 +1190,59 @@ class PlayerMobileFragment : Fragment() {
                 startActivity(Intent.createChooser(intent, getString(R.string.player_external_player_title)))
             }
         }
-        playerListener?.let { player.removeListener(it) }
-        val listener = object : Player.Listener {
+        attachPlaybackListener()
+        if (::player.isInitialized && player.isPlaying) {
+            startProgressHandler()
+        }
+        resumePlaybackFromSavedPosition(currentPosition)
+    }
+
+    private fun resumePlaybackFromSavedPosition(currentPosition: Long) {
+        if (currentPosition == 0L) {
+            val videoType = args.videoType
+            val provider = UserPreferences.currentProvider
+
+            val watchItem: WatchItem? = when (videoType) {
+                is Video.Type.Movie -> {
+                    // Try cache first, then DB
+                    var movie = if (provider != null) {
+                        UserDataCache.read(requireContext(), provider)?.continueWatchingMovies
+                            ?.find { it.id == videoType.id }?.toMovie()
+                    } else null
+                    movie ?: database.movieDao().getById(videoType.id)
+                }
+                is Video.Type.Episode -> {
+                    // Try cache first, then DB
+                    var episode = if (provider != null) {
+                        UserDataCache.read(requireContext(), provider)?.continueWatchingEpisodes
+                            ?.find { it.id == videoType.id }?.toEpisode()
+                    } else null
+                    episode ?: database.episodeDao().getById(videoType.id)
+                }
+            }
+
+            val lastPlaybackPositionMillis = watchItem?.watchHistory
+                ?.let { it.lastPlaybackPositionMillis - 10.seconds.inWholeMilliseconds }
+
+            player.seekTo(lastPlaybackPositionMillis ?: 0)
+        } else {
+            player.seekTo(currentPosition)
+        }
+
+        player.prepare()
+        player.play()
+    }
+
+    private fun attachPlaybackListener() {
+        playerListener?.let {
+            if (::player.isInitialized) player.removeListener(it)
+        }
+        val listener = createPlaybackListener()
+        player.addListener(listener)
+        this.playerListener = listener
+    }
+
+    private fun createPlaybackListener(): Player.Listener = object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
                 binding.pvPlayer.keepScreenOn = isPlaying || UserPreferences.keepScreenOnWhenPaused
@@ -1267,43 +1339,6 @@ class PlayerMobileFragment : Fragment() {
                 }
             }
         }
-        player.addListener(listener)
-        this.playerListener = listener
-
-        if (currentPosition == 0L) {
-            val videoType = args.videoType
-            val provider = UserPreferences.currentProvider
-            
-            val watchItem: WatchItem? = when (videoType) {
-                is Video.Type.Movie -> {
-                    // Try cache first, then DB
-                    var movie = if (provider != null) {
-                        UserDataCache.read(requireContext(), provider)?.continueWatchingMovies
-                            ?.find { it.id == videoType.id }?.toMovie()
-                    } else null
-                    movie ?: database.movieDao().getById(videoType.id)
-                }
-                is Video.Type.Episode -> {
-                    // Try cache first, then DB
-                    var episode = if (provider != null) {
-                        UserDataCache.read(requireContext(), provider)?.continueWatchingEpisodes
-                            ?.find { it.id == videoType.id }?.toEpisode()
-                    } else null
-                    episode ?: database.episodeDao().getById(videoType.id)
-                }
-            }
-            
-            val lastPlaybackPositionMillis = watchItem?.watchHistory
-                ?.let { it.lastPlaybackPositionMillis - 10.seconds.inWholeMilliseconds }
-
-            player.seekTo(lastPlaybackPositionMillis ?: 0)
-        } else {
-            player.seekTo(currentPosition)
-        }
-
-        player.prepare()
-        player.play()
-    }
 
     private fun enterPIPMode() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -1399,6 +1434,9 @@ class PlayerMobileFragment : Fragment() {
         UserDataCache.syncEpisodeToCache(requireContext(), provider, persistedNextEpisode)
     }
     private fun startProgressHandler() {
+        // Idempotent: ExoPlayer replays onIsPlayingChanged to freshly-added listeners, which can
+        // call this again; stop any previous runnable so only one tick loop keeps running.
+        stopProgressHandler()
         progressHandler = android.os.Handler(android.os.Looper.getMainLooper())
         progressRunnable = Runnable {
             if (player.isPlaying) {
@@ -1601,6 +1639,61 @@ class PlayerMobileFragment : Fragment() {
         playerListener = null
         // The ExoPlayer + MediaSession belong to PlaybackService and keep playing in the
         // background (media notification, lock screen, PiP). Nothing is released here.
+    }
+
+    /**
+     * Binds this fragment's views to the player that PlaybackService is already playing,
+     * resuming the session without tearing the player down or reloading any content.
+     */
+    private fun attachToActivePlayer() {
+        releasePlayer()
+        player = PlaybackSession.player as ExoPlayer
+        currentExtraBuffering = PlayerSettingsView.Settings.ExtraBuffering.isEnabled
+        currentSoftwareDecoder = PlayerSettingsView.Settings.SoftwareDecoder.isEnabled
+        // Restore the content that is actually playing so the re-attached UI keeps working
+        // (Cast, Download, server picker, headers).
+        currentVideo = PlaybackSession.lastVideo
+        currentServer = PlaybackSession.lastServer
+        servers = PlaybackSession.lastServers
+        if (servers.isNotEmpty()) {
+            player.playlistMetadata = MediaMetadata.Builder()
+                .setTitle(resolvePlayerTitle())
+                .setMediaServers(servers.map {
+                    MediaServer(
+                        id = it.id,
+                        name = it.name,
+                    )
+                })
+                .build()
+            binding.settings.setOnServerSelectedListener { server ->
+                servers.firstOrNull { it.id == server.id }?.let {
+                    viewModel.getVideo(it)
+                }
+            }
+        }
+        binding.pvPlayer.player = player
+        binding.settings.player = player
+        binding.settings.subtitleView = binding.pvPlayer.subtitleView
+        binding.settings.onSubtitlesClicked = {
+            viewModel.getSubtitles(args.videoType)
+        }
+        binding.settings.setOnExtraBufferingSelectedListener {
+            displayVideo(
+                currentVideo ?: return@setOnExtraBufferingSelectedListener,
+                currentServer ?: return@setOnExtraBufferingSelectedListener
+            )
+        }
+        binding.settings.setOnSoftwareDecoderSelectedListener { useSoftware ->
+            currentSoftwareDecoder = useSoftware
+            displayVideo(
+                currentVideo ?: return@setOnSoftwareDecoderSelectedListener,
+                currentServer ?: return@setOnSoftwareDecoderSelectedListener
+            )
+        }
+        attachPlaybackListener()
+        if (player.isPlaying) {
+            startProgressHandler()
+        }
     }
 
     /**

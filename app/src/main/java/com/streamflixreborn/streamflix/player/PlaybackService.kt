@@ -1,5 +1,6 @@
 package com.streamflixreborn.streamflix.player
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -27,6 +28,12 @@ import com.streamflixreborn.streamflix.utils.UserPreferences
 class PlaybackService : MediaSessionService() {
 
     companion object {
+        /**
+         * Action used by the media notification's session activity: tapping the notification
+         * returns to the active player instead of opening the launcher/home screen.
+         */
+        const val ACTION_OPEN_PLAYER = "com.streamflixreborn.streamflix.action.OPEN_PLAYER"
+
         /**
          * (Re)builds the service-owned player with the given configuration.
          * Called by the player fragments whenever the player must be (re)initialized.
@@ -83,6 +90,21 @@ object PlaybackSession {
     var player: ExoPlayer? = null
         private set
 
+    /** Navigation args of the content currently (or last) playing, for notification taps. */
+    var resumeData: ResumeData? = null
+
+    /** Last displayed video + server, so a re-attached fragment keeps Cast/Download/servers working. */
+    var lastVideo: com.streamflixreborn.streamflix.models.Video? = null
+    var lastServer: com.streamflixreborn.streamflix.models.Video.Server? = null
+    var lastServers: List<com.streamflixreborn.streamflix.models.Video.Server> = emptyList()
+
+    data class ResumeData(
+        val id: String,
+        val title: String,
+        val subtitle: String,
+        val videoType: com.streamflixreborn.streamflix.models.Video.Type,
+    )
+
     private var mediaSession: MediaSession? = null
     private var extraBuffering = false
     private var softwareDecoder = false
@@ -91,10 +113,29 @@ object PlaybackSession {
     fun getOrCreateSession(context: Context): MediaSession {
         mediaSession?.let { return it }
         val newPlayer = buildPlayer(context)
-        val newSession = MediaSession.Builder(context, newPlayer).build()
+        val newSession = MediaSession.Builder(context, newPlayer)
+            .setSessionActivity(sessionActivity(context))
+            .build()
         player = newPlayer
         mediaSession = newSession
         return newSession
+    }
+
+    /**
+     * PendingIntent that reopens [com.streamflixreborn.streamflix.activities.main.MainMobileActivity]
+     * at the player screen (the activity reads [resumeData] to navigate there).
+     */
+    fun sessionActivity(context: Context): PendingIntent {
+        val intent = Intent(context, com.streamflixreborn.streamflix.activities.main.MainMobileActivity::class.java).apply {
+            action = PlaybackService.ACTION_OPEN_PLAYER
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        return PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     fun reinitPlayer(
