@@ -1,3 +1,5 @@
+import org.gradle.api.initialization.resolve.RepositoriesMode
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -13,6 +15,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Streamflix"
-include ':app'
-include ':retrofit-jsoup-converter'
-include ':navigation'
+include(":app")
+include(":retrofit-jsoup-converter")
+include(":navigation")

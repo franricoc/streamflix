@@ -33,8 +33,6 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Compile & unit tests
-        run: ./gradlew assembleDebug testDebugUnitTest --stacktrace
-
-      - name: Lint
-        run: ./gradlew lint
+      - name: Compile, unit tests, lint & static analysis
+        run: |
+          ./gradlew assembleDebug testDebugUnitTest lint :app:detekt :app:ktlintCheck --stacktrace

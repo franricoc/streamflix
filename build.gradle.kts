@@ -8,8 +8,10 @@ plugins {
     alias(libs.plugins.kotlin.parcelize) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.ktlint) apply false
+    alias(libs.plugins.detekt) apply false
 }
 
-tasks.register('clean', Delete) {
-    delete layout.buildDirectory
+tasks.register<Delete>("clean") {
+    delete(layout.buildDirectory)
 }
