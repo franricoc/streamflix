@@ -29,6 +29,10 @@ object SuperFavoritesProvider : BaseProvider() {
     override val logo: String = "ic_super_favorites"
     override val language: String = "all"
 
+    // \b word boundaries so legit titles like "Terror" (which contains "error")
+    // are not filtered out as broken stubs.
+    private val brokenTitleRegex = Regex("\\b(404|not found|error)\\b", RegexOption.IGNORE_CASE)
+
     private fun getFavoriteProviders(): List<Provider> {
         val favNames = UserPreferences.favoriteProviders
         if (favNames.isEmpty()) return emptyList()
@@ -176,7 +180,7 @@ object SuperFavoritesProvider : BaseProvider() {
             }
         }
 
-        val movies = deferreds.awaitAll().filterNotNull()
+        val movies = deferreds.awaitAll().filterNotNull().filter { it.isValidResult() }
         if (movies.isEmpty()) {
             return@supervisorScope Movie(id = id, title = "Sin información").apply { providerName = name }
         }
@@ -216,7 +220,7 @@ object SuperFavoritesProvider : BaseProvider() {
             }
         }
 
-        val tvShows = deferreds.awaitAll().filterNotNull()
+        val tvShows = deferreds.awaitAll().filterNotNull().filter { it.isValidResult() }
         if (tvShows.isEmpty()) {
             return@supervisorScope TvShow(id = id, title = "Sin información").apply { providerName = name }
         }
@@ -452,7 +456,9 @@ object SuperFavoritesProvider : BaseProvider() {
             is TvShow -> show.recommendations
             else -> return@flatMap emptyList()
         }
-        recommendations.map { rec -> wrapShow(rec, pName) }
+        recommendations
+            .filter { it.isValidResult() }
+            .map { rec -> wrapShow(rec, pName) }
     }.distinctBy {
         (it as? Movie)?.title ?: (it as? TvShow)?.title ?: ""
     }
@@ -462,6 +468,22 @@ object SuperFavoritesProvider : BaseProvider() {
         is Movie -> providerName
         is TvShow -> providerName
         else -> null
+    }
+
+    /** True when the show has a real title instead of an error-page stub ("Error 404",
+     *  "Not Found", "Unknown") that a source provider may return for removed content. */
+    private fun Show.isValidResult(): Boolean {
+        val title = when (this) {
+            is Movie -> this.title
+            is TvShow -> this.title
+            else -> return false
+        }
+        return title.isNotBlank() &&
+            !brokenTitleRegex.containsMatchIn(title) &&
+            title != "Unknown" &&
+            title != "No disponible" &&
+            title != "Sin información" &&
+            title != "null"
     }
 
     /** Stub for unresolved people so the page isn't a blank error screen. */

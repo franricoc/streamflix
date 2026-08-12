@@ -290,8 +290,11 @@ object PoseidonHD2Provider : BaseProvider(){
         val document = getDocument("${baseUrl.trimEnd('/')}/pelicula/$id")
         val jsonData = document.selectFirst("script#__NEXT_DATA__")?.data()
         if (jsonData != null) {
-            val json = JSONObject(jsonData).getJSONObject("props").getJSONObject("pageProps").getJSONObject("thisMovie")
-            val tmdbId = json.optString("TMDbId")
+            val json = JSONObject(jsonData).getJSONObject("props").getJSONObject("pageProps")
+            // A 404 page has no thisMovie; surface it instead of returning a stub
+            // titled like the error page ("Error 404") as if it were real content.
+            val movieJson = json.optJSONObject("thisMovie") ?: throw Exception("Película no encontrada")
+            val tmdbId = movieJson.optString("TMDbId")
             if (tmdbId.isNotEmpty()) {
                 try {
                     return TMDb3.Movies.details(
@@ -330,9 +333,9 @@ object PoseidonHD2Provider : BaseProvider(){
                 } catch (_: Exception) { }
             }
 
-            val titles = json.optJSONObject("titles")
-            val title = titles?.optString("name") ?: json.optString("title") ?: ""
-            val images = json.optJSONObject("images")
+            val titles = movieJson.optJSONObject("titles")
+            val title = titles?.optString("name") ?: movieJson.optString("title") ?: ""
+            val images = movieJson.optJSONObject("images")
             val rawPoster = images?.optString("poster") ?: ""
             val imgUrl = rawPoster.toUri().getQueryParameter("url") ?: rawPoster
             val poster = if (imgUrl.startsWith("http")) imgUrl 
@@ -342,16 +345,21 @@ object PoseidonHD2Provider : BaseProvider(){
             return Movie(
                 id = id,
                 title = title,
-                overview = json.optString("overview", ""),
-                released = json.optString("releaseDate", "").take(10),
-                rating = json.optJSONObject("rate")?.optDouble("average", 0.0) ?: 0.0,
+                overview = movieJson.optString("overview", ""),
+                released = movieJson.optString("releaseDate", "").take(10),
+                rating = movieJson.optJSONObject("rate")?.optDouble("average", 0.0) ?: 0.0,
                 poster = poster
             )
         }
 
+        val fallbackTitle = document.selectFirst("h1")?.text() ?: ""
+        if (fallbackTitle.isBlank() || fallbackTitle.contains("404", ignoreCase = true)) {
+            throw Exception("Película no encontrada")
+        }
+
         return Movie(
             id = id,
-            title = document.selectFirst("h1")?.text() ?: "",
+            title = fallbackTitle,
             overview = document.select(".Description p").text(),
             poster = document.select(".Image img").attr("src")
         )
@@ -359,49 +367,51 @@ object PoseidonHD2Provider : BaseProvider(){
 
     override suspend fun getTvShow(id: String): TvShow {
         val document = getDocument("${baseUrl.trimEnd('/')}/serie/$id")
-        val jsonData = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return TvShow(id = id, title = "Unknown")
-        val json = JSONObject(jsonData).getJSONObject("props").getJSONObject("pageProps").getJSONObject("thisSerie")
-        val tmdbId = json.optString("TMDbId")
+        val jsonData = document.selectFirst("script#__NEXT_DATA__")?.data()
+        if (jsonData != null) {
+            return parseTvShowFromJson(id, jsonData)
+        }
 
-        val seasonsJson = json.optJSONArray("seasons") ?: JSONArray()
+        // No __NEXT_DATA__ (transient HTML, Cloudflare challenge): fall back to
+        // parsing the page like getMovie instead of hard-failing, but only when
+        // it isn't a 404 page.
+        val fallbackTitle = document.selectFirst("h1")?.text() ?: ""
+        if (fallbackTitle.isBlank() || fallbackTitle.contains("404", ignoreCase = true)) {
+            throw Exception("Serie no encontrada")
+        }
+
+        return TvShow(
+            id = id,
+            title = fallbackTitle,
+            overview = document.select(".Description p").text(),
+            poster = document.select(".Image img").attr("src"),
+        )
+    }
+
+    /** Parses the serie from its __NEXT_DATA__ payload, rejecting 404 pages. */
+    private suspend fun parseTvShowFromJson(
+        id: String,
+        jsonData: String,
+    ): TvShow {
+        val json = JSONObject(jsonData).getJSONObject("props").getJSONObject("pageProps")
+        // A 404 page has no thisSerie; surface it instead of returning a stub
+        // titled like the error page ("Error 404") as if it were real content.
+        val serieJson = json.optJSONObject("thisSerie") ?: throw Exception("Serie no encontrada")
+        val tmdbId = serieJson.optString("TMDbId")
+
+        val seasonsJson = serieJson.optJSONArray("seasons") ?: JSONArray()
         val seasons = (0 until seasonsJson.length()).map { i ->
             val num = seasonsJson.getJSONObject(i).getInt("number")
             Season(id = "$id/temporada/$num", number = num, title = "Temporada $num")
         }
 
         if (tmdbId.isNotEmpty()) {
-            try {
-                return TMDb3.TvSeries.details(
-                    seriesId = tmdbId.toInt(),
-                    appendToResponse = listOf(
-                        TMDb3.Params.AppendToResponse.Tv.CREDITS,
-                        TMDb3.Params.AppendToResponse.Tv.RECOMMENDATIONS,
-                        TMDb3.Params.AppendToResponse.Tv.VIDEOS,
-                    ),
-                    language = language
-                ).let { tmdbTv ->
-                    TvShow(
-                        id = id,
-                        title = tmdbTv.name,
-                        overview = tmdbTv.overview,
-                        released = tmdbTv.firstAirDate,
-                        rating = tmdbTv.voteAverage.toDouble(),
-                        poster = tmdbTv.posterPath?.original,
-                        banner = tmdbTv.backdropPath?.original,
-                        seasons = seasons.map { season ->
-                            val tmdbSeason = tmdbTv.seasons.find { it.seasonNumber == season.number }
-                            season.copy(title = tmdbSeason?.name ?: season.title, poster = tmdbSeason?.posterPath?.w500 ?: season.poster)
-                        },
-                        genres = tmdbTv.genres.map { Genre(it.id.toString(), it.name) },
-                        cast = tmdbTv.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList()
-                    )
-                }
-            } catch (_: Exception) { }
+            fetchTvShowFromTmdb(id, tmdbId, seasons)?.let { return it }
         }
 
-        val titles = json.optJSONObject("titles")
-        val title = titles?.optString("name") ?: json.optString("title") ?: ""
-        val images = json.optJSONObject("images")
+        val titles = serieJson.optJSONObject("titles")
+        val title = titles?.optString("name") ?: serieJson.optString("title") ?: ""
+        val images = serieJson.optJSONObject("images")
         val rawPoster = images?.optString("poster") ?: ""
         val imgUrl = rawPoster.toUri().getQueryParameter("url") ?: rawPoster
         val poster = if (imgUrl.startsWith("http")) imgUrl 
@@ -411,12 +421,47 @@ object PoseidonHD2Provider : BaseProvider(){
         return TvShow(
             id = id,
             title = title,
-            overview = json.optString("overview", ""),
-            released = json.optString("releaseDate", "").take(10),
-            rating = json.optJSONObject("rate")?.optDouble("average", 0.0) ?: 0.0,
+            overview = serieJson.optString("overview", ""),
+            released = serieJson.optString("releaseDate", "").take(10),
+            rating = serieJson.optJSONObject("rate")?.optDouble("average", 0.0) ?: 0.0,
             poster = poster,
             seasons = seasons
         )
+    }
+
+    /** Enriches a serie from TMDb when the site exposes a TMDb id, or null. */
+    private suspend fun fetchTvShowFromTmdb(
+        id: String,
+        tmdbId: String,
+        seasons: List<Season>,
+    ): TvShow? = try {
+        TMDb3.TvSeries.details(
+            seriesId = tmdbId.toInt(),
+            appendToResponse = listOf(
+                TMDb3.Params.AppendToResponse.Tv.CREDITS,
+                TMDb3.Params.AppendToResponse.Tv.RECOMMENDATIONS,
+                TMDb3.Params.AppendToResponse.Tv.VIDEOS,
+            ),
+            language = language
+        ).let { tmdbTv ->
+            TvShow(
+                id = id,
+                title = tmdbTv.name,
+                overview = tmdbTv.overview,
+                released = tmdbTv.firstAirDate,
+                rating = tmdbTv.voteAverage.toDouble(),
+                poster = tmdbTv.posterPath?.original,
+                banner = tmdbTv.backdropPath?.original,
+                seasons = seasons.map { season ->
+                    val tmdbSeason = tmdbTv.seasons.find { it.seasonNumber == season.number }
+                    season.copy(title = tmdbSeason?.name ?: season.title, poster = tmdbSeason?.posterPath?.w500 ?: season.poster)
+                },
+                genres = tmdbTv.genres.map { Genre(it.id.toString(), it.name) },
+                cast = tmdbTv.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList()
+            )
+        }
+    } catch (_: Exception) {
+        null
     }
 
     override suspend fun getEpisodesBySeason(seasonId: String): List<Episode> {

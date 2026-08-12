@@ -832,7 +832,6 @@
     <ID>MagicNumber:MainTvActivity.kt$MainTvActivity$400</ID>
     <ID>MagicNumber:MainTvActivity.kt$MainTvActivity$48</ID>
     <ID>MagicNumber:MainTvActivity.kt$MainTvActivity$800</ID>
-    <ID>MagicNumber:MainTvActivity.kt$MainTvActivity$8080</ID>
     <ID>MagicNumber:MainTvActivity.kt$MainTvActivity$80f</ID>
     <ID>MagicNumber:MainTvActivity.kt$MainTvActivity$999f</ID>
     <ID>MagicNumber:MkissaProvider.kt$MkissaProvider$10</ID>
@@ -2684,7 +2683,6 @@
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getEpisodesBySeason(seasonId: String): List&lt;Episode&gt;</ID>
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getMovie(id: String): Movie</ID>
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
-    <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getTvShow(id: String): TvShow</ID>
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun search(query: String, page: Int): List&lt;AppAdapter.Item&gt;</ID>
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$private suspend fun resolvePlayerUrl(playerUrl: String): String?</ID>
     <ID>ReturnCount:ProviderExtensions.kt$fun Element.toShow( baseUrl: String, moviePatterns: List&lt;String&gt; = listOf("/pelicula/", "/peliculas/", "/movie/", "/film/", "/films/", "/ver-pelicula/"), tvShowPatterns: List&lt;String&gt; = listOf("/serie/", "/series/", "/tv/", "/show/", "/anime/", "/doramas/", "/ver-serie/") ): Show?</ID>
@@ -3113,6 +3111,8 @@
     <ID>TooGenericExceptionThrown:PlusPomlaExtractor.kt$PlusPomlaExtractor$throw Exception("Ajax URL not found")</ID>
     <ID>TooGenericExceptionThrown:PlusPomlaExtractor.kt$PlusPomlaExtractor$throw Exception("No sources found")</ID>
     <ID>TooGenericExceptionThrown:PoseidonHD2Provider.kt$PoseidonHD2Provider$throw Exception("Function not available for Poseidonhd2")</ID>
+    <ID>TooGenericExceptionThrown:PoseidonHD2Provider.kt$PoseidonHD2Provider$throw Exception("Película no encontrada")</ID>
+    <ID>TooGenericExceptionThrown:PoseidonHD2Provider.kt$PoseidonHD2Provider$throw Exception("Serie no encontrada")</ID>
     <ID>TooGenericExceptionThrown:RabbitstreamExtractor.kt$RabbitstreamExtractor.MegacloudExtractor$throw Exception("Failed to match the key")</ID>
     <ID>TooGenericExceptionThrown:RidomoviesProvider.kt$RidomoviesProvider$throw Exception("Not yet implemented")</ID>
     <ID>TooGenericExceptionThrown:RidooExtractor.kt$RidooExtractor$throw Exception("Can't extract m3u8 URL from embed page")</ID>
