@@ -270,27 +270,75 @@ class MainTvActivity : FragmentActivity() {
 
     private var deviceDiscoveryManager: com.streamflixreborn.streamflix.cast.DeviceDiscoveryManager? = null
 
-    private fun startTvCastServer() {
-        try {
-            val port = 8080
-            tvWebSocketServer = com.streamflixreborn.streamflix.cast.TvWebSocketServer(
-                port = port,
-                onPlayRequested = { payload ->
-                    runOnUiThread { handleIncomingCastPayload(payload) }
-                },
-                onControlRequested = { action, pos ->
-                    runOnUiThread {
-                        (getCurrentFragment() as? PlayerTvFragment)?.handleRemoteControl(action, pos)
-                    }
-                }
-            ).also { it.start() }
+    private companion object {
+        const val CAST_PORT_DEFAULT = 8080
+        const val CAST_PORT_FALLBACK_1 = 8081
+        const val CAST_PORT_FALLBACK_2 = 8082
+        const val CAST_SERVER_START_TIMEOUT_MS = 5_000L
 
-            deviceDiscoveryManager = com.streamflixreborn.streamflix.cast.DeviceDiscoveryManager(this).also {
-                it.registerTvService(port)
+        // stop(code) closes connections and joins the server thread; the parameter is
+        // the WebSocket close code (1000 = normal), not a timeout.
+        const val CAST_SERVER_CLOSE_CODE = 1000
+    }
+
+    /** Stops a cast server off the main thread: stop() drains connections and joins
+     *  the server thread, so calling it synchronously on onCreate/onDestroy (e.g.
+     *  during an activity recreate) can freeze the UI.
+     */
+    private fun stopTvCastServerAsync(server: com.streamflixreborn.streamflix.cast.TvWebSocketServer) {
+        Thread {
+            try {
+                server.stop(CAST_SERVER_CLOSE_CODE)
+            } catch (ignored: Exception) {
             }
-        } catch (e: Exception) {
-            android.util.Log.e("MainTvActivity", "Error starting TV cast server", e)
+        }.apply {
+            isDaemon = true
+        }.start()
+    }
+
+    private fun startTvCastServer() {
+        // The fixed 8080 port can be left in a transient state (e.g. activity recreate
+        // after a provider/profile switch while a stale server still owns the socket).
+        // Retry with fallback ports and only register the NSD service once the server
+        // actually bound, using the real port it ended up on.
+        val ports = listOf(CAST_PORT_DEFAULT, CAST_PORT_FALLBACK_1, CAST_PORT_FALLBACK_2, 0)
+        for (port in ports) {
+            val server =
+                com.streamflixreborn.streamflix.cast.TvWebSocketServer(
+                    port = port,
+                    onPlayRequested = { payload ->
+                        runOnUiThread { handleIncomingCastPayload(payload) }
+                    },
+                    onControlRequested = { action, pos ->
+                        runOnUiThread {
+                            (getCurrentFragment() as? PlayerTvFragment)?.handleRemoteControl(action, pos)
+                        }
+                    },
+                )
+            try {
+                server.start()
+                if (server.awaitStart(CAST_SERVER_START_TIMEOUT_MS)) {
+                    val actualPort = server.address.port
+                    tvWebSocketServer = server
+                    deviceDiscoveryManager =
+                        com.streamflixreborn.streamflix.cast.DeviceDiscoveryManager(this).also {
+                            it.registerTvService(actualPort)
+                        }
+                    android.util.Log.i("MainTvActivity", "TV cast server started on port $actualPort")
+                    return
+                }
+                val error = server.getStartError()
+                android.util.Log.e(
+                    "MainTvActivity",
+                    "TV cast server failed to start on port $port: ${error?.message}",
+                )
+                stopTvCastServerAsync(server)
+            } catch (e: Exception) {
+                android.util.Log.e("MainTvActivity", "Error starting TV cast server on port $port", e)
+                stopTvCastServerAsync(server)
+            }
         }
+        android.util.Log.e("MainTvActivity", "TV cast server could not bind any port")
     }
 
     private fun handleIncomingCastPayload(payload: com.streamflixreborn.streamflix.cast.CastPayload) {
@@ -339,8 +387,12 @@ class MainTvActivity : FragmentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         try {
-            tvWebSocketServer?.stop()
             deviceDiscoveryManager?.unregisterTvService()
+            // Draining open connections can block, so stop the server off the main
+            // thread: a quick activity recreate (provider/profile switch) must not
+            // stall while stale sockets close.
+            tvWebSocketServer?.let { stopTvCastServerAsync(it) }
+            tvWebSocketServer = null
         } catch (e: Exception) {
             android.util.Log.e("MainTvActivity", "Error stopping TV cast server", e)
         }

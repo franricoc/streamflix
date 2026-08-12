@@ -174,44 +174,40 @@
         <error line="263" column="27" source="standard:function-signature" />
         <error line="263" column="41" source="standard:function-signature" />
         <error line="263" column="53" source="standard:function-signature" />
-        <error line="276" column="33" source="standard:multiline-expression-wrapping" />
-        <error line="276" column="69" source="standard:chain-method-continuation" />
-        <error line="285" column="18" source="standard:trailing-comma-on-call-site" />
-        <error line="288" column="38" source="standard:multiline-expression-wrapping" />
-        <error line="297" column="31" source="standard:multiline-expression-wrapping" />
-        <error line="309" column="25" source="standard:multiline-expression-wrapping" />
-        <error line="314" column="26" source="standard:trailing-comma-on-call-site" />
-        <error line="319" column="22" source="standard:multiline-expression-wrapping" />
-        <error line="333" column="14" source="standard:trailing-comma-on-call-site" />
-        <error line="337" column="1" source="standard:no-consecutive-blank-lines" />
-        <error line="360" column="18" source="standard:trailing-comma-on-call-site" />
-        <error line="369" column="23" source="standard:multiline-expression-wrapping" />
-        <error line="374" column="22" source="standard:multiline-expression-wrapping" />
-        <error line="379" column="30" source="standard:multiline-expression-wrapping" />
-        <error line="382" column="33" source="standard:binary-expression-wrapping" />
-        <error line="382" column="98" source="standard:chain-method-continuation" />
-        <error line="382" column="104" source="standard:function-literal" />
-        <error line="382" column="105" source="standard:wrapping" />
-        <error line="382" column="117" source="standard:binary-expression-wrapping" />
-        <error line="382" column="141" source="standard:max-line-length" />
-        <error line="382" column="144" source="standard:function-literal" />
-        <error line="382" column="145" source="standard:chain-method-continuation" />
-        <error line="382" column="154" source="standard:binary-expression-wrapping" />
-        <error line="391" column="29" source="standard:multiline-expression-wrapping" />
-        <error line="400" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="411" column="16" source="standard:chain-method-continuation" />
-        <error line="411" column="25" source="standard:argument-list-wrapping" />
-        <error line="411" column="33" source="standard:argument-list-wrapping" />
-        <error line="411" column="59" source="standard:chain-method-continuation" />
-        <error line="411" column="73" source="standard:argument-list-wrapping" />
-        <error line="411" column="127" source="standard:argument-list-wrapping" />
-        <error line="411" column="140" source="standard:max-line-length" />
-        <error line="411" column="181" source="standard:argument-list-wrapping" />
-        <error line="411" column="208" source="standard:argument-list-wrapping" />
-        <error line="411" column="209" source="standard:argument-list-wrapping" />
-        <error line="416" column="59" source="standard:chain-method-continuation" />
-        <error line="416" column="93" source="standard:chain-method-continuation" />
-        <error line="424" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="345" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="357" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="362" column="26" source="standard:trailing-comma-on-call-site" />
+        <error line="367" column="22" source="standard:multiline-expression-wrapping" />
+        <error line="381" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="385" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="412" column="18" source="standard:trailing-comma-on-call-site" />
+        <error line="421" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="426" column="22" source="standard:multiline-expression-wrapping" />
+        <error line="431" column="30" source="standard:multiline-expression-wrapping" />
+        <error line="434" column="33" source="standard:binary-expression-wrapping" />
+        <error line="434" column="98" source="standard:chain-method-continuation" />
+        <error line="434" column="104" source="standard:function-literal" />
+        <error line="434" column="105" source="standard:wrapping" />
+        <error line="434" column="117" source="standard:binary-expression-wrapping" />
+        <error line="434" column="141" source="standard:max-line-length" />
+        <error line="434" column="144" source="standard:function-literal" />
+        <error line="434" column="145" source="standard:chain-method-continuation" />
+        <error line="434" column="154" source="standard:binary-expression-wrapping" />
+        <error line="443" column="29" source="standard:multiline-expression-wrapping" />
+        <error line="452" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="463" column="16" source="standard:chain-method-continuation" />
+        <error line="463" column="25" source="standard:argument-list-wrapping" />
+        <error line="463" column="33" source="standard:argument-list-wrapping" />
+        <error line="463" column="59" source="standard:chain-method-continuation" />
+        <error line="463" column="73" source="standard:argument-list-wrapping" />
+        <error line="463" column="127" source="standard:argument-list-wrapping" />
+        <error line="463" column="140" source="standard:max-line-length" />
+        <error line="463" column="181" source="standard:argument-list-wrapping" />
+        <error line="463" column="208" source="standard:argument-list-wrapping" />
+        <error line="463" column="209" source="standard:argument-list-wrapping" />
+        <error line="468" column="59" source="standard:chain-method-continuation" />
+        <error line="468" column="93" source="standard:chain-method-continuation" />
+        <error line="476" column="1" source="standard:no-consecutive-blank-lines" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/activities/main/MainViewModel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -1413,42 +1409,8 @@
         <error line="268" column="72" source="standard:try-catch-finally-spacing" />
         <error line="268" column="72" source="standard:try-catch-finally-spacing" />
     </file>
-    <file name="src/main/java/com/streamflixreborn/streamflix/cast/MobileCastClient.kt">
-        <error line="12" column="1" source="standard:no-empty-first-line-in-class-body" />
-        <error line="22" column="34" source="standard:trailing-comma-on-declaration-site" />
-        <error line="24" column="19" source="standard:multiline-expression-wrapping" />
-        <error line="33" column="22" source="standard:multiline-expression-wrapping" />
-        <error line="63" column="51" source="standard:try-catch-finally-spacing" />
-        <error line="63" column="51" source="standard:try-catch-finally-spacing" />
-        <error line="68" column="1" source="standard:no-consecutive-blank-lines" />
-        <error line="69" column="34" source="standard:function-signature" />
-        <error line="69" column="45" source="standard:function-signature" />
-        <error line="69" column="62" source="standard:function-signature" />
-        <error line="69" column="77" source="standard:function-signature" />
-    </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/cast/TvWebSocketServer.kt">
-        <error line="13" column="93" source="standard:trailing-comma-on-declaration-site" />
-        <error line="15" column="1" source="standard:no-empty-first-line-in-class-body" />
-        <error line="26" column="25" source="standard:function-signature" />
-        <error line="26" column="42" source="standard:function-signature" />
-        <error line="26" column="68" source="standard:function-signature" />
-        <error line="30" column="26" source="standard:function-signature" />
-        <error line="30" column="43" source="standard:function-signature" />
-        <error line="30" column="54" source="standard:function-signature" />
-        <error line="30" column="70" source="standard:function-signature" />
-        <error line="30" column="85" source="standard:function-signature" />
-        <error line="34" column="28" source="standard:function-signature" />
-        <error line="34" column="45" source="standard:function-signature" />
-        <error line="34" column="60" source="standard:function-signature" />
-        <error line="59" column="25" source="standard:function-signature" />
-        <error line="59" column="43" source="standard:function-signature" />
-        <error line="59" column="61" source="standard:function-signature" />
-        <error line="59" column="79" source="standard:function-signature" />
-        <error line="61" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="66" column="40" source="standard:trailing-comma-on-call-site" />
-        <error line="75" column="26" source="standard:function-signature" />
-        <error line="75" column="44" source="standard:function-signature" />
-        <error line="75" column="57" source="standard:function-signature" />
+        <error line="29" column="54" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/cast/ui/CastRemoteControlDialog.kt">
         <error line="11" column="1" source="standard:no-empty-first-line-in-class-body" />
