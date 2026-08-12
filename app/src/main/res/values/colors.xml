@@ -6,6 +6,7 @@
 
     <!-- Colore di sfondo dinamico per TV -->
     <color name="app_background">#181818</color>
+    <color name="favorite_selected">#00E5FF</color>
 
     <!-- Modern Design Tokens -->
     <color name="accent_primary">#E50914</color>

@@ -69,7 +69,7 @@ object SerienStreamProvider : BaseProvider(){
         "U2VyaWVuU3RyZWFt", Base64.NO_WRAP
     ).toString(Charsets.UTF_8)
     override val logo
-        get() = "${currentBaseUrl()}public/img/logo-sto-serienstream-sx-to-serien-online-streaming-vod.png"
+        get() = "${currentBaseUrl()}assets/logos/logo.svg"
     override val language = "de"
     @Volatile
     private var service: SerienStreamService? = null

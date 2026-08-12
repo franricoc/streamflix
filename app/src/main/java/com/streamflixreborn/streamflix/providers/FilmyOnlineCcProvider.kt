@@ -26,6 +26,7 @@ import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.URLEncoder
+import java.net.URLDecoder
 import retrofit2.Retrofit
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -33,6 +34,7 @@ import retrofit2.http.Url
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.text.Normalizer
 import java.util.concurrent.TimeUnit
@@ -47,13 +49,15 @@ import okhttp3.Request
 object FilmyOnlineCcProvider : BaseProvider(){
 
     override val name = "FilmyOnline"
-    override val baseUrl = "http://filmyonline.cc"
+    override val baseUrl = "https://filmyonline.cc"
     override val logo = "$baseUrl/favicon/icon-144x144.png?v=1703232212"
     override val language = "pl"
 
     private var webViewResolver: WebViewResolver? = null
     private val providerMutex = Mutex()
     private const val TAG = "FilmyOnlineBypass"
+    private const val MAX_API_CLEARANCE_RETRIES = 2
+    private var bootstrapCsrfToken: String? = null
 
     private val service = FilmyOnlineCcService.build()
 
@@ -67,23 +71,41 @@ object FilmyOnlineCcProvider : BaseProvider(){
         }
     }
 
-    private suspend fun fetchApiJson(url: String): JSONObject = withContext(Dispatchers.IO) {
-        val request = Request.Builder()
-            .url(url)
-            .header("Referer", baseUrl)
-            .build()
+    private suspend fun fetchApiJson(url: String, referer: String = "$baseUrl/"): JSONObject = withContext(Dispatchers.IO) {
+        var clearanceRetries = 0
 
-        NetworkClient.default.newCall(request).execute().use { response ->
-            val body = response.body?.string().orEmpty()
-            if (!response.isSuccessful) {
-                if (response.code == 403) {
-                    providerMutex.withLock { getResolver().get(baseUrl) }
-                    return@withContext fetchApiJson(url)
+        while (clearanceRetries <= MAX_API_CLEARANCE_RETRIES) {
+            val request = buildBrowserApiRequest(url, referer)
+
+            var shouldRefreshClearance = false
+            NetworkClient.default.newCall(request).execute().use { response ->
+                val body = response.body?.string().orEmpty()
+                if (response.isSuccessful) {
+                    return@withContext JSONObject(body)
                 }
-                throw Exception("FilmyOnline API request failed: ${response.code}")
+
+                if (response.code == 403 && clearanceRetries < MAX_API_CLEARANCE_RETRIES) {
+                    clearanceRetries++
+                    shouldRefreshClearance = true
+                } else {
+                    throw Exception("FilmyOnline API request failed: ${response.code}")
+                }
             }
-            JSONObject(body)
+
+            if (shouldRefreshClearance) {
+                providerMutex.withLock {
+                    getResolver().get(
+                        baseUrl,
+                        completion = { _, html, cookies -> isBrowserSessionReady(html, cookies) }
+                    )
+                }
+                if (!promoteClearanceCookies(baseUrl)) {
+                    throw Exception("FilmyOnline clearance cookie was not established")
+                }
+            }
         }
+
+        throw Exception("FilmyOnline API request failed after refreshing clearance")
     }
 
     private suspend fun getDocument(url: String): Document {
@@ -96,33 +118,39 @@ object FilmyOnlineCcProvider : BaseProvider(){
             document
         } catch (_: Exception) {
             Log.d(TAG, "Using WebView bypass for $url")
-            val html = providerMutex.withLock { getResolver().get(url) }
-            FilmyOnlineCfClearanceStore.update(
-                CookieManager.getInstance().getCookie(url)
-            )
+            val html = providerMutex.withLock {
+                getResolver().get(
+                    url,
+                    completion = { _, pageHtml, cookies -> isBrowserSessionReady(pageHtml, cookies) }
+                )
+            }
+            if (!promoteClearanceCookies(url)) {
+                throw Exception("FilmyOnline clearance cookie was not established")
+            }
+
+            delay(500)
+            runCatching {
+                val refreshed = service.getDocument(url)
+                if (!requiresClearance(refreshed.outerHtml())) {
+                    return refreshed
+                }
+            }
+
             Jsoup.parse(html).apply { setBaseUri(baseUrl) }
         }
     }
 
     override suspend fun getHome(): List<Category> {
-        val root = fetchApiJson("$baseUrl/api/v1/channel/homepage?channelType=channel&restriction=&loader=channelPage")
-        return root.optJSONObject("channel")
-            ?.optJSONObject("content")
-            ?.optJSONArray("data")
-            ?.toJsonObjectList()
-            ?.mapNotNull { channel ->
-                val items = channel.optJSONObject("content")
-                    ?.optJSONArray("data")
-                    ?.toTitleItems()
-                    .orEmpty()
-                    .take(20)
+        val bootstrapCategories = runCatching {
+            val root = getBootstrapRoot(getDocument(baseUrl))
+            cacheBootstrapCsrfToken(root)
+            extractHomeCategories(root)
+        }.getOrDefault(emptyList())
 
-                if (items.isEmpty()) null else Category(
-                    name = channel.optString("name").ifBlank { "FilmyOnline" },
-                    list = items
-                )
-            }
-            .orEmpty()
+        if (bootstrapCategories.isNotEmpty()) return bootstrapCategories
+
+        Log.d(TAG, "Bootstrap home categories were empty")
+        return emptyList()
     }
 
     override suspend fun search(query: String, page: Int): List<AppAdapter.Item> {
@@ -133,45 +161,31 @@ object FilmyOnlineCcProvider : BaseProvider(){
             )
         }
 
-        val root = fetchApiJson("$baseUrl/api/v1/channel/homepage?channelType=channel&restriction=&loader=channelPage")
-        val channels = root.optJSONObject("channel")
-            ?.optJSONObject("content")
-            ?.optJSONArray("data")
-            .orEmptyJsonArray()
-            .toJsonObjectList()
+        val encodedQuery = URLEncoder.encode(query, Charsets.UTF_8.name())
+        val root = fetchApiJson(
+            "$baseUrl/api/v1/search/$encodedQuery?loader=searchPage",
+            referer = "$baseUrl/search/$encodedQuery"
+        )
 
-        return channels.flatMap { channel ->
-            channel.optJSONObject("content")
-                ?.optJSONArray("data")
-                .orEmptyJsonArray()
-                .toTitleItems()
-        }.filter { item ->
-            when (item) {
-                is Movie -> item.title.contains(query, ignoreCase = true)
-                is TvShow -> item.title.contains(query, ignoreCase = true)
-                else -> false
-            }
-        }.distinctBy(::itemKey)
+        return root.optJSONArray("results")
+            .orEmptyJsonArray()
+            .toTitleItems()
     }
 
     override suspend fun getMovies(page: Int): List<Movie> {
-        val root = fetchApiJson("$baseUrl/api/v1/channel/movies?channelType=channel&restriction=&loader=channelPage")
-        return root.optJSONObject("channel")
-            ?.optJSONObject("content")
-            ?.optJSONArray("data")
-            .orEmptyJsonArray()
-            .toTitleItems()
-            .filterIsInstance<Movie>()
+        val root = getBootstrapRoot(getDocument(baseUrl))
+        cacheBootstrapCsrfToken(root)
+        return bootstrapTitleItems(root) { channel ->
+            channel.optJSONObject("config")?.optString("contentModel") == "movie"
+        }.filterIsInstance<Movie>()
     }
 
     override suspend fun getTvShows(page: Int): List<TvShow> {
-        val root = fetchApiJson("$baseUrl/api/v1/channel/series?channelType=channel&restriction=&loader=channelPage")
-        return root.optJSONObject("channel")
-            ?.optJSONObject("content")
-            ?.optJSONArray("data")
-            .orEmptyJsonArray()
-            .toTitleItems()
-            .filterIsInstance<TvShow>()
+        val root = getBootstrapRoot(getDocument(baseUrl))
+        cacheBootstrapCsrfToken(root)
+        return bootstrapTitleItems(root) { channel ->
+            channel.optJSONObject("config")?.optString("contentModel") == "series"
+        }.filterIsInstance<TvShow>()
     }
 
     override suspend fun getMovie(id: String): Movie {
@@ -214,7 +228,8 @@ object FilmyOnlineCcProvider : BaseProvider(){
                                     id = buildSeasonId(parsed.titleId, titleSlug, seasonNumber),
                                     number = seasonNumber,
                                     title = "Sezon $seasonNumber",
-                                    poster = seasonObject.optString("poster").ifBlank { title.optString("poster").ifBlank { null } },
+                                    poster = seasonObject.optString("poster").takeIf { it.isNotBlank() }
+                                        ?: title.optString("poster").takeIf { it.isNotBlank() },
                                     episodes = getEpisodesBySeason(buildSeasonId(parsed.titleId, titleSlug, seasonNumber))
                                 )
                             }
@@ -243,7 +258,7 @@ object FilmyOnlineCcProvider : BaseProvider(){
         val title = seasonPage.optJSONObject("title") ?: return emptyList()
         return seasonPage.optJSONObject("episodes")
             ?.optJSONArray("data")
-            ?.toEpisodeItems(title.optString("poster").ifBlank { null })
+            ?.toEpisodeItems(title.optString("poster").takeIf { it.isNotBlank() })
             .orEmpty()
     }
 
@@ -252,11 +267,18 @@ object FilmyOnlineCcProvider : BaseProvider(){
             "/series" -> "Seriale"
             else -> "Filmy"
         }
-        val url = if (id.startsWith("/")) "$baseUrl$id?page=$page" else "$baseUrl/movies?page=$page"
+        val root = getBootstrapRoot(getDocument(baseUrl))
+        cacheBootstrapCsrfToken(root)
+        val contentModel = when (id) {
+            "/series" -> "series"
+            else -> "movie"
+        }
         return Genre(
             id = id,
             name = normalized,
-            shows = getChannelItems(url).filterIsInstance<Show>()
+            shows = bootstrapTitleItems(root) { channel ->
+                channel.optJSONObject("config")?.optString("contentModel") == contentModel
+            }.filterIsInstance<Show>()
         )
     }
 
@@ -282,7 +304,7 @@ object FilmyOnlineCcProvider : BaseProvider(){
             val source = video.optString("src").ifBlank { continue }
             val serverName = buildString {
                 append(video.optString("quality").ifBlank { "default" }.uppercase())
-                val lang = video.optString("language").ifBlank { null }
+            val lang = video.optString("language").takeIf { it.isNotBlank() }
                 if (lang != null) append(" [$lang]")
             }
             collected.putIfAbsent(source, Video.Server(id = source, name = serverName, src = source))
@@ -351,13 +373,82 @@ object FilmyOnlineCcProvider : BaseProvider(){
                 '}' -> {
                     depth--
                     if (depth == 0) {
-                        return JSONObject(html.substring(startIndex, index + 1))
+                        return JSONObject(html.substring(startIndex, index + 1)).also { cacheBootstrapCsrfToken(it) }
                     }
                 }
             }
         }
 
         throw Exception("Unable to extract FilmyOnline bootstrap JSON")
+    }
+
+    private fun extractHomeCategories(root: JSONObject): List<Category> {
+        val channelData = root.optJSONObject("loaders")
+            ?.optJSONObject("channelPage")
+            ?.optJSONObject("channel")
+            ?.optJSONObject("content")
+            ?.optJSONArray("data")
+            ?: root.optJSONObject("channel")
+                ?.optJSONObject("content")
+                ?.optJSONArray("data")
+
+        return channelData
+            ?.toJsonObjectList()
+            ?.mapNotNull { channel ->
+                val items = channel.optJSONObject("content")
+                    ?.optJSONArray("data")
+                    ?.toTitleItems()
+                    .orEmpty()
+                    .take(20)
+
+                if (items.isEmpty()) null else Category(
+                    name = channel.optString("name").ifBlank { "FilmyOnline" },
+                    list = items
+                )
+            }
+            .orEmpty()
+    }
+
+    private suspend fun promoteClearanceCookies(sourceUrl: String, timeoutMs: Long = 5000): Boolean = withContext(Dispatchers.IO) {
+        val cookieManager = CookieManager.getInstance()
+        val deadline = System.currentTimeMillis() + timeoutMs
+        val targets = listOf(
+            sourceUrl,
+            "$sourceUrl/",
+            baseUrl,
+            "$baseUrl/"
+        ).distinct()
+
+        while (System.currentTimeMillis() <= deadline) {
+            val cookieHeader = targets.firstNotNullOfOrNull { candidate ->
+                cookieManager.getCookie(candidate)?.takeIf { it.contains("cf_clearance=") }
+            }
+            if (!cookieHeader.isNullOrBlank() &&
+                cookieHeader.contains("XSRF-TOKEN=", ignoreCase = true) &&
+                cookieHeader.contains("filmy_i_seriale_online_za_darmo_session=", ignoreCase = true)
+            ) {
+                cookieHeader.split(";")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .forEach { cookie ->
+                        val rootCookie = if (cookie.contains("Path=", ignoreCase = true)) {
+                            cookie
+                        } else {
+                            "$cookie; Path=/"
+                        }
+                        targets.forEach { target ->
+                            cookieManager.setCookie(target, rootCookie)
+                        }
+                    }
+                cookieManager.flush()
+                FilmyOnlineCfClearanceStore.update(cookieHeader)
+                return@withContext true
+            }
+            delay(200)
+        }
+
+        FilmyOnlineCfClearanceStore.update(null)
+        false
     }
 
     private fun JSONArray.toTitleItems(): List<AppAdapter.Item> {
@@ -379,10 +470,11 @@ object FilmyOnlineCcProvider : BaseProvider(){
         )
 
         val commonTitle = title.optString("name")
-        val commonOverview = title.optString("description").ifBlank { null }
-        val commonReleased = title.optString("release_date").ifBlank { title.optString("year").ifBlank { null } }
-        val commonPoster = title.optString("poster").ifBlank { null }
-        val commonBanner = title.optString("backdrop").ifBlank { null }
+        val commonOverview = title.optString("description").takeIf { it.isNotBlank() }
+        val commonReleased = title.optString("release_date").takeIf { it.isNotBlank() }
+            ?: title.optString("year").takeIf { it.isNotBlank() }
+        val commonPoster = title.optString("poster").takeIf { it.isNotBlank() }
+        val commonBanner = title.optString("backdrop").takeIf { it.isNotBlank() }
         val commonRating = title.optDouble("rating").takeIf { it > 0.0 }
         val commonRuntime = title.optInt("runtime").takeIf { it > 0 }
 
@@ -526,9 +618,9 @@ object FilmyOnlineCcProvider : BaseProvider(){
                 id = primaryVideoId.toString(),
                 number = episodeNumber,
                 title = episode.optString("name").ifBlank { "Odcinek $episodeNumber" },
-                released = episode.optString("release_date").ifBlank { null },
-                poster = episode.optString("poster").ifBlank { fallbackPoster },
-                overview = episode.optString("description").ifBlank { null }
+                released = episode.optString("release_date").takeIf { it.isNotBlank() },
+                poster = episode.optString("poster").takeIf { it.isNotBlank() } ?: fallbackPoster,
+                overview = episode.optString("description").takeIf { it.isNotBlank() }
             )
         }
     }
@@ -571,6 +663,90 @@ object FilmyOnlineCcProvider : BaseProvider(){
         ).joinToString("|")
     }
 
+    private fun cacheBootstrapCsrfToken(root: JSONObject) {
+        val token = root.optString("csrf_token").takeIf { it.isNotBlank() } ?: return
+        bootstrapCsrfToken = token
+    }
+
+    private fun buildBrowserApiRequest(url: String, referer: String = "$baseUrl/"): Request {
+        val cookieHeader = currentBrowserCookieHeader()
+        val xsrfToken = resolveXsrfToken(cookieHeader)
+
+        return Request.Builder()
+            .url(url)
+            .header("Referer", referer)
+            .header("Accept", "application/json")
+            .header("Accept-Language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7")
+            .header("Sec-Fetch-Dest", "empty")
+            .header("Sec-Fetch-Mode", "cors")
+            .header("Sec-Fetch-Site", "same-origin")
+            .apply {
+                if (!cookieHeader.isNullOrBlank()) {
+                    header("Cookie", cookieHeader)
+                }
+                if (!xsrfToken.isNullOrBlank()) {
+                    header("X-XSRF-TOKEN", xsrfToken)
+                }
+            }
+            .build()
+    }
+
+    private fun currentBrowserCookieHeader(): String? {
+        val stored = FilmyOnlineCfClearanceStore.cookieHeader()
+        if (!stored.isNullOrBlank()) return stored
+
+        val cookieManager = CookieManager.getInstance()
+        val targets = listOf(
+            baseUrl,
+            "$baseUrl/",
+            "$baseUrl/api/v1/",
+        )
+        return targets.firstNotNullOfOrNull { candidate ->
+            cookieManager.getCookie(candidate)?.takeIf { it.isNotBlank() }
+        }
+    }
+
+    private fun resolveXsrfToken(cookieHeader: String?): String? {
+        val fromCookies = cookieHeader
+            ?.split(";")
+            ?.map { it.trim() }
+            ?.firstOrNull { it.startsWith("XSRF-TOKEN=", ignoreCase = true) }
+            ?.substringAfter("=", "")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { runCatching { URLDecoder.decode(it, Charsets.UTF_8.name()) }.getOrDefault(it) }
+
+        return fromCookies ?: bootstrapCsrfToken
+    }
+
+    private fun isBrowserSessionReady(html: String, cookies: String): Boolean {
+        return html.contains("window.bootstrapData =") &&
+            cookies.contains("cf_clearance=", ignoreCase = true) &&
+            cookies.contains("XSRF-TOKEN=", ignoreCase = true) &&
+            cookies.contains("filmy_i_seriale_online_za_darmo_session=", ignoreCase = true)
+    }
+
+    private fun bootstrapChannelObjects(root: JSONObject): List<JSONObject> {
+        return root.optJSONObject("loaders")
+            ?.optJSONObject("channelPage")
+            ?.optJSONObject("channel")
+            ?.optJSONObject("content")
+            ?.optJSONArray("data")
+            .orEmptyJsonArray()
+            .toJsonObjectList()
+    }
+
+    private fun bootstrapTitleItems(root: JSONObject, channelPredicate: (JSONObject) -> Boolean = { true }): List<AppAdapter.Item> {
+        return bootstrapChannelObjects(root)
+            .filter(channelPredicate)
+            .flatMap { channel ->
+                channel.optJSONObject("content")
+                    ?.optJSONArray("data")
+                    .orEmptyJsonArray()
+                    .toTitleItems()
+            }
+            .distinctBy(::itemKey)
+    }
+
     private suspend fun fetchSeasonEpisodes(
         titleId: Int,
         titleSlug: String,
@@ -580,8 +756,8 @@ object FilmyOnlineCcProvider : BaseProvider(){
         val root = getBootstrapRoot(getDocument(buildSeasonUrl(titleId, titleSlug, seasonNumber)))
         val seasonPage = root.optJSONObject("loaders")?.optJSONObject("seasonPage") ?: return emptyList()
         val seasonPoster = seasonPage.optJSONObject("season")?.optString("poster")
-        val fallbackPoster = seasonPoster?.ifBlank { null }
-            ?: title.optString("poster").ifBlank { null }
+        val fallbackPoster = seasonPoster?.takeIf { it.isNotBlank() }
+            ?: title.optString("poster").takeIf { it.isNotBlank() }
 
         return seasonPage.optJSONObject("episodes")
             ?.optJSONArray("data")
@@ -611,13 +787,13 @@ object FilmyOnlineCcProvider : BaseProvider(){
             ?.optJSONObject("watchPage")
             ?.optJSONObject("title")
             ?.optString("name")
-            ?.ifBlank { null }
+            ?.takeIf { it.isNotBlank() }
             ?: root.optJSONObject("loaders")
                 ?.optJSONObject("watchPage")
                 ?.optJSONObject("video")
                 ?.optJSONObject("title")
                 ?.optString("name")
-                ?.ifBlank { null }
+                ?.takeIf { it.isNotBlank() }
 
         return slugifyTitle(watchTitle)
     }
@@ -632,7 +808,7 @@ object FilmyOnlineCcProvider : BaseProvider(){
             .replace(Regex("[^a-z0-9]+"), "-")
             .trim('-')
 
-        return normalized.ifBlank { null }
+        return normalized.takeIf { it.isNotBlank() }
     }
 
     private fun requiresClearance(html: String): Boolean {

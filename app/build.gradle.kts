@@ -130,6 +130,17 @@ dependencies {
     implementation(libs.conscrypt.android)
     implementation(libs.browser)
     implementation(libs.nanohttpd)
+
+    // --- Dependencies portadas del upstream (favoritos/Supabase + SVG + Cronet) ---
+    implementation("com.caverock:androidsvg-aar:1.4")
+    implementation("org.chromium.net:cronet-embedded:119.6045.31")
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.2.2"))
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
+    implementation("io.ktor:ktor-client-okhttp:3.2.2")
+    testImplementation("junit:junit:4.13.2")
+
     implementation(libs.zxing.core)
     implementation(libs.java.websocket)
 }

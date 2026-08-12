@@ -15,6 +15,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.streamflixreborn.streamflix.utils.SubtitleOffsetRenderersFactory
 import com.streamflixreborn.streamflix.utils.UserPreferences
 
 /**
@@ -185,7 +186,7 @@ object PlaybackSession {
         val baseBuilder = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1 && !softwareDecoder) {
             ExoPlayer.Builder(context)
         } else {
-            val renderersFactory = DefaultRenderersFactory(context).apply {
+            val renderersFactory = SubtitleOffsetRenderersFactory(context).apply {
                 setEnableDecoderFallback(true)
                 if (softwareDecoder) {
                     setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)

@@ -110,7 +110,6 @@ object ProviderRegistry {
             "HDFilmeProvider",
             "MEGAKinoProvider",
             "FilmyOnlineCcProvider",
-            "ZeriunProvider",
             "TvporinternetHDProvider",
             "FrembedProvider",
             "KidrazProvider",

@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
+import org.json.JSONArray
 
 object UserPreferences {
 
@@ -507,6 +508,48 @@ object UserPreferences {
             val key = if (activeId.isNullOrEmpty()) Key.FAVORITE_PROVIDERS.name else "${Key.FAVORITE_PROVIDERS.name}_$activeId"
             setStringSet(key, value)
         }
+
+    /** Key dinámico (por provider/sección) sobre DataStore, con la misma semántica de Key. */
+    private fun getPrefString(keyName: String): String? =
+        snapshotFlow.value[stringPreferencesKey(keyName)]
+
+    private fun setPrefString(keyName: String, value: String?) = edit {
+        if (value == null) remove(stringPreferencesKey(keyName)) else set(stringPreferencesKey(keyName), value)
+    }
+
+    fun getFavoriteCategoryOrder(providerName: String): List<String> {
+        val key = "FAVORITE_CATEGORY_ORDER_$providerName"
+        val saved = getPrefString(key)
+            ?.split(',')
+            ?.filter { it == "movies" || it == "tv_shows" }
+            .orEmpty()
+        return (saved + listOf("movies", "tv_shows")).distinct()
+    }
+
+    fun setFavoriteCategoryOrder(providerName: String, order: List<String>) {
+        val normalized = (order.filter { it == "movies" || it == "tv_shows" } +
+            listOf("movies", "tv_shows")).distinct()
+        setPrefString("FAVORITE_CATEGORY_ORDER_$providerName", normalized.joinToString(","))
+    }
+
+    fun getFavoriteItemOrder(providerName: String, section: String): List<String> {
+        val raw = getPrefString("FAVORITE_ITEM_ORDER_${providerName}_$section") ?: return emptyList()
+        return runCatching {
+            val json = JSONArray(raw)
+            List(json.length()) { index -> json.getString(index) }
+        }.getOrDefault(emptyList())
+    }
+
+    fun setFavoriteItemOrder(providerName: String, section: String, order: List<String>) {
+        setPrefString("FAVORITE_ITEM_ORDER_${providerName}_$section", JSONArray(order).toString())
+    }
+
+    fun getFavoriteSortMode(providerName: String): String =
+        getPrefString("FAVORITE_SORT_MODE_$providerName") ?: "manual"
+
+    fun setFavoriteSortMode(providerName: String, mode: String) {
+        setPrefString("FAVORITE_SORT_MODE_$providerName", mode)
+    }
 
     private enum class Key {
         APP_LAYOUT,

@@ -284,6 +284,9 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
 
         updateOverviewLabels()
         updateProviderVisibilityState()
+        SupabaseSettingsController.bind(this, lifecycleScope) { key ->
+            findPreference(key)
+        }
 
         findPreference<EditTextPreference>("provider_streamingcommunity_domain")?.apply {
             val currentValue = UserPreferences.streamingcommunityDomain
