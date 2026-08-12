@@ -65,6 +65,10 @@ android {
 
     lint {
         baseline = file("lint-baseline.xml")
+        // The SuspiciousIndentation detector crashes (IllegalArgumentException in
+        // IndentationDetector/Location) on several Kotlin files in this project.
+        // This is an upstream lint bug; the check is disabled to keep lint usable.
+        disable += "SuspiciousIndentation"
     }
 }
 
@@ -86,6 +90,7 @@ dependencies {
     implementation(project(":navigation"))
 
     implementation(libs.core.ktx)
+    implementation(libs.datastore.preferences)
     implementation(libs.leanback)
     implementation(libs.glide)
     implementation(libs.glide.okhttp3.integration)

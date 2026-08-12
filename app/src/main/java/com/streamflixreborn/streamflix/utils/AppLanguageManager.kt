@@ -3,7 +3,6 @@ package com.streamflixreborn.streamflix.utils
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
-import com.streamflixreborn.streamflix.BuildConfig
 import com.streamflixreborn.streamflix.R
 import java.util.Locale
 
@@ -36,9 +35,10 @@ object AppLanguageManager {
     }
 
     fun getSelectedLanguage(context: Context): String {
-        val storedLanguage = context
-            .getSharedPreferences("${BuildConfig.APPLICATION_ID}.preferences", Context.MODE_PRIVATE)
-            .getString("CURRENT_LANGUAGE", null)
+        // CURRENT_LANGUAGE lives in the app DataStore (was SharedPreferences).
+        // UserPreferences.setup() runs in StreamFlixApp.attachBaseContext before
+        // wrap(), so the in-memory snapshot already holds the persisted value.
+        val storedLanguage = UserPreferences.currentLanguage
             ?.takeIf { it == SYSTEM_LANGUAGE || it in getAvailableLanguageTags(context) }
 
         return storedLanguage ?: SYSTEM_LANGUAGE

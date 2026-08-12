@@ -3,13 +3,13 @@
     <file name="src/main/java/com/streamflixreborn/streamflix/StreamFlixApp.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="31" column="21" source="standard:backing-property-naming" />
-        <error line="46" column="44" source="standard:multiline-expression-wrapping" />
-        <error line="47" column="44" source="standard:function-signature" />
-        <error line="47" column="64" source="standard:function-signature" />
-        <error line="47" column="91" source="standard:function-signature" />
-        <error line="63" column="54" source="standard:function-signature" />
-        <error line="63" column="74" source="standard:function-signature" />
-        <error line="63" column="90" source="standard:function-signature" />
+        <error line="49" column="44" source="standard:multiline-expression-wrapping" />
+        <error line="50" column="44" source="standard:function-signature" />
+        <error line="50" column="64" source="standard:function-signature" />
+        <error line="50" column="91" source="standard:function-signature" />
+        <error line="66" column="54" source="standard:function-signature" />
+        <error line="66" column="74" source="standard:function-signature" />
+        <error line="66" column="90" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/activities/main/AppLauncherActivity.kt">
         <error line="16" column="26" source="standard:multiline-expression-wrapping" />
@@ -24030,28 +24030,31 @@
         <error line="98" column="1" source="standard:final-newline" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/utils/AniWorldUpdateTvShowWorker.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="16" column="1" source="standard:no-unused-imports" />
-        <error line="23" column="35" source="standard:trailing-comma-on-declaration-site" />
-        <error line="28" column="50" source="standard:op-spacing" />
+        <error line="24" column="35" source="standard:trailing-comma-on-declaration-site" />
         <error line="35" column="45" source="standard:multiline-expression-wrapping" />
         <error line="35" column="45" source="standard:function-signature" />
-        <error line="51" column="42" source="standard:multiline-expression-wrapping" />
-        <error line="56" column="55" source="standard:multiline-expression-wrapping" />
-        <error line="58" column="69" source="standard:trailing-comma-on-call-site" />
-        <error line="67" column="35" source="standard:unnecessary-parentheses-before-trailing-lambda" />
-        <error line="75" column="28" source="standard:multiline-expression-wrapping" />
-        <error line="80" column="47" source="standard:multiline-expression-wrapping" />
-        <error line="82" column="65" source="standard:trailing-comma-on-call-site" />
-        <error line="96" column="23" source="standard:unnecessary-parentheses-before-trailing-lambda" />
-        <error line="100" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="105" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="53" column="42" source="standard:multiline-expression-wrapping" />
+        <error line="58" column="55" source="standard:multiline-expression-wrapping" />
+        <error line="60" column="69" source="standard:trailing-comma-on-call-site" />
+        <error line="77" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="82" column="47" source="standard:multiline-expression-wrapping" />
+        <error line="84" column="65" source="standard:trailing-comma-on-call-site" />
+        <error line="102" column="1" source="standard:no-blank-line-before-rbrace" />
         <error line="107" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="109" column="1" source="standard:no-blank-line-before-rbrace" />
+    </file>
+    <file name="src/main/java/com/streamflixreborn/streamflix/utils/AppDataStores.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="31" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="58" column="29" source="standard:function-signature" />
+        <error line="58" column="47" source="standard:function-signature" />
+        <error line="58" column="58" source="standard:function-signature" />
+        <error line="58" column="70" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/utils/AppLanguageManager.kt">
-        <error line="13" column="42" source="standard:multiline-expression-wrapping" />
-        <error line="24" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="39" column="30" source="standard:multiline-expression-wrapping" />
+        <error line="12" column="42" source="standard:multiline-expression-wrapping" />
+        <error line="23" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="41" column="30" source="standard:multiline-expression-wrapping" />
         <error line="48" column="26" source="standard:multiline-expression-wrapping" />
         <error line="57" column="29" source="standard:multiline-expression-wrapping" />
         <error line="68" column="18" source="standard:trailing-comma-on-call-site" />
@@ -25246,76 +25249,73 @@
         <error line="515" column="1" source="standard:no-blank-line-in-list" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="20" column="1" source="standard:no-empty-first-line-in-class-body" />
-        <error line="51" column="17" source="standard:multiline-expression-wrapping" />
-        <error line="63" column="1" source="standard:no-consecutive-blank-lines" />
-        <error line="89" column="26" source="standard:function-signature" />
-        <error line="89" column="46" source="standard:function-signature" />
-        <error line="89" column="57" source="standard:function-signature" />
-        <error line="89" column="67" source="standard:function-expression-body" />
-        <error line="96" column="26" source="standard:function-signature" />
-        <error line="96" column="47" source="standard:function-signature" />
-        <error line="96" column="60" source="standard:function-signature" />
-        <error line="96" column="73" source="standard:function-signature" />
-        <error line="98" column="25" source="standard:multiline-expression-wrapping" />
-        <error line="127" column="17" source="standard:multiline-expression-wrapping" />
-        <error line="302" column="99" source="standard:no-semi" />
-        <error line="302" column="99" source="standard:trailing-comma-on-declaration-site" />
-        <error line="306" column="17" source="standard:multiline-expression-wrapping" />
-        <error line="315" column="17" source="standard:multiline-expression-wrapping" />
-        <error line="326" column="72" source="standard:trailing-comma-on-call-site" />
-        <error line="547" column="27" source="standard:trailing-comma-on-declaration-site" />
-        <error line="549" column="44" source="standard:multiline-expression-wrapping" />
-        <error line="549" column="44" source="standard:function-signature" />
-        <error line="554" column="49" source="standard:multiline-expression-wrapping" />
-        <error line="554" column="49" source="standard:function-signature" />
-        <error line="561" column="38" source="standard:multiline-expression-wrapping" />
-        <error line="561" column="38" source="standard:function-signature" />
-        <error line="566" column="34" source="standard:multiline-expression-wrapping" />
-        <error line="566" column="34" source="standard:function-signature" />
-        <error line="571" column="30" source="standard:multiline-expression-wrapping" />
-        <error line="571" column="30" source="standard:function-signature" />
-        <error line="576" column="32" source="standard:multiline-expression-wrapping" />
-        <error line="576" column="32" source="standard:function-signature" />
-        <error line="581" column="36" source="standard:multiline-expression-wrapping" />
-        <error line="581" column="36" source="standard:function-signature" />
-        <error line="586" column="43" source="standard:multiline-expression-wrapping" />
-        <error line="586" column="43" source="standard:function-signature" />
-        <error line="593" column="39" source="standard:multiline-expression-wrapping" />
-        <error line="593" column="39" source="standard:function-signature" />
-        <error line="600" column="35" source="standard:multiline-expression-wrapping" />
-        <error line="600" column="35" source="standard:function-signature" />
-        <error line="607" column="37" source="standard:multiline-expression-wrapping" />
-        <error line="607" column="37" source="standard:function-signature" />
-        <error line="614" column="41" source="standard:multiline-expression-wrapping" />
-        <error line="614" column="41" source="standard:function-signature" />
-        <error line="621" column="24" source="standard:multiline-expression-wrapping" />
-        <error line="621" column="24" source="standard:function-signature" />
+        <error line="36" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="103" column="30" source="standard:function-signature" />
+        <error line="103" column="47" source="standard:function-signature" />
+        <error line="103" column="65" source="standard:function-signature" />
+        <error line="103" column="69" source="standard:multiline-expression-wrapping" />
+        <error line="103" column="69" source="standard:function-signature" />
+        <error line="132" column="26" source="standard:function-signature" />
+        <error line="132" column="46" source="standard:function-signature" />
+        <error line="132" column="57" source="standard:function-signature" />
+        <error line="132" column="67" source="standard:function-expression-body" />
+        <error line="139" column="26" source="standard:function-signature" />
+        <error line="139" column="47" source="standard:function-signature" />
+        <error line="139" column="60" source="standard:function-signature" />
+        <error line="139" column="73" source="standard:function-signature" />
+        <error line="141" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="170" column="17" source="standard:multiline-expression-wrapping" />
+        <error line="345" column="99" source="standard:no-semi" />
+        <error line="345" column="99" source="standard:trailing-comma-on-declaration-site" />
+        <error line="349" column="17" source="standard:multiline-expression-wrapping" />
+        <error line="358" column="17" source="standard:multiline-expression-wrapping" />
+        <error line="369" column="72" source="standard:trailing-comma-on-call-site" />
+        <error line="555" column="27" source="standard:trailing-comma-on-declaration-site" />
+        <error line="567" column="43" source="standard:multiline-expression-wrapping" />
+        <error line="567" column="43" source="standard:function-signature" />
+        <error line="571" column="39" source="standard:multiline-expression-wrapping" />
+        <error line="571" column="39" source="standard:function-signature" />
+        <error line="575" column="35" source="standard:multiline-expression-wrapping" />
+        <error line="575" column="35" source="standard:function-signature" />
+        <error line="579" column="37" source="standard:multiline-expression-wrapping" />
+        <error line="579" column="37" source="standard:function-signature" />
+        <error line="583" column="41" source="standard:multiline-expression-wrapping" />
+        <error line="583" column="41" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/utils/UserProfileManager.kt">
-        <error line="17" column="45" source="standard:function-signature" />
-        <error line="37" column="32" source="standard:function-signature" />
-        <error line="37" column="50" source="standard:function-signature" />
-        <error line="37" column="68" source="standard:function-signature" />
-        <error line="42" column="29" source="standard:function-signature" />
-        <error line="42" column="47" source="standard:function-signature" />
-        <error line="42" column="63" source="standard:function-signature" />
-        <error line="60" column="55" source="standard:function-expression-body" />
-        <error line="70" column="26" source="standard:function-signature" />
-        <error line="70" column="44" source="standard:function-signature" />
-        <error line="70" column="61" source="standard:function-signature" />
-        <error line="89" column="61" source="standard:chain-method-continuation" />
-        <error line="90" column="73" source="standard:chain-method-continuation" />
-        <error line="94" column="37" source="standard:function-signature" />
-        <error line="94" column="55" source="standard:function-signature" />
-        <error line="94" column="75" source="standard:function-signature" />
-        <error line="101" column="21" source="standard:function-signature" />
-        <error line="101" column="39" source="standard:function-signature" />
-        <error line="101" column="59" source="standard:function-signature" />
-        <error line="119" column="23" source="standard:function-signature" />
-        <error line="119" column="41" source="standard:function-signature" />
-        <error line="119" column="58" source="standard:function-signature" />
+        <error line="75" column="22" source="standard:function-signature" />
+        <error line="75" column="40" source="standard:function-signature" />
+        <error line="75" column="80" source="standard:function-signature" />
+        <error line="83" column="27" source="standard:function-signature" />
+        <error line="83" column="45" source="standard:function-signature" />
+        <error line="83" column="56" source="standard:function-signature" />
+        <error line="88" column="27" source="standard:function-signature" />
+        <error line="88" column="45" source="standard:function-signature" />
+        <error line="88" column="58" source="standard:function-signature" />
+        <error line="88" column="72" source="standard:function-signature" />
+        <error line="88" column="76" source="standard:multiline-expression-wrapping" />
+        <error line="88" column="76" source="standard:function-signature" />
+        <error line="92" column="32" source="standard:function-signature" />
+        <error line="92" column="50" source="standard:function-signature" />
+        <error line="92" column="68" source="standard:function-signature" />
+        <error line="99" column="29" source="standard:function-signature" />
+        <error line="99" column="47" source="standard:function-signature" />
+        <error line="99" column="63" source="standard:function-signature" />
+        <error line="120" column="55" source="standard:function-expression-body" />
+        <error line="130" column="26" source="standard:function-signature" />
+        <error line="130" column="44" source="standard:function-signature" />
+        <error line="130" column="61" source="standard:function-signature" />
+        <error line="149" column="61" source="standard:chain-method-continuation" />
+        <error line="150" column="73" source="standard:chain-method-continuation" />
+        <error line="154" column="37" source="standard:function-signature" />
+        <error line="154" column="55" source="standard:function-signature" />
+        <error line="154" column="75" source="standard:function-signature" />
+        <error line="161" column="21" source="standard:function-signature" />
+        <error line="161" column="39" source="standard:function-signature" />
+        <error line="161" column="59" source="standard:function-signature" />
+        <error line="179" column="23" source="standard:function-signature" />
+        <error line="179" column="41" source="standard:function-signature" />
+        <error line="179" column="58" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/streamflixreborn/streamflix/utils/VoiceRecognitionHelper.kt">
         <error line="18" column="1" source="standard:no-wildcard-imports" />

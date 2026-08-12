@@ -37,6 +37,9 @@ class StreamFlixApp : Application() {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun attachBaseContext(base: Context) {
+        // Initialize DataStore (and migrate SharedPreferences) before the language
+        // wrap reads CURRENT_LANGUAGE, so the resolved locale sees persisted data.
+        UserPreferences.setup(base)
         super.attachBaseContext(AppLanguageManager.wrap(base))
     }
 

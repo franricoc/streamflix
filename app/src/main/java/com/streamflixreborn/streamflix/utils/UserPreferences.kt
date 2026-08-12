@@ -1,26 +1,40 @@
 package com.streamflixreborn.streamflix.utils
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
-import com.streamflixreborn.streamflix.StreamFlixApp
 import com.streamflixreborn.streamflix.BuildConfig
 import com.streamflixreborn.streamflix.R
+import com.streamflixreborn.streamflix.StreamFlixApp
+import com.streamflixreborn.streamflix.database.AppDatabase
 import com.streamflixreborn.streamflix.fragments.player.settings.PlayerSettingsView
 import com.streamflixreborn.streamflix.providers.Provider
 import com.streamflixreborn.streamflix.providers.Provider.Companion.providers
 import com.streamflixreborn.streamflix.providers.TmdbProvider
-import androidx.core.content.edit
-import com.streamflixreborn.streamflix.database.AppDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
 object UserPreferences {
 
     private const val TAG = "UserPrefsDebug"
-
-    private lateinit var prefs: SharedPreferences
 
     // Default DoH Provider URL (Cloudflare)
     private const val DEFAULT_DOH_PROVIDER_URL = "https://cloudflare-dns.com/dns-query"
@@ -40,6 +54,19 @@ object UserPreferences {
 
     lateinit var providerCache: JSONObject
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // In-memory snapshot of the DataStore. Reads keep the exact same synchronous
+    // API as before while writes go through DataStore (async, Flow-based) and
+    // update the snapshot immediately (write-through) for read-after-write
+    // consistency. MutableStateFlow makes snapshot updates atomic across threads.
+    // Note: with two rapid edits in flight the DataStore collector can briefly
+    // deliver an intermediate state; the snapshot self-corrects on the next
+    // emission, so the window is transient and theoretical in practice.
+    private val snapshotFlow = MutableStateFlow<Preferences>(emptyPreferences())
+
+    private var isSetup = false
+
     private inline fun debugLog(message: () -> String) {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, message())
@@ -47,19 +74,35 @@ object UserPreferences {
     }
 
     fun setup(context: Context) {
-        val prefsName = "${BuildConfig.APPLICATION_ID}.preferences"
-        prefs = context.getSharedPreferences(
-            prefsName,
-            Context.MODE_PRIVATE,
-        )
-        if (::prefs.isInitialized) {
-            debugLog { "prefs initialized: ${prefs.hashCode()}" }
+        if (isSetup) return
+        AppDataStores.init(context)
+        // Synchronously load the initial state (this also runs the
+        // SharedPreferences -> DataStore migration) so every consumer reads the
+        // persisted values right away, exactly like the old synchronous API.
+        snapshotFlow.value = runBlocking { AppDataStores.appPreferencesDataStore.data.first() }
+        scope.launch {
+            AppDataStores.appPreferencesDataStore.data.collect { snapshotFlow.value = it }
+        }
+        isSetup = true
 
-            val jsonString = Key.PROVIDER_CACHE.getString() ?: "{}"
-            providerCache = runCatching { JSONObject(jsonString) }.getOrDefault(JSONObject())
+        val jsonString = Key.PROVIDER_CACHE.getString() ?: "{}"
+        providerCache = runCatching { JSONObject(jsonString) }.getOrDefault(JSONObject())
+        debugLog { "preferences initialized: ${snapshotFlow.value.asMap().size} keys" }
+    }
+
+    /** Write-through: applies to the snapshot synchronously and persists async. */
+    private fun edit(transform: MutablePreferences.() -> Unit) {
+        snapshotFlow.update { it.toMutablePreferences().apply(transform) }
+        scope.launch {
+            AppDataStores.appPreferencesDataStore.edit(transform)
         }
     }
 
+    private fun getStringSet(keyName: String): Set<String>? = snapshotFlow.value[stringSetPreferencesKey(keyName)]
+
+    private fun setStringSet(keyName: String, value: Set<String>) = edit {
+        set(stringSetPreferencesKey(keyName), value)
+    }
 
     var currentProvider: Provider?
         get() {
@@ -350,11 +393,11 @@ object UserPreferences {
         set(value) = Key.SUBTITLE_NAME.setString(value)
     var streamingcommunityDomain: String
         get() {
-            if (!::prefs.isInitialized) {
-                Log.e(TAG, "streamingcommunityDomain GET: prefs is not initialized")
+            if (!isSetup) {
+                Log.e(TAG, "streamingcommunityDomain GET: preferences not initialized")
                 return DEFAULT_STREAMINGCOMMUNITY_DOMAIN
             }
-            val storedValue = prefs.getString(Key.STREAMINGCOMMUNITY_DOMAIN.name, null)
+            val storedValue = Key.STREAMINGCOMMUNITY_DOMAIN.getString()
             return if (storedValue.isNullOrEmpty()) {
                 DEFAULT_STREAMINGCOMMUNITY_DOMAIN
             } else {
@@ -362,115 +405,80 @@ object UserPreferences {
             }
         }
         set(value) {
-            val oldDomain = if (::prefs.isInitialized) prefs.getString(Key.STREAMINGCOMMUNITY_DOMAIN.name, null) else null
-            if (!::prefs.isInitialized) {
-                Log.e(TAG, "streamingcommunityDomain SET: prefs is not initialized")
+            if (!isSetup) {
+                Log.e(TAG, "streamingcommunityDomain SET: preferences not initialized")
                 return
             }
+            val oldDomain = Key.STREAMINGCOMMUNITY_DOMAIN.getString()
 
             if (value != oldDomain && !value.isNullOrEmpty() && !oldDomain.isNullOrEmpty()) {
                 clearProviderCache("StreamingCommunity")
             }
 
-            with(prefs.edit()) {
-                if (value.isNullOrEmpty()) {
-                    remove(Key.STREAMINGCOMMUNITY_DOMAIN.name)
-                } else {
-                    putString(Key.STREAMINGCOMMUNITY_DOMAIN.name, value)
-                }
-                apply()
-            }
+            Key.STREAMINGCOMMUNITY_DOMAIN.setString(value?.takeUnless { it.isNullOrEmpty() })
         }
 
     var serienstreamDomain: String
         get() {
-            if (!::prefs.isInitialized) return DEFAULT_SERIENSTREAM_DOMAIN
-            val storedValue = prefs.getString(Key.SERIENSTREAM_DOMAIN.name, null)
+            if (!isSetup) return DEFAULT_SERIENSTREAM_DOMAIN
+            val storedValue = Key.SERIENSTREAM_DOMAIN.getString()
             return if (storedValue.isNullOrEmpty()) DEFAULT_SERIENSTREAM_DOMAIN else storedValue
         }
         set(value) {
-            val oldDomain = if (::prefs.isInitialized) prefs.getString(Key.SERIENSTREAM_DOMAIN.name, null) else null
-            if (!::prefs.isInitialized) return
+            if (!isSetup) return
+            val oldDomain = Key.SERIENSTREAM_DOMAIN.getString()
 
             if (value != oldDomain && !value.isNullOrEmpty() && !oldDomain.isNullOrEmpty()) {
                 clearProviderCache("SerienStream")
             }
 
-            with(prefs.edit()) {
-                if (value.isNullOrEmpty()) {
-                    remove(Key.SERIENSTREAM_DOMAIN.name)
-                } else {
-                    putString(Key.SERIENSTREAM_DOMAIN.name, value)
-                }
-                apply()
-            }
+            Key.SERIENSTREAM_DOMAIN.setString(value?.takeUnless { it.isNullOrEmpty() })
         }
 
     var cuevanaDomain: String
         get() {
-            if (!::prefs.isInitialized) return DEFAULT_CUEVANA_DOMAIN
-            val storedValue = prefs.getString(Key.CUEVANA_DOMAIN.name, null)
+            if (!isSetup) return DEFAULT_CUEVANA_DOMAIN
+            val storedValue = Key.CUEVANA_DOMAIN.getString()
             return if (storedValue.isNullOrEmpty()) DEFAULT_CUEVANA_DOMAIN else storedValue
         }
         set(value) {
-            val oldDomain = if (::prefs.isInitialized) prefs.getString(Key.CUEVANA_DOMAIN.name, null) else null
-            if (!::prefs.isInitialized) return
+            if (!isSetup) return
 
+            val oldDomain = Key.CUEVANA_DOMAIN.getString()
             if (value != oldDomain && !value.isNullOrEmpty() && !oldDomain.isNullOrEmpty()) {
                 clearProviderCache("Cuevana 3")
             }
 
-            with(prefs.edit()) {
-                if (value.isNullOrEmpty()) {
-                    remove(Key.CUEVANA_DOMAIN.name)
-                } else {
-                    putString(Key.CUEVANA_DOMAIN.name, value)
-                }
-                apply()
-            }
+            Key.CUEVANA_DOMAIN.setString(value?.takeUnless { it.isNullOrEmpty() })
         }
 
     var poseidonDomain: String
         get() {
-            if (!::prefs.isInitialized) return DEFAULT_POSEIDON_DOMAIN
-            val storedValue = prefs.getString(Key.POSEIDON_DOMAIN.name, null)
+            if (!isSetup) return DEFAULT_POSEIDON_DOMAIN
+            val storedValue = Key.POSEIDON_DOMAIN.getString()
             return if (storedValue.isNullOrEmpty()) DEFAULT_POSEIDON_DOMAIN else storedValue
         }
         set(value) {
-            val oldDomain = if (::prefs.isInitialized) prefs.getString(Key.POSEIDON_DOMAIN.name, null) else null
-            if (!::prefs.isInitialized) return
+            if (!isSetup) return
 
+            val oldDomain = Key.POSEIDON_DOMAIN.getString()
             if (value != oldDomain && !value.isNullOrEmpty() && !oldDomain.isNullOrEmpty()) {
                 clearProviderCache("Poseidonhd2")
             }
 
-            with(prefs.edit()) {
-                if (value.isNullOrEmpty()) {
-                    remove(Key.POSEIDON_DOMAIN.name)
-                } else {
-                    putString(Key.POSEIDON_DOMAIN.name, value)
-                }
-                apply()
-            }
+            Key.POSEIDON_DOMAIN.setString(value?.takeUnless { it.isNullOrEmpty() })
         }
 
     var moflixDomain: String
         get() {
-            if (!::prefs.isInitialized) return DEFAULT_MOFLIX_DOMAIN
-            val storedValue = prefs.getString(Key.MOFLIX_DOMAIN.name, null)
+            if (!isSetup) return DEFAULT_MOFLIX_DOMAIN
+            val storedValue = Key.MOFLIX_DOMAIN.getString()
             return if (storedValue.isNullOrEmpty()) DEFAULT_MOFLIX_DOMAIN else storedValue
         }
         set(value) {
-            if (!::prefs.isInitialized) return
+            if (!isSetup) return
 
-            with(prefs.edit()) {
-                if (value.isNullOrEmpty()) {
-                    remove(Key.MOFLIX_DOMAIN.name)
-                } else {
-                    putString(Key.MOFLIX_DOMAIN.name, value)
-                }
-                apply()
-            }
+            Key.MOFLIX_DOMAIN.setString(value?.takeUnless { it.isNullOrEmpty() })
         }
 
     var dohProviderUrl: String
@@ -492,12 +500,12 @@ object UserPreferences {
         get() {
             val activeId = UserProfileManager.getActiveProfileId(StreamFlixApp.instance)
             val key = if (activeId.isNullOrEmpty()) Key.FAVORITE_PROVIDERS.name else "${Key.FAVORITE_PROVIDERS.name}_$activeId"
-            return prefs.getStringSet(key, null) ?: emptySet()
+            return getStringSet(key) ?: emptySet()
         }
         set(value) {
             val activeId = UserProfileManager.getActiveProfileId(StreamFlixApp.instance)
             val key = if (activeId.isNullOrEmpty()) Key.FAVORITE_PROVIDERS.name else "${Key.FAVORITE_PROVIDERS.name}_$activeId"
-            prefs.edit { putStringSet(key, value) }
+            setStringSet(key, value)
         }
 
     private enum class Key {
@@ -546,81 +554,34 @@ object UserPreferences {
         PROVIDER_LANGUAGE,
         FAVORITE_PROVIDERS;
 
-        fun getStringSet(): Set<String>? = when {
-            prefs.contains(name) -> prefs.getStringSet(name, null)
-            else -> null
+        fun getBoolean(): Boolean? = snapshotFlow.value[booleanPreferencesKey(name)]
+
+        fun getFloat(): Float? = snapshotFlow.value[floatPreferencesKey(name)]
+
+        fun getInt(): Int? = snapshotFlow.value[intPreferencesKey(name)]
+
+        fun getLong(): Long? = snapshotFlow.value[longPreferencesKey(name)]
+
+        fun getString(): String? = snapshotFlow.value[stringPreferencesKey(name)]
+
+        fun setBoolean(value: Boolean?) = edit {
+            if (value == null) remove(booleanPreferencesKey(name)) else set(booleanPreferencesKey(name), value)
         }
 
-        fun setStringSet(value: Set<String>?) = value?.let {
-            with(prefs.edit()) {
-                putStringSet(name, value)
-                apply()
-            }
-        } ?: remove()
-
-        fun getBoolean(): Boolean? = when {
-            prefs.contains(name) -> prefs.getBoolean(name, false)
-            else -> null
+        fun setFloat(value: Float?) = edit {
+            if (value == null) remove(floatPreferencesKey(name)) else set(floatPreferencesKey(name), value)
         }
 
-        fun getFloat(): Float? = when {
-            prefs.contains(name) -> prefs.getFloat(name, 0F)
-            else -> null
+        fun setInt(value: Int?) = edit {
+            if (value == null) remove(intPreferencesKey(name)) else set(intPreferencesKey(name), value)
         }
 
-        fun getInt(): Int? = when {
-            prefs.contains(name) -> prefs.getInt(name, 0)
-            else -> null
+        fun setLong(value: Long?) = edit {
+            if (value == null) remove(longPreferencesKey(name)) else set(longPreferencesKey(name), value)
         }
 
-        fun getLong(): Long? = when {
-            prefs.contains(name) -> prefs.getLong(name, 0)
-            else -> null
-        }
-
-        fun getString(): String? = when {
-            prefs.contains(name) -> prefs.getString(name, null)
-            else -> null
-        }
-
-        fun setBoolean(value: Boolean?) = value?.let {
-            with(prefs.edit()) {
-                putBoolean(name, value)
-                apply()
-            }
-        } ?: remove()
-
-        fun setFloat(value: Float?) = value?.let {
-            with(prefs.edit()) {
-                putFloat(name, value)
-                apply()
-            }
-        } ?: remove()
-
-        fun setInt(value: Int?) = value?.let {
-            with(prefs.edit()) {
-                putInt(name, value)
-                apply()
-            }
-        } ?: remove()
-
-        fun setLong(value: Long?) = value?.let {
-            with(prefs.edit()) {
-                putLong(name, value)
-                apply()
-            }
-        } ?: remove()
-
-        fun setString(value: String?) = value?.let {
-            with(prefs.edit()) {
-                putString(name, value)
-                apply()
-            }
-        } ?: remove()
-
-        fun remove() = with(prefs.edit()) {
-            remove(name)
-            apply()
+        fun setString(value: String?) = edit {
+            if (value == null) remove(stringPreferencesKey(name)) else set(stringPreferencesKey(name), value)
         }
     }
 }

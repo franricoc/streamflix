@@ -2,30 +2,30 @@ package com.streamflixreborn.streamflix.utils
 
 import android.content.Context
 import android.util.Log
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.streamflixreborn.streamflix.database.AniWorldDatabase
 import com.streamflixreborn.streamflix.models.TvShow
+import com.streamflixreborn.streamflix.providers.AniWorldProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import retrofit2.HttpException
-import java.io.File
-import androidx.core.content.edit
-import com.streamflixreborn.streamflix.database.AniWorldDatabase
-import com.streamflixreborn.streamflix.providers.AniWorldProvider
 
 class AniWorldUpdateTvShowWorker(
     context: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams) {
     companion object {
-        private const val PREFS_NAME = "AniWorldUpdateTvShowsPrefs"
         private const val KEY_PROCESSED_FILE = "processed_aniworld_tvshows_json"
-        private const val AFTER_BOOTUP_ANIWORLD ="after_bootup_aniworld"
+        private const val AFTER_BOOTUP_ANIWORLD = "after_bootup_aniworld"
     }
 
     private val dao = AniWorldDatabase.getInstance(context).tvShowDao()
@@ -34,9 +34,11 @@ class AniWorldUpdateTvShowWorker(
 
     override suspend fun doWork(): Result = coroutineScope {
         try {
-            val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val hasProcessedFile = prefs.getBoolean(KEY_PROCESSED_FILE, false)
-            val isAfterBootUp = prefs.getBoolean(AFTER_BOOTUP_ANIWORLD, false)
+            AppDataStores.init(applicationContext)
+            val dataStore = AppDataStores.aniWorldUpdateDataStore
+            val prefs = dataStore.data.first()
+            val hasProcessedFile = prefs[booleanPreferencesKey(KEY_PROCESSED_FILE)] ?: false
+            val isAfterBootUp = prefs[booleanPreferencesKey(AFTER_BOOTUP_ANIWORLD)] ?: false
             val assetManager = applicationContext.assets
             val inputStream = assetManager.open("aniworld_tvshows.json")
 
@@ -64,7 +66,7 @@ class AniWorldUpdateTvShowWorker(
                             }
                         }
                         updateJobs.awaitAll()
-                        prefs.edit() { putBoolean(KEY_PROCESSED_FILE, true) }
+                        dataStore.edit { it[booleanPreferencesKey(KEY_PROCESSED_FILE)] = true }
                         AniWorldProvider.invalidateCache()
                     } catch (e: Exception) {
                         Log.e("AniWorldWorker", "Failed to process JSON", e)
@@ -93,7 +95,7 @@ class AniWorldUpdateTvShowWorker(
                 }
                 jobs.awaitAll()
             }
-            prefs.edit() { putBoolean(AFTER_BOOTUP_ANIWORLD, true) }
+            dataStore.edit { it[booleanPreferencesKey(AFTER_BOOTUP_ANIWORLD)] = true }
             AniWorldProvider.invalidateCache()
             Log.d("AniWorldWorker", "All updates completed")
             Result.success()

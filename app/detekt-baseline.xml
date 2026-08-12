@@ -2235,7 +2235,6 @@
     <ID>MaxLineLength:UserDataCache.kt$UserDataCache$}</ID>
     <ID>MaxLineLength:UserPreferences.kt$UserPreferences$get</ID>
     <ID>MaxLineLength:UserPreferences.kt$UserPreferences$val key = if (activeId.isNullOrEmpty()) Key.FAVORITE_PROVIDERS.name else "${Key.FAVORITE_PROVIDERS.name}_$activeId"</ID>
-    <ID>MaxLineLength:UserPreferences.kt$UserPreferences$val oldDomain = if (::prefs.isInitialized) prefs.getString(Key.STREAMINGCOMMUNITY_DOMAIN.name, null) else null</ID>
     <ID>MaxLineLength:UserProfile.kt$UserProfile.Companion$avatarType = runCatching { AvatarType.valueOf(json.optString("avatarType", "PRESET")) }.getOrDefault(AvatarType.PRESET)</ID>
     <ID>MaxLineLength:VavooProvider.kt$VavooProvider$return People(id = id, name = "Vavoo", image = logo, biography = "", birthday = "", deathday = "", placeOfBirth = "")</ID>
     <ID>MaxLineLength:VeevExtractor.kt$VeevExtractor$val</ID>
@@ -3331,7 +3330,7 @@
     <ID>TooManyFunctions:TvporinternetHDProvider.kt$TvporinternetHDProvider : BaseProviderIptvProvider</ID>
     <ID>TooManyFunctions:UnJourUnFilmProvider.kt$UnJourUnFilmProvider : BaseProviderProviderPortalUrlProviderConfigUrl</ID>
     <ID>TooManyFunctions:UserDataCache.kt$UserDataCache</ID>
-    <ID>TooManyFunctions:UserPreferences.kt$UserPreferences$Key</ID>
+    <ID>TooManyFunctions:UserPreferences.kt$UserPreferences</ID>
     <ID>TooManyFunctions:UserProfileManager.kt$UserProfileManager</ID>
     <ID>TooManyFunctions:VavooProvider.kt$VavooProvider : BaseProviderIptvProvider</ID>
     <ID>TooManyFunctions:VidsrcNetExtractor.kt$VidsrcNetExtractor : Extractor</ID>
