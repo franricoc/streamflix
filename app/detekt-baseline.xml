@@ -183,10 +183,8 @@
     <ID>CyclomaticComplexMethod:PlayerTvFragment.kt$PlayerTvFragment$override fun onViewCreated(view: View, savedInstanceState: Bundle?)</ID>
     <ID>CyclomaticComplexMethod:PlayerTvFragment.kt$PlayerTvFragment$private fun displayVideo( video: Video, server: Video.Server, startPositionMs: Long? = null, shouldPlay: Boolean = true, )</ID>
     <ID>CyclomaticComplexMethod:PlayerTvView.kt$PlayerTvView$override fun dispatchKeyEvent(event: KeyEvent): Boolean</ID>
-    <ID>CyclomaticComplexMethod:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getHome(): List&lt;Category&gt;</ID>
     <ID>CyclomaticComplexMethod:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getMovie(id: String): Movie</ID>
     <ID>CyclomaticComplexMethod:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
-    <ID>CyclomaticComplexMethod:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getTvShow(id: String): TvShow</ID>
     <ID>CyclomaticComplexMethod:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun search(query: String, page: Int): List&lt;AppAdapter.Item&gt;</ID>
     <ID>CyclomaticComplexMethod:ProvidersViewModel.kt$ProvidersViewModel$fun getProviders(language: String? = null)</ID>
     <ID>CyclomaticComplexMethod:RpmvidExtractor.kt$RpmvidExtractor$override suspend fun extract(link: String): Video</ID>
@@ -327,6 +325,7 @@
     <ID>LargeClass:MovieViewHolder.kt$MovieViewHolder : ViewHolder</ID>
     <ID>LargeClass:PlayerMobileFragment.kt$PlayerMobileFragment : Fragment</ID>
     <ID>LargeClass:PlayerTvFragment.kt$PlayerTvFragment : Fragment</ID>
+    <ID>LargeClass:PoseidonHD2Provider.kt$PoseidonHD2Provider : BaseProvider</ID>
     <ID>LargeClass:SettingsMobileFragment.kt$SettingsMobileFragment : PreferenceFragmentCompat</ID>
     <ID>LargeClass:SettingsTvFragment.kt$SettingsTvFragment : LeanbackPreferenceFragmentCompat</ID>
     <ID>LargeClass:SflixProvider.kt$SflixProvider : BaseProvider</ID>
@@ -1971,9 +1970,6 @@
     <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$"${baseUrl.trimEnd('/')}/serie/$id/temporada/${videoType.season.number}/episodio/${videoType.number}"</ID>
     <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$cast = tmdbMovie.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList()</ID>
     <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$cast = tmdbTv.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList()</ID>
-    <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$if</ID>
-    <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$is TMDb3.Movie -&gt; Movie(id = multi.id.toString(), title = multi.title, poster = multi.posterPath?.w500)</ID>
-    <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$is TMDb3.Tv -&gt; TvShow(id = multi.id.toString(), title = multi.name, poster = multi.posterPath?.w500)</ID>
     <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$items.add(Movie(id = href.substringAfter("/pelicula/"), title = title, released = year, poster = poster))</ID>
     <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$items.add(TvShow(id = href.substringAfter("/serie/"), title = title, released = year, poster = poster))</ID>
     <ID>MaxLineLength:PoseidonHD2Provider.kt$PoseidonHD2Provider$override val logo: String get() = "$baseUrl/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fposeidonhd2.86e0c298.png&amp;w=640&amp;q=75"</ID>
@@ -2679,7 +2675,6 @@
     <ID>ReturnCount:PlutoTvItProvider.kt$PlutoTvItProvider$private fun getAllChannels(): List&lt;M3UChannel&gt;</ID>
     <ID>ReturnCount:PlutoTvMxProvider.kt$PlutoTvMxProvider$private fun getAllChannels(): List&lt;M3UChannel&gt;</ID>
     <ID>ReturnCount:PlutoTvUsProvider.kt$PlutoTvUsProvider$private fun getAllChannels(): List&lt;M3UChannel&gt;</ID>
-    <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$fun parseNextItem(item: JSONObject): Show?</ID>
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getEpisodesBySeason(seasonId: String): List&lt;Episode&gt;</ID>
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getMovie(id: String): Movie</ID>
     <ID>ReturnCount:PoseidonHD2Provider.kt$PoseidonHD2Provider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
@@ -3111,6 +3106,7 @@
     <ID>TooGenericExceptionThrown:PlusPomlaExtractor.kt$PlusPomlaExtractor$throw Exception("Ajax URL not found")</ID>
     <ID>TooGenericExceptionThrown:PlusPomlaExtractor.kt$PlusPomlaExtractor$throw Exception("No sources found")</ID>
     <ID>TooGenericExceptionThrown:PoseidonHD2Provider.kt$PoseidonHD2Provider$throw Exception("Function not available for Poseidonhd2")</ID>
+    <ID>TooGenericExceptionThrown:PoseidonHD2Provider.kt$PoseidonHD2Provider$throw Exception("HTTP $notFoundCode para $url")</ID>
     <ID>TooGenericExceptionThrown:PoseidonHD2Provider.kt$PoseidonHD2Provider$throw Exception("Película no encontrada")</ID>
     <ID>TooGenericExceptionThrown:PoseidonHD2Provider.kt$PoseidonHD2Provider$throw Exception("Serie no encontrada")</ID>
     <ID>TooGenericExceptionThrown:RabbitstreamExtractor.kt$RabbitstreamExtractor.MegacloudExtractor$throw Exception("Failed to match the key")</ID>

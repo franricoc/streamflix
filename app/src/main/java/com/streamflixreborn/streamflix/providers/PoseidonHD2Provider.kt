@@ -34,6 +34,8 @@ object PoseidonHD2Provider : BaseProvider(){
     override val language = "es"
 
     private const val TAG = "PoseidonHD2"
+    private const val HTTP_NOT_FOUND = 404
+    private const val HTTP_GONE = 410
     private var webViewResolver: WebViewResolver? = null
 
     private fun getResolver(): WebViewResolver {
@@ -42,29 +44,34 @@ object PoseidonHD2Provider : BaseProvider(){
         }
     }
 
+    /** Follows host redirects and persists the new domain so future URLs stay valid. */
+    private fun redirectTrackingInterceptor(): okhttp3.Interceptor =
+        okhttp3.Interceptor { chain ->
+            val response = chain.proceed(chain.request())
+            if (response.isRedirect) {
+                val location = response.header("Location")
+                if (!location.isNullOrEmpty()) {
+                    val newHost = if (location.startsWith("http")) {
+                        java.net.URL(location).host
+                    } else {
+                        null
+                    }
+                    if (!newHost.isNullOrEmpty() && newHost != UserPreferences.poseidonDomain) {
+                        Log.d(TAG, "Domain changed from ${UserPreferences.poseidonDomain} to $newHost")
+                        UserPreferences.poseidonDomain = newHost
+                    }
+                }
+            }
+            response
+        }
+
     private suspend fun getDocument(url: String): Document {
+        var notFoundCode: Int? = null
         try {
             val client = NetworkClient.default.newBuilder()
                 .connectTimeout(5, TimeUnit.SECONDS)
                 .readTimeout(5, TimeUnit.SECONDS)
-                .addInterceptor { chain ->
-                    val response = chain.proceed(chain.request())
-                    if (response.isRedirect) {
-                        val location = response.header("Location")
-                        if (!location.isNullOrEmpty()) {
-                            val newHost = if (location.startsWith("http")) {
-                                java.net.URL(location).host
-                            } else {
-                                null
-                            }
-                            if (!newHost.isNullOrEmpty() && newHost != UserPreferences.poseidonDomain) {
-                                Log.d(TAG, "Domain changed from ${UserPreferences.poseidonDomain} to $newHost")
-                                UserPreferences.poseidonDomain = newHost
-                            }
-                        }
-                    }
-                    response
-                }
+                .addInterceptor(redirectTrackingInterceptor())
                 .build()
 
             val request = okhttp3.Request.Builder()
@@ -77,65 +84,39 @@ object PoseidonHD2Provider : BaseProvider(){
 
             if (response.isSuccessful) {
                 val html = response.body?.string() ?: ""
-                if (!html.contains("cf-browser-verification") && !html.contains("Checking your browser") && !html.contains("Just a moment...")) {
+                if (!isCloudflareChallenge(html)) {
                     return Jsoup.parse(html).apply { setBaseUri(baseUrl) }
                 }
+            } else if (response.code == HTTP_NOT_FOUND || response.code == HTTP_GONE) {
+                // The content no longer exists (the site now requires the slug
+                // segment, so bare numeric ids 404). Falling back to the WebView
+                // would open the site's own "Error 404" page fullscreen; fail
+                // fast instead so the app renders its own error state.
+                notFoundCode = response.code
             }
         } catch (e: Exception) {
             Log.e(TAG, "OkHttp failed for $url, trying WebView")
+        }
+
+        if (notFoundCode != null) {
+            throw Exception("HTTP $notFoundCode para $url")
         }
 
         val html = getResolver().get(url)
         return Jsoup.parse(html).apply { setBaseUri(baseUrl) }
     }
 
+    /** True when the site answered with a Cloudflare challenge page instead of real content. */
+    private fun isCloudflareChallenge(html: String): Boolean =
+        html.contains("cf-browser-verification") ||
+            html.contains("Checking your browser") ||
+            html.contains("Just a moment...")
+
     override suspend fun getHome(): List<Category> {
         val document = getDocument(baseUrl)
         val jsonData = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return emptyList()
         val json = JSONObject(jsonData).getJSONObject("props").getJSONObject("pageProps")
         val categories = mutableListOf<Category>()
-
-        fun parseNextItem(item: JSONObject): Show? {
-            val urlObj = item.optJSONObject("url") ?: return null
-            val slug = urlObj.optString("slug") ?: return null
-            val id = slug.substringAfter("/")
-            val title = item.optJSONObject("titles")?.optString("name") 
-                ?: item.optString("title") 
-                ?: return null
-            
-            val images = item.optJSONObject("images")
-            val rawPoster = images?.optString("poster") ?: item.optString("image") ?: ""
-            val imgUrl = rawPoster.toUri().getQueryParameter("url") ?: rawPoster
-            val poster = if (imgUrl.startsWith("http")) imgUrl 
-                         else if (imgUrl.isNotEmpty()) "${baseUrl.trimEnd('/')}/${imgUrl.trimStart('/')}" 
-                         else null
-            
-            val banner = images?.optString("backdrop")?.let { 
-                if (it.startsWith("http")) it else "${baseUrl.trimEnd('/')}/${it.trimStart('/')}" 
-            }
-            
-            val year = item.optString("releaseDate", "").take(4).ifEmpty {
-                item.optString("year").ifEmpty { null }
-            }
-
-            return if (slug.contains("movies/") || slug.contains("pelicula/")) {
-                Movie(
-                    id = id,
-                    title = title,
-                    poster = poster,
-                    banner = banner,
-                    released = year
-                )
-            } else if (slug.contains("series/") || slug.contains("serie/")) {
-                TvShow(
-                    id = id,
-                    title = title,
-                    poster = poster,
-                    banner = banner,
-                    released = year
-                )
-            } else null
-        }
 
         // 2. TABS (Movies)
         val tabMap = listOf(
@@ -145,19 +126,19 @@ object PoseidonHD2Provider : BaseProvider(){
         )
         for ((key, name) in tabMap) {
             json.optJSONArray(key)?.let { array ->
-                val list = (0 until array.length()).mapNotNull { i -> parseNextItem(array.getJSONObject(i)) }
+                val list = (0 until array.length()).mapNotNull { i -> parseShowItem(array.getJSONObject(i)) }
                 if (list.isNotEmpty()) categories.add(Category(name, list))
             }
         }
 
         // 3. SERIES
         json.optJSONArray("series")?.let { array ->
-            val list = (0 until array.length()).mapNotNull { i -> parseNextItem(array.getJSONObject(i)) }
+            val list = (0 until array.length()).mapNotNull { i -> parseShowItem(array.getJSONObject(i)) }
             if (list.isNotEmpty()) categories.add(Category("Últimas series", list))
         }
         
         json.optJSONArray("topSeriesDay")?.let { array ->
-            val list = (0 until array.length()).mapNotNull { i -> parseNextItem(array.getJSONObject(i)) }
+            val list = (0 until array.length()).mapNotNull { i -> parseShowItem(array.getJSONObject(i)) }
             if (list.isNotEmpty()) categories.add(Category("Series destacadas (Hoy)", list))
         }
 
@@ -287,7 +268,14 @@ object PoseidonHD2Provider : BaseProvider(){
     }
 
     override suspend fun getMovie(id: String): Movie {
-        val document = getDocument("${baseUrl.trimEnd('/')}/pelicula/$id")
+        val effectiveId =
+            if (id.isNumericId()) {
+                resolveSluggedId(id, isTvShow = false) ?: throw Exception("Película no encontrada")
+            } else {
+                id
+            }
+
+        val document = getDocument("${baseUrl.trimEnd('/')}/pelicula/$effectiveId")
         val jsonData = document.selectFirst("script#__NEXT_DATA__")?.data()
         if (jsonData != null) {
             val json = JSONObject(jsonData).getJSONObject("props").getJSONObject("pageProps")
@@ -307,7 +295,7 @@ object PoseidonHD2Provider : BaseProvider(){
                         language = language
                     ).let { tmdbMovie ->
                         Movie(
-                            id = id,
+                            id = effectiveId,
                             title = tmdbMovie.title,
                             overview = tmdbMovie.overview,
                             released = tmdbMovie.releaseDate,
@@ -321,13 +309,9 @@ object PoseidonHD2Provider : BaseProvider(){
                             banner = tmdbMovie.backdropPath?.original,
                             genres = tmdbMovie.genres.map { Genre(it.id.toString(), it.name) },
                             cast = tmdbMovie.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList(),
-                            recommendations = tmdbMovie.recommendations?.results?.mapNotNull { multi ->
-                                when (multi) {
-                                    is TMDb3.Movie -> Movie(id = multi.id.toString(), title = multi.title, poster = multi.posterPath?.w500)
-                                    is TMDb3.Tv -> TvShow(id = multi.id.toString(), title = multi.name, poster = multi.posterPath?.w500)
-                                    else -> null
-                                }
-                            } ?: emptyList(),
+                            // Site-provided picks carry slug-bearing ids that resolve;
+                            // TMDb numeric ids would 404 on the detail URL.
+                            recommendations = parseRelatedMovies(json),
                         )
                     }
                 } catch (_: Exception) { }
@@ -343,12 +327,13 @@ object PoseidonHD2Provider : BaseProvider(){
                          else null
 
             return Movie(
-                id = id,
+                id = effectiveId,
                 title = title,
                 overview = movieJson.optString("overview", ""),
                 released = movieJson.optString("releaseDate", "").take(10),
                 rating = movieJson.optJSONObject("rate")?.optDouble("average", 0.0) ?: 0.0,
-                poster = poster
+                poster = poster,
+                recommendations = parseRelatedMovies(json)
             )
         }
 
@@ -358,18 +343,25 @@ object PoseidonHD2Provider : BaseProvider(){
         }
 
         return Movie(
-            id = id,
+            id = effectiveId,
             title = fallbackTitle,
             overview = document.select(".Description p").text(),
-            poster = document.select(".Image img").attr("src")
+            poster = document.select(".Image img").attr("src"),
         )
     }
 
     override suspend fun getTvShow(id: String): TvShow {
-        val document = getDocument("${baseUrl.trimEnd('/')}/serie/$id")
+        val effectiveId =
+            if (id.isNumericId()) {
+                resolveSluggedId(id, isTvShow = true) ?: throw Exception("Serie no encontrada")
+            } else {
+                id
+            }
+
+        val document = getDocument("${baseUrl.trimEnd('/')}/serie/$effectiveId")
         val jsonData = document.selectFirst("script#__NEXT_DATA__")?.data()
         if (jsonData != null) {
-            return parseTvShowFromJson(id, jsonData)
+            return parseTvShowFromJson(effectiveId, jsonData)
         }
 
         // No __NEXT_DATA__ (transient HTML, Cloudflare challenge): fall back to
@@ -381,7 +373,7 @@ object PoseidonHD2Provider : BaseProvider(){
         }
 
         return TvShow(
-            id = id,
+            id = effectiveId,
             title = fallbackTitle,
             overview = document.select(".Description p").text(),
             poster = document.select(".Image img").attr("src"),
@@ -462,6 +454,107 @@ object PoseidonHD2Provider : BaseProvider(){
         }
     } catch (_: Exception) {
         null
+    }
+
+    /** True for bare TMDb ids (old favorites saved before the site required slugs). */
+    private fun String.isNumericId(): Boolean = isNotBlank() && all { it.isDigit() }
+
+    /** Parses a movie/serie item from the site's JSON payload (home, related, etc.). */
+    private fun parseShowItem(item: JSONObject): Show? {
+        val slug = item.optJSONObject("url")?.optString("slug").orEmpty()
+        val title = item.optJSONObject("titles")?.optString("name") ?: item.optString("title")
+        if (slug.isBlank() || title.isBlank()) return null
+        val id = slug.substringAfter("/")
+
+        val images = item.optJSONObject("images")
+        val poster = buildPosterUrl(images, item)
+        val banner =
+            images?.optString("backdrop")?.let {
+                if (it.startsWith("http")) it else "${baseUrl.trimEnd('/')}/${it.trimStart('/')}"
+            }
+
+        val year =
+            item.optString("releaseDate", "").take(4).ifEmpty {
+                item.optString("year").ifEmpty { null }
+            }
+
+        return when {
+            slug.contains("movies/") || slug.contains("pelicula/") ->
+                Movie(
+                    id = id,
+                    title = title,
+                    poster = poster,
+                    banner = banner,
+                    released = year,
+                )
+            slug.contains("series/") || slug.contains("serie/") ->
+                TvShow(
+                    id = id,
+                    title = title,
+                    poster = poster,
+                    banner = banner,
+                    released = year,
+                )
+            else -> null
+        }
+    }
+
+    /** Resolves the site's poster URL, which may be relative or an _next/image proxy URL. */
+    private fun buildPosterUrl(
+        images: JSONObject?,
+        item: JSONObject,
+    ): String? {
+        val rawPoster = images?.optString("poster") ?: item.optString("image")
+        val imgUrl = rawPoster.toUri().getQueryParameter("url") ?: rawPoster
+        return when {
+            imgUrl.startsWith("http") -> imgUrl
+            imgUrl.isNotEmpty() -> "${baseUrl.trimEnd('/')}/${imgUrl.trimStart('/')}"
+            else -> null
+        }
+    }
+
+    /** The site's own "related" picks (slug-bearing ids that actually resolve). */
+    private fun parseRelatedMovies(pageProps: JSONObject): List<Show> {
+        val array = pageProps.optJSONArray("relatedMovies") ?: return emptyList()
+        return (0 until array.length()).mapNotNull { i ->
+            parseShowItem(array.getJSONObject(i))
+        }
+    }
+
+    /**
+     * Resolves a bare TMDb id to the site's slug-bearing id via the site search,
+     * so old favorites and TMDb-sourced ids keep opening after the site stopped
+     * redirecting numeric-only URLs.
+     */
+    private suspend fun resolveSluggedId(
+        numericId: String,
+        isTvShow: Boolean,
+    ): String? {
+        val title =
+            try {
+                if (isTvShow) {
+                    TMDb3.TvSeries.details(seriesId = numericId.toInt()).name
+                } else {
+                    TMDb3.Movies.details(movieId = numericId.toInt()).title
+                }
+            } catch (_: Exception) {
+                return null
+            }
+        return if (title.isBlank()) {
+            null
+        } else {
+            try {
+                search(title, 1).firstNotNullOfOrNull { item ->
+                    when (item) {
+                        is Movie -> item.id.takeIf { it.startsWith("$numericId/") }
+                        is TvShow -> item.id.takeIf { it.startsWith("$numericId/") }
+                        else -> null
+                    }
+                }
+            } catch (_: Exception) {
+                null
+            }
+        }
     }
 
     override suspend fun getEpisodesBySeason(seasonId: String): List<Episode> {
