@@ -33,6 +33,11 @@ import kotlin.coroutines.resume
 
 class WebViewResolver(private val context: Context) {
 
+    private companion object {
+        const val HTTP_NOT_FOUND = 404
+        const val HTTP_GONE = 410
+    }
+
     data class Result(
         val html: String,
         val evaluatedValue: String? = null,
@@ -180,6 +185,15 @@ class WebViewResolver(private val context: Context) {
                         }
                     }, 1500)
                 }
+
+                override fun onReceivedHttpError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    errorResponse: WebResourceResponse?,
+                ) {
+                    super.onReceivedHttpError(view, request, errorResponse)
+                    abortOnMainFrameNotFound(request, errorResponse, continuation, url)
+                }
             }
         }
         Log.d(TAG, "[WebView] Opened")
@@ -190,6 +204,33 @@ class WebViewResolver(private val context: Context) {
             showVisibleChallenge(continuation)
         } else {
             webView?.loadUrl(url, headers)
+        }
+    }
+
+    /**
+     * A 4xx "gone" response on the main frame means the content does not exist;
+     * the WebView cannot fix it, so abort before the fullscreen dialog would
+     * show the site's own error page instead of the app's error state.
+     */
+    private fun abortOnMainFrameNotFound(
+        request: WebResourceRequest?,
+        errorResponse: WebResourceResponse?,
+        continuation: kotlinx.coroutines.CancellableContinuation<Result>,
+        url: String,
+    ) {
+        val code = errorResponse?.statusCode
+        if (request?.isForMainFrame != true || (code != HTTP_NOT_FOUND && code != HTTP_GONE)) return
+        Log.d(TAG, "[WebView] Main frame HTTP $code -> aborting bypass")
+        mainHandler.post {
+            if (!continuation.isCompleted) {
+                continuation.resume(
+                    Result(
+                        html = "<html><body>HTTP $code</body></html>",
+                        finalUrl = request.url?.toString() ?: url,
+                    ),
+                )
+            }
+            cleanup()
         }
     }
 
