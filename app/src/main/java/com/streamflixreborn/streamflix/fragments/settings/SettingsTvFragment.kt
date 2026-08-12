@@ -1,6 +1,7 @@
 package com.streamflixreborn.streamflix.fragments.settings
 
 import android.app.AlertDialog
+import com.streamflixreborn.streamflix.utils.DialogTheme
 import android.content.ActivityNotFoundException
 import android.content.ContentValues
 import android.content.Intent
@@ -893,7 +894,7 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
         }
 
         findPreference<Preference>("key_backup_refresh_cache_tv")?.setOnPreferenceClickListener {
-            AlertDialog.Builder(requireContext())
+            val dialog = AlertDialog.Builder(requireContext())
                 .setTitle(R.string.settings_refresh_cache_confirm)
                 .setMessage(R.string.settings_refresh_cache_message)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -911,7 +912,9 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
                     }
                 }
                 .setNegativeButton(android.R.string.cancel, null)
-                .show()
+                .create()
+            DialogTheme.style(dialog)
+            dialog.show()
             true
         }
 
@@ -1331,7 +1334,7 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
             getString(R.string.backup_delete_action),
         )
 
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle(file.name)
             .setItems(options) { _, which ->
                 when (which) {
@@ -1340,7 +1343,9 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
     }
 
     private fun showLocalDatabaseBackupFileActions(file: File) {
@@ -1349,7 +1354,7 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
             getString(R.string.backup_delete_action),
         )
 
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle(file.name)
             .setItems(options) { _, which ->
                 when (which) {
@@ -1358,11 +1363,13 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
     }
 
     private fun confirmDeleteLocalBackup(file: File) {
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.backup_delete_confirm_title)
             .setMessage(getString(R.string.backup_delete_confirm_message, file.name))
             .setPositiveButton(R.string.backup_delete_action) { _, _ ->
@@ -1384,7 +1391,9 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
                     }
             }
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
     }
 
     private fun importBackupFromFile(file: File) {
@@ -1908,6 +1917,8 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
             .create()
 
         dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(DialogTheme.ACCEPT_COLOR)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(DialogTheme.DISMISS_COLOR)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 input.error = null
                 val errorMessage = onSubmit(input.text?.toString()?.trim().orEmpty())
@@ -1945,6 +1956,8 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
             .create()
 
         dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(DialogTheme.ACCEPT_COLOR)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(DialogTheme.DISMISS_COLOR)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 input.error = null
                 val newValue = input.text?.toString()?.trim().orEmpty()
@@ -2044,7 +2057,7 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
             setSingleLine()
         }
 
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Test WebSocket bypass")
             .setMessage("Enter the URL that the mobile resolver should open.")
             .setView(input)
@@ -2067,7 +2080,9 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
                 showWebSocketBypassQrDialog(session.deepLink, session.wsUrl, targetUrl)
             }
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
     }
 
     private fun showWebSocketBypassQrDialog(
@@ -2141,7 +2156,9 @@ class SettingsTvFragment : LeanbackPreferenceFragmentCompat() {
             .setTitle("WebSocket bypass QR")
             .setView(scrollView)
             .setPositiveButton(android.R.string.ok, null)
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
 
         dialog.window?.setLayout(dialogWidth, LinearLayout.LayoutParams.WRAP_CONTENT)
     }

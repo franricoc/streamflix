@@ -590,7 +590,7 @@ class MainMobileActivity : FragmentActivity() {
     private fun showResolverConnectionErrorDialog(ws: String, token: String) {
         if (isFinishing || isDestroyed) return
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(R.string.app_name)
             .setMessage("Unable to reach the TV bypass websocket. Retry?")
             .setPositiveButton("Retry") { _, _ ->
@@ -602,13 +602,15 @@ class MainMobileActivity : FragmentActivity() {
             .setOnCancelListener {
                 clearResolverState()
             }
-            .show()
+            .create()
+        com.streamflixreborn.streamflix.utils.DialogTheme.style(dialog)
+        dialog.show()
     }
 
     private fun showPostBypassCloseDialog() {
         if (isFinishing || isDestroyed) return
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(R.string.app_name)
             .setMessage("Bypass completed. Do you want to close the app?")
             .setPositiveButton("Close app") { _, _ ->
@@ -616,7 +618,9 @@ class MainMobileActivity : FragmentActivity() {
             }
             .setNegativeButton("Keep open", null)
             .setOnCancelListener(null)
-            .show()
+            .create()
+        com.streamflixreborn.streamflix.utils.DialogTheme.style(dialog)
+        dialog.show()
     }
 
     override fun onUserLeaveHint() {

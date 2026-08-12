@@ -17,6 +17,7 @@ import com.streamflixreborn.streamflix.models.Video
 import com.streamflixreborn.streamflix.offline.DownloadModule
 import com.streamflixreborn.streamflix.offline.database.OfflineDatabase
 import com.streamflixreborn.streamflix.offline.database.OfflineVideoEntity
+import com.streamflixreborn.streamflix.utils.DialogTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -238,14 +239,16 @@ class DownloadsFragment : Fragment() {
     }
 
     private fun confirmDeleteDownload(video: OfflineVideoEntity) {
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.confirm_delete_title)
             .setMessage(R.string.confirm_delete_message)
             .setPositiveButton(R.string.btn_delete) { _, _ ->
                 DownloadModule.removeDownload(requireContext(), video.id)
             }
             .setNegativeButton(R.string.btn_cancel, null)
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
     }
 }
 

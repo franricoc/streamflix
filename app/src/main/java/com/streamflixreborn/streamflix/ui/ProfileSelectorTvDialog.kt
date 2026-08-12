@@ -25,6 +25,7 @@ import com.google.android.material.card.MaterialCardView
 import com.streamflixreborn.streamflix.R
 import com.streamflixreborn.streamflix.models.AvatarType
 import com.streamflixreborn.streamflix.models.UserProfile
+import com.streamflixreborn.streamflix.utils.DialogTheme
 import com.streamflixreborn.streamflix.utils.UserProfileManager
 import java.io.File
 
@@ -68,7 +69,7 @@ class ProfileSelectorTvDialog(
                 if (isSelecting) return@TvProfileAdapter
                 if (isManageMode) {
                     val options = arrayOf("🗑️ Eliminar Perfil")
-                    AlertDialog.Builder(context)
+                    val deleteDialog = AlertDialog.Builder(context)
                         .setTitle("Administrar Perfil '${selectedProfile.name}'")
                         .setItems(options) { dialogInterface, which ->
                             when (which) {
@@ -77,7 +78,7 @@ class ProfileSelectorTvDialog(
                                     if (profiles.size <= 1) {
                                         Toast.makeText(context, "No puedes eliminar el único perfil activo", Toast.LENGTH_SHORT).show()
                                     } else {
-                                        AlertDialog.Builder(context)
+                                        val confirmDialog = AlertDialog.Builder(context)
                                             .setTitle("Eliminar Perfil")
                                             .setMessage("¿Deseas eliminar '${selectedProfile.name}'?")
                                             .setPositiveButton("Eliminar") { _, _ ->
@@ -85,13 +86,17 @@ class ProfileSelectorTvDialog(
                                                 refreshProfilesList()
                                             }
                                             .setNegativeButton("Cancelar", null)
-                                            .show()
+                                            .create()
+                                        DialogTheme.style(confirmDialog)
+                                        confirmDialog.show()
                                     }
                                 }
                             }
                         }
                         .setNegativeButton("Cancelar", null)
-                        .show()
+                        .create()
+                    DialogTheme.style(deleteDialog)
+                    deleteDialog.show()
                     return@TvProfileAdapter
                 }
 
@@ -243,6 +248,7 @@ class ProfileSelectorTvDialog(
                 }
                 .setNegativeButton("Cancelar", null)
                 .create()
+            DialogTheme.style(dialog)
 
             etInput.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||

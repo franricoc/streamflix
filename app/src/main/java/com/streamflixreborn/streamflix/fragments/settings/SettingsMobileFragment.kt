@@ -44,6 +44,7 @@ import com.streamflixreborn.streamflix.providers.SerienStreamProvider
 import com.streamflixreborn.streamflix.providers.StreamingCommunityProvider
 import com.streamflixreborn.streamflix.providers.TmdbProvider
 import com.streamflixreborn.streamflix.utils.AppLanguageManager
+import com.streamflixreborn.streamflix.utils.DialogTheme
 import com.streamflixreborn.streamflix.utils.DnsResolver
 import com.streamflixreborn.streamflix.utils.ProviderChangeNotifier
 import com.streamflixreborn.streamflix.utils.ThemeManager
@@ -826,7 +827,7 @@ class SettingsMobileFragment : PreferenceFragmentCompat() {
         }
 
         findPreference<Preference>("key_backup_refresh_cache_mobile")?.setOnPreferenceClickListener {
-            AlertDialog.Builder(requireContext())
+            val dialog = AlertDialog.Builder(requireContext())
                 .setTitle(R.string.settings_refresh_cache_confirm)
                 .setMessage(R.string.settings_refresh_cache_message)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -844,7 +845,9 @@ class SettingsMobileFragment : PreferenceFragmentCompat() {
                     }
                 }
                 .setNegativeButton(android.R.string.cancel, null)
-                .show()
+                .create()
+            DialogTheme.style(dialog)
+            dialog.show()
             true
         }
 
@@ -1262,6 +1265,8 @@ class SettingsMobileFragment : PreferenceFragmentCompat() {
             .create()
 
         dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(DialogTheme.ACCEPT_COLOR)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(DialogTheme.DISMISS_COLOR)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 input.error = null
                 val errorMessage = onSubmit(input.text?.toString()?.trim().orEmpty())
@@ -1299,6 +1304,8 @@ class SettingsMobileFragment : PreferenceFragmentCompat() {
             .create()
 
         dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(DialogTheme.ACCEPT_COLOR)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(DialogTheme.DISMISS_COLOR)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 input.error = null
                 val newValue = input.text?.toString()?.trim().orEmpty()

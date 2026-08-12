@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.streamflixreborn.streamflix.cast.CastPayload
 import com.streamflixreborn.streamflix.cast.DeviceDiscoveryManager
+import com.streamflixreborn.streamflix.utils.DialogTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -59,6 +60,7 @@ object DeviceSelectorDialog {
                     }
 
                     val newDialog = newBuilder.create()
+                    DialogTheme.style(newDialog)
                     dialog?.dismiss()
                     dialog = newDialog
                     newDialog.show()
@@ -79,7 +81,7 @@ object DeviceSelectorDialog {
             d.dismiss()
         }
 
-        dialog = builder.create()
+        dialog = builder.create().also { DialogTheme.style(it) }
         dialog?.show()
     }
 
@@ -92,7 +94,7 @@ object DeviceSelectorDialog {
             inputType = InputType.TYPE_CLASS_TEXT
         }
 
-        AlertDialog.Builder(context)
+        val dialog = AlertDialog.Builder(context)
             .setTitle("Ingresar IP de la TV")
             .setView(input)
             .setPositiveButton("Conectar") { dialog, _ ->
@@ -111,6 +113,8 @@ object DeviceSelectorDialog {
                 dialog.dismiss()
             }
             .setNegativeButton("Cancelar", null)
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
     }
 }

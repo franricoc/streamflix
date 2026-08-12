@@ -45,7 +45,7 @@ class VoiceRecognitionHelper(
             }
 
             fragment.shouldShowRequestPermissionRationale(permission) -> {
-                AlertDialog.Builder(context)
+                val dialog = AlertDialog.Builder(context)
                     .setTitle(context.getString(R.string.voice_permission_title))
                     .setMessage(context.getString(R.string.voice_permission_rationale))
                     .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -54,7 +54,9 @@ class VoiceRecognitionHelper(
                     .setNegativeButton(android.R.string.cancel) { _, _ ->
                         onError(context.getString(R.string.voice_error_permission_denied))
                     }
-                    .show()
+                    .create()
+                DialogTheme.style(dialog)
+                dialog.show()
             }
 
             else -> permissionLauncher.launch(permission)

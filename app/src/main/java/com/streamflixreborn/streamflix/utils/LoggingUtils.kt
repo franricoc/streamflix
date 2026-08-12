@@ -37,7 +37,7 @@ object LoggingUtils {
 
         val logContent = logBuilder.toString()
 
-        AlertDialog.Builder(context)
+        val dialog = AlertDialog.Builder(context)
             .setTitle("📝 ${context.getString(R.string.error_dialog_title)}")
             .setMessage(logContent)
             .setPositiveButton("OK", null)
@@ -50,6 +50,8 @@ object LoggingUtils {
                     Toast.makeText(context, context.getString(R.string.error_dialog_copied), Toast.LENGTH_SHORT).show()
                 }
             }
-            .show()
+            .create()
+        DialogTheme.style(dialog)
+        dialog.show()
     }
 }

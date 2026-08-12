@@ -188,10 +188,8 @@ object SuperFavoritesProvider : BaseProvider() {
         } ?: movies.first()
 
         val mergedGenres = movies.flatMap { it.genres }.distinctBy { it.name }
-        val mergedCast = movies.flatMap { it.cast }.distinctBy { it.name }
-        val mergedRecommendations = movies.flatMap { it.recommendations }.distinctBy {
-            (it as? Movie)?.title ?: (it as? TvShow)?.title ?: ""
-        }
+        val mergedCast = mergeCast(movies)
+        val mergedRecommendations = mergeRecommendations(movies)
 
         primary.copy(
             id = id,
@@ -252,10 +250,8 @@ object SuperFavoritesProvider : BaseProvider() {
         }
 
         val mergedGenres = tvShows.flatMap { it.genres }.distinctBy { it.name }
-        val mergedCast = tvShows.flatMap { it.cast }.distinctBy { it.name }
-        val mergedRecommendations = tvShows.flatMap { it.recommendations }.distinctBy {
-            (it as? Movie)?.title ?: (it as? TvShow)?.title ?: ""
-        }
+        val mergedCast = mergeCast(tvShows)
+        val mergedRecommendations = mergeRecommendations(tvShows)
 
         primary.copy(
             id = id,
@@ -402,7 +398,93 @@ object SuperFavoritesProvider : BaseProvider() {
         )
     }
 
-    override suspend fun getPeople(id: String, page: Int): People {
-        throw UnsupportedOperationException("$name no soporta getPeople")
+    override suspend fun getPeople(id: String, page: Int): People = supervisorScope {
+        val sources = SuperFavoritesDeduplicator.decodeCompositeId(id)
+        if (sources.isEmpty()) {
+            return@supervisorScope emptyPeople(id)
+        }
+
+        val deferreds = sources.map { (providerName, origId) ->
+            async {
+                val provider = ProviderRegistry.findByName(providerName) ?: return@async null
+                try {
+                    provider.getPeople(origId, page)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        }
+
+        val peopleList = deferreds.awaitAll().filterNotNull()
+        if (peopleList.isEmpty()) {
+            return@supervisorScope emptyPeople(id)
+        }
+
+        // Prefer the source with the richest profile so the page isn't blank.
+        val primary = peopleList.maxByOrNull {
+            it.filmography.size +
+                (if (!it.biography.isNullOrEmpty()) 1 else 0) +
+                (if (!it.image.isNullOrEmpty()) 1 else 0)
+        } ?: peopleList.first()
+
+        primary.copy(id = id)
     }
+
+    /** Merges cast lists from all sources, re-encoding each person id into a
+     *  composite id so the person page resolves back to its source provider. */
+    private fun mergeCast(shows: List<Show>): List<People> = shows.flatMap { show ->
+        val pName = show.sourceProvider() ?: return@flatMap emptyList()
+        val cast = when (show) {
+            is Movie -> show.cast
+            is TvShow -> show.cast
+            else -> return@flatMap emptyList()
+        }
+        cast.map { person -> wrapPeople(person, pName) }
+    }.distinctBy { it.name }
+
+    /** Merges recommendations from all sources, re-encoding each item id into a
+     *  composite id so tapping a recommendation opens it instead of showing
+     *  "No disponible". */
+    private fun mergeRecommendations(shows: List<Show>): List<Show> = shows.flatMap { show ->
+        val pName = show.sourceProvider() ?: return@flatMap emptyList()
+        val recommendations = when (show) {
+            is Movie -> show.recommendations
+            is TvShow -> show.recommendations
+            else -> return@flatMap emptyList()
+        }
+        recommendations.map { rec -> wrapShow(rec, pName) }
+    }.distinctBy {
+        (it as? Movie)?.title ?: (it as? TvShow)?.title ?: ""
+    }
+
+    /** Provider name of a source show, or null when it wasn't tagged. */
+    private fun Show.sourceProvider(): String? = when (this) {
+        is Movie -> providerName
+        is TvShow -> providerName
+        else -> null
+    }
+
+    /** Stub for unresolved people so the page isn't a blank error screen. */
+    private fun emptyPeople(id: String): People =
+        People(
+            id = id,
+            name = "Sin información",
+            filmography = emptyList()
+        )
+
+    /** Re-encodes a source show id into a composite id. */
+    private fun wrapShow(show: Show, providerName: String): Show = when (show) {
+        is Movie -> show.copy(
+            id = SuperFavoritesDeduplicator.encodeCompositeId("movie", mapOf(providerName to show.id))
+        ).apply { this.providerName = name }
+        is TvShow -> show.copy(
+            id = SuperFavoritesDeduplicator.encodeCompositeId("tvshow", mapOf(providerName to show.id))
+        ).apply { this.providerName = name }
+        else -> show
+    }
+
+    /** Re-encodes a source people id into a composite id. */
+    private fun wrapPeople(person: People, providerName: String): People = person.copy(
+        id = SuperFavoritesDeduplicator.encodeCompositeId("people", mapOf(providerName to person.id))
+    )
 }

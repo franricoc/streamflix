@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import com.streamflixreborn.streamflix.cast.CastPayload
 import com.streamflixreborn.streamflix.cast.MobileCastClient
+import com.streamflixreborn.streamflix.utils.DialogTheme
 
 object CastRemoteControlDialog {
 
@@ -101,6 +102,7 @@ object CastRemoteControlDialog {
             .setView(layout)
             .setPositiveButton("Cerrar Control", null)
             .create()
+        DialogTheme.style(dialog)
 
         btnStop.setOnClickListener {
             sendControlCommand(device, "STOP", 0L)
