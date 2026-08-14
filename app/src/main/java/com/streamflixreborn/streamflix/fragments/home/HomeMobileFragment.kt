@@ -194,12 +194,6 @@ class HomeMobileFragment : Fragment() {
             }
 
         categories
-            .find { it.name == Category.RECENTLY_WATCHED }
-            ?.also {
-                it.name = getString(R.string.home_recently_watched)
-            }
-
-        categories
             .find { it.name == Category.FAVORITE_MOVIES }
             ?.also { it.name = getString(R.string.home_favorite_movies) }
 

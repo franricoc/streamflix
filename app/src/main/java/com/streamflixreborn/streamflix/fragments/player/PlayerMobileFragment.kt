@@ -104,6 +104,14 @@ class PlayerMobileFragment : Fragment() {
     companion object {
         private const val NEXT_EPISODE_PREFETCH_THRESHOLD_MS = 60_000L
         private const val NEXT_EPISODE_OVERLAY_MIN_THRESHOLD_MS = 30_000L
+        private const val MAX_PLAYBACK_RETRIES = 2
+        private const val PLAYBACK_RETRY_DELAY_MS = 1_500L
+        private const val HTTP_STATUS_FORBIDDEN = 403
+        private const val HTTP_STATUS_REQUEST_TIMEOUT = 408
+        private const val HTTP_STATUS_TOO_MANY_REQUESTS = 429
+        private const val HTTP_5XX_STATUS_MIN = 500
+        private const val HTTP_5XX_STATUS_MAX = 599
+        private const val MAX_ERROR_CAUSE_DEPTH = 8
     }
 
     private var _binding: FragmentPlayerMobileBinding? = null
@@ -136,6 +144,7 @@ class PlayerMobileFragment : Fragment() {
     private var nextEpisodePrefetchTargetId: String? = null
     private var nextEpisodePrefetchJob: Job? = null
     private var nextEpisodeOverlayDismissed = false
+    private var playbackRetryCount = 0
 
     private val bypassWebViewLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -726,6 +735,15 @@ class PlayerMobileFragment : Fragment() {
         }
 
         binding.pvPlayer.controller.binding.btnExoCast.setOnClickListener {
+            // Offline playback: the original provider URL would 403 on the TV (no headers/cookies)
+            // and is useless without a download. Instead the phone serves the downloaded file
+            // itself over HTTP and the TV plays straight from the phone.
+            val isOfflinePlayback = arguments?.getBoolean("is_offline_playback", false) ?: false
+            if (isOfflinePlayback) {
+                castOfflinePlaybackToTv()
+                return@setOnClickListener
+            }
+
             val vid = currentVideo
             if (vid == null || vid.source.isEmpty()) {
                 Toast.makeText(requireContext(), "El video aún no se ha cargado", Toast.LENGTH_SHORT).show()
@@ -779,15 +797,13 @@ class PlayerMobileFragment : Fragment() {
                         com.streamflixreborn.streamflix.cast.CastControlManager.startSession(
                             device = device,
                             title = title,
-                            subtitle = subtitleText
+                            subtitle = subtitleText,
                         )
                         // The phone hands playback off to the TV: stop the local media session so
                         // no stale notification or audio remains on the phone.
                         PlaybackService.stop(requireContext())
                         findNavController().navigateUp()
                     },
-
-
                     onError = { err ->
                         Toast.makeText(requireContext(), "Error al enviar: $err", Toast.LENGTH_LONG).show()
                     }
@@ -888,6 +904,88 @@ class PlayerMobileFragment : Fragment() {
             binding.settings.hide()
             binding.pvPlayer.hideController()
             binding.pvPlayer.enterManualZoomMode()
+        }
+    }
+
+    private fun castOfflinePlaybackToTv() {
+        val title = resolvePlayerTitle()
+        val subtitleText = resolvePlayerSubtitle()
+        val posterUrl =
+            when (val type = args.videoType) {
+                is Video.Type.Movie -> type.poster
+                is Video.Type.Episode -> type.poster ?: type.tvShow.poster
+            }
+        val currentPos = if (::player.isInitialized) player.currentPosition else 0L
+
+        lifecycleScope.launch {
+            val entity =
+                withContext(Dispatchers.IO) {
+                    com.streamflixreborn.streamflix.offline.database.OfflineDatabase
+                        .getInstance(requireContext())
+                        .offlineDao()
+                        .getById(args.id)
+                }
+            val localServer =
+                com.streamflixreborn.streamflix.cast.LocalMediaServer.getInstance(requireContext())
+            val serverBaseUrl = localServer.startServer()
+            if (serverBaseUrl == null) {
+                Toast.makeText(
+                    requireContext(),
+                    "Error iniciando servidor local en el teléfono",
+                    Toast.LENGTH_SHORT,
+                ).show()
+                return@launch
+            }
+
+            val payload =
+                com.streamflixreborn.streamflix.cast.CastPayload(
+                    action = "PLAY",
+                    title = title,
+                    subtitle = subtitleText,
+                    posterUrl = posterUrl,
+                    streamUrl =
+                        "$serverBaseUrl/offline_stream/" +
+                            "${com.streamflixreborn.streamflix.cast.encodeIdForUrl(args.id)}",
+                    mimeType = entity?.mimeType,
+                    startPositionMs = currentPos,
+                    videoType = args.videoType,
+                    mediaId = args.id,
+                    isOfflineDownload = true,
+                )
+            sendCastToSelectedDevice(payload, title, subtitleText)
+        }
+    }
+
+    private fun sendCastToSelectedDevice(
+        payload: com.streamflixreborn.streamflix.cast.CastPayload,
+        title: String,
+        subtitleText: String,
+    ) {
+        com.streamflixreborn.streamflix.cast.ui.DeviceSelectorDialog.show(requireContext()) { device ->
+            if (::player.isInitialized) {
+                player.pause()
+            }
+            Toast.makeText(requireContext(), "Enviando a ${device.name}...", Toast.LENGTH_SHORT).show()
+            com.streamflixreborn.streamflix.cast.MobileCastClient.sendPayloadToTv(
+                ipAddress = device.ipAddress,
+                port = device.port,
+                payload = payload,
+                onSuccess = {
+                    Toast.makeText(requireContext(), "📺 Transmitiendo en ${device.name}", Toast.LENGTH_SHORT).show()
+                    com.streamflixreborn.streamflix.cast.CastControlManager.startSession(
+                        device = device,
+                        title = title,
+                        subtitle = subtitleText,
+                    )
+                    // The phone hands playback off to the TV: stop the local media session so
+                    // no stale notification or audio remains on the phone.
+                    PlaybackService.stop(requireContext())
+                    findNavController().navigateUp()
+                },
+                onError = { err ->
+                    Toast.makeText(requireContext(), "Error al enviar: $err", Toast.LENGTH_LONG).show()
+                },
+            )
         }
     }
 
@@ -1063,6 +1161,8 @@ class PlayerMobileFragment : Fragment() {
         updatePlayerHeader()
 
         val isOfflinePlayback = arguments?.getBoolean("is_offline_playback", false) ?: false
+        binding.pvPlayer.controller.binding.btnExoExternalPlayer?.visibility =
+            if (isOfflinePlayback) android.view.View.GONE else android.view.View.VISIBLE
         binding.pvPlayer.controller.binding.btnExoDownload?.apply {
             visibility = if (isOfflinePlayback) android.view.View.GONE else android.view.View.VISIBLE
             setOnClickListener {
@@ -1366,14 +1466,73 @@ class PlayerMobileFragment : Fragment() {
             override fun onPlayerError(error: PlaybackException) {
                 super.onPlayerError(error)
                 Log.e("PlayerMobileFragment", "onPlayerError: ", error)
-                
-                val nextServer = servers.getOrNull(servers.indexOf(currentServer) + 1)
+
+                val currentIdx = servers.indexOf(currentServer)
+
+                // Transient/HTTP errors (403, 429, 5xx, network drops) usually clear up on a
+                // retry: re-resolve the same server (fresh URL/token) before abandoning it.
+                if (isRetryableError(error) && playbackRetryCount < MAX_PLAYBACK_RETRIES) {
+                    playbackRetryCount++
+                    Log.i(
+                        "PlayerMobileFragment",
+                        "Playback error, retrying ${currentServer?.name} " +
+                            "($playbackRetryCount/$MAX_PLAYBACK_RETRIES)"
+                    )
+                    lifecycleScope.launch {
+                        delay(PLAYBACK_RETRY_DELAY_MS)
+                        val server = currentServer ?: return@launch
+                        if (servers.contains(server)) {
+                            viewModel.getVideo(server)
+                        } else {
+                            // Cast/local stream: rebuild the media item and resume.
+                            val video = currentVideo
+                            if (video != null) displayVideo(video, server)
+                        }
+                    }
+                    return
+                }
+                playbackRetryCount = 0
+
+                val nextServer = servers.getOrNull(currentIdx + 1)
                 if (nextServer != null) {
                     Log.i("PlayerMobileFragment", "Playback failed, trying next server: ${nextServer.name}")
                     viewModel.getVideo(nextServer)
+                    return
                 }
+
+                Toast.makeText(
+                    requireContext(),
+                    error.message ?: "Error de reproducción",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
+
+    private fun isRetryableError(error: PlaybackException): Boolean {
+        val status = extractHttpStatusCode(error)
+        if (status != null) {
+            return status == HTTP_STATUS_FORBIDDEN ||
+                status == HTTP_STATUS_REQUEST_TIMEOUT ||
+                status == HTTP_STATUS_TOO_MANY_REQUESTS ||
+                status in HTTP_5XX_STATUS_MIN..HTTP_5XX_STATUS_MAX
+        }
+        return error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+            error.errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED
+    }
+
+    private fun extractHttpStatusCode(error: PlaybackException): Int? {
+        var t: Throwable? = error
+        var depth = 0
+        while (t != null && depth < MAX_ERROR_CAUSE_DEPTH) {
+            if (t is HttpDataSource.InvalidResponseCodeException) {
+                return t.responseCode
+            }
+            t = t.cause
+            depth++
+        }
+        return error.cause?.message
+            ?.let { Regex("Response code: (\\d{3})").find(it)?.groupValues?.get(1)?.toIntOrNull() }
+    }
 
     private fun enterPIPMode() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

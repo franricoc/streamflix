@@ -121,8 +121,10 @@
     <ID>CyclomaticComplexMethod:CuevanaEuProvider.kt$CuevanaEuProvider$override suspend fun getTvShow(id: String): TvShow</ID>
     <ID>CyclomaticComplexMethod:CuevanaEuProvider.kt$CuevanaEuProvider$private fun genreFromId(id: Int): Genre?</ID>
     <ID>CyclomaticComplexMethod:CuevanaEuProvider.kt$CuevanaEuProvider$private fun parseEpisodesFromDoc(document: Document, seasonNumber: Int?): List&lt;Episode&gt;</ID>
-    <ID>CyclomaticComplexMethod:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getMovie(id: String): Movie</ID>
-    <ID>CyclomaticComplexMethod:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getTvShow(id: String): TvShow</ID>
+    <ID>CyclomaticComplexMethod:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getEpisodesBySeason(seasonId: String): List&lt;Episode&gt;</ID>
+    <ID>CyclomaticComplexMethod:DoramasflixProvider.kt$DoramasflixProvider$private fun requestContext(operationName: String): String</ID>
+    <ID>CyclomaticComplexMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun resolveDoramaMetadata( content: Content, slug: String, ): TvShow</ID>
+    <ID>CyclomaticComplexMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun resolveMovieMetadata( content: Content, slug: String, ): Movie</ID>
     <ID>CyclomaticComplexMethod:EinschaltenProvider.kt$EinschaltenProvider$override suspend fun getMovie(id: String): Movie</ID>
     <ID>CyclomaticComplexMethod:Episode.kt$Episode$override fun equals(other: Any?): Boolean</ID>
     <ID>CyclomaticComplexMethod:EpisodeManager.kt$EpisodeManager$suspend fun addEpisodesFromDb(type: Video.Type.Episode, database: AppDatabase)</ID>
@@ -153,7 +155,6 @@
     <ID>CyclomaticComplexMethod:JKAnimeProvider.kt$JKAnimeProvider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
     <ID>CyclomaticComplexMethod:KidrazProvider.kt$KidrazProvider$override suspend fun getHome(): List&lt;Category&gt;</ID>
     <ID>CyclomaticComplexMethod:LamovieProvider.kt$LamovieProvider$override suspend fun getTvShow(id: String): TvShow</ID>
-    <ID>CyclomaticComplexMethod:LocalMediaServer.kt$LocalMediaServer$private fun serveOfflineDownload(session: IHTTPSession, downloadId: String): Response</ID>
     <ID>CyclomaticComplexMethod:MStreamProvider.kt$MStreamProvider$fun getMovieObj(json: JSONObject?, reducePosterSize: Boolean): Movie</ID>
     <ID>CyclomaticComplexMethod:MStreamProvider.kt$MStreamProvider$fun getTvShowObj(json: JSONObject?): TvShow</ID>
     <ID>CyclomaticComplexMethod:MStreamProvider.kt$MStreamProvider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Server&gt;</ID>
@@ -317,6 +318,8 @@
     <ID>FunctionParameterNaming:UnJourUnFilmProvider.kt$UnJourUnFilmProvider.Service$@Header("User-agent") user_agent: String = USER_AGENT</ID>
     <ID>InstanceOfCheckForException:AnimeWorldProvider.kt$AnimeWorldProvider$e is CertPathValidatorException</ID>
     <ID>InstanceOfCheckForException:AnimeWorldProvider.kt$AnimeWorldProvider$e is SSLHandshakeException</ID>
+    <ID>InstanceOfCheckForException:DoramasflixPageMetadata.kt$DoramasflixPageMetadata$error is CancellationException</ID>
+    <ID>InstanceOfCheckForException:DoramasflixProvider.kt$DoramasflixProvider$error is CancellationException</ID>
     <ID>InstanceOfCheckForException:FrembedExtractor.kt$FrembedExtractor$e is retrofit2.HttpException</ID>
     <ID>InstanceOfCheckForException:GuardaSerieProvider.kt$GuardaSerieProvider$e is CloudflareChallengeException</ID>
     <ID>InstanceOfCheckForException:StreamingCommunityProvider.kt$StreamingCommunityProvider$e is java.security.cert.CertPathValidatorException</ID>
@@ -328,6 +331,7 @@
     <ID>LargeClass:CB01Provider.kt$CB01Provider : BaseProvider</ID>
     <ID>LargeClass:CloudSyncManager.kt$CloudSyncManager</ID>
     <ID>LargeClass:CuevanaEuProvider.kt$CuevanaEuProvider : BaseProvider</ID>
+    <ID>LargeClass:DoramasflixProvider.kt$DoramasflixProvider : Provider</ID>
     <ID>LargeClass:FilmyOnlineCcProvider.kt$FilmyOnlineCcProvider : BaseProvider</ID>
     <ID>LargeClass:FrenchStreamProvider.kt$FrenchStreamProvider : BaseProviderProviderPortalUrlProviderConfigUrl</ID>
     <ID>LargeClass:HDFilmeProvider.kt$HDFilmeProvider : BaseProvider</ID>
@@ -393,6 +397,18 @@
     <ID>LongMethod:CuevanaEuProvider.kt$CuevanaEuProvider$override suspend fun getMovie(id: String): Movie</ID>
     <ID>LongMethod:CuevanaEuProvider.kt$CuevanaEuProvider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
     <ID>LongMethod:CuevanaEuProvider.kt$CuevanaEuProvider$override suspend fun getTvShow(id: String): TvShow</ID>
+    <ID>LongMethod:DoramasflixModelsTest.kt$DoramasflixModelsTest$@Test fun `full search and episode pagination keep page information`()</ID>
+    <ID>LongMethod:DoramasflixModelsTest.kt$DoramasflixModelsTest$@Test fun `playback response keeps provider languages and hard subtitle descriptors`()</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getEpisodesBySeason(seasonId: String): List&lt;Episode&gt;</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getMovies(page: Int): List&lt;Movie&gt;</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getServers( id: String, videoType: Video.Type, ): List&lt;Video.Server&gt;</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun detailDorama(slug: String): Content</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun detailMovie(slug: String): Content</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun getDoramaPage( page: Int, isTvShow: Boolean, ): List&lt;TvShow&gt;</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun getEpisodes( slug: String, seasonNumber: Int, ): List&lt;DoramasflixEpisode&gt;</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun getPlaybackContext( id: String, videoType: Video.Type, ): PlaybackContext</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun searchDoramas( input: String, page: Int, ): List&lt;Content&gt;</ID>
+    <ID>LongMethod:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun searchMovies( input: String, page: Int, ): List&lt;Content&gt;</ID>
     <ID>LongMethod:EpisodeViewHolder.kt$EpisodeViewHolder$private fun displayContinueWatchingMobileItem(binding: ItemEpisodeContinueWatchingMobileBinding)</ID>
     <ID>LongMethod:EpisodeViewHolder.kt$EpisodeViewHolder$private fun displayContinueWatchingTvItem(binding: ItemEpisodeContinueWatchingTvBinding)</ID>
     <ID>LongMethod:EpisodeViewHolder.kt$EpisodeViewHolder$private fun displayMobileItem(binding: ItemEpisodeMobileBinding)</ID>
@@ -415,9 +431,7 @@
     <ID>LongMethod:HiAnimeProvider.kt$HiAnimeProvider$override suspend fun getMovie(id: String): Movie</ID>
     <ID>LongMethod:HiAnimeProvider.kt$HiAnimeProvider$override suspend fun getTvShow(id: String): TvShow</ID>
     <ID>LongMethod:HomeCacheStore.kt$HomeCacheStore.CachedItem$fun toItemOrNull(): AppAdapter.Item?</ID>
-    <ID>LongMethod:HomeTvFragment.kt$HomeTvFragment$private fun displayHome(categories: List&lt;Category&gt;)</ID>
     <ID>LongMethod:KidrazProvider.kt$KidrazProvider$override suspend fun getHome(): List&lt;Category&gt;</ID>
-    <ID>LongMethod:LocalMediaServer.kt$LocalMediaServer$private fun serveOfflineDownload(session: IHTTPSession, downloadId: String): Response</ID>
     <ID>LongMethod:MainMobileActivity.kt$MainMobileActivity$override fun onCreate(savedInstanceState: Bundle?)</ID>
     <ID>LongMethod:MainTvActivity.kt$MainTvActivity$override fun onCreate(savedInstanceState: Bundle?)</ID>
     <ID>LongMethod:MovieViewHolder.kt$MovieViewHolder$private fun displayGridTvItem(binding: ItemMovieGridTvBinding)</ID>
@@ -558,6 +572,7 @@
     <ID>LoopWithTooManyJumpStatements:CB01Provider.kt$CB01Provider$for</ID>
     <ID>LoopWithTooManyJumpStatements:CableVisionHDProvider.kt$CableVisionHDProvider$while</ID>
     <ID>LoopWithTooManyJumpStatements:CloseloadExtractor.kt$CloseloadExtractor$for</ID>
+    <ID>LoopWithTooManyJumpStatements:DoramasflixProvider.kt$DoramasflixProvider$while</ID>
     <ID>LoopWithTooManyJumpStatements:Extractor.kt$Extractor.Companion$for</ID>
     <ID>LoopWithTooManyJumpStatements:FilmyOnlineCcProvider.kt$FilmyOnlineCcProvider$for</ID>
     <ID>LoopWithTooManyJumpStatements:GenericPackedSourceExtractor.kt$GenericPackedSourceExtractor$for</ID>
@@ -727,8 +742,11 @@
     <ID>MagicNumber:DecryptHelper.kt$DecryptHelper$3</ID>
     <ID>MagicNumber:DnsResolver.kt$DnsResolver$30</ID>
     <ID>MagicNumber:DoodLaExtractor.kt$DoodLaExtractor$10</ID>
-    <ID>MagicNumber:DoramasflixProvider.kt$DoramasflixProvider$10</ID>
+    <ID>MagicNumber:DoramasflixLogic.kt$DoramasflixLogic$10</ID>
+    <ID>MagicNumber:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$40</ID>
+    <ID>MagicNumber:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$5.0</ID>
     <ID>MagicNumber:DoramasflixProvider.kt$DoramasflixProvider$1024</ID>
+    <ID>MagicNumber:DoramasflixProvider.kt$DoramasflixProvider$10L</ID>
     <ID>MagicNumber:DoramasflixProvider.kt$DoramasflixProvider$30</ID>
     <ID>MagicNumber:DownloadModule.kt$DownloadModule$12</ID>
     <ID>MagicNumber:DownloadModule.kt$DownloadModule$4</ID>
@@ -848,7 +866,6 @@
     <ID>MagicNumber:LatanimeProvider.kt$LatanimeProvider$1024</ID>
     <ID>MagicNumber:LatanimeProvider.kt$LatanimeProvider$12</ID>
     <ID>MagicNumber:LatanimeProvider.kt$LatanimeProvider$30</ID>
-    <ID>MagicNumber:LocalMediaServer.kt$LocalMediaServer.CacheInputStream$0xFF</ID>
     <ID>MagicNumber:MEGAKinoProvider.kt$MEGAKinoProvider$10</ID>
     <ID>MagicNumber:MEGAKinoProvider.kt$MEGAKinoProvider$1000</ID>
     <ID>MagicNumber:MEGAKinoProvider.kt$MEGAKinoProvider$20</ID>
@@ -1620,18 +1637,8 @@
     <ID>MaxLineLength:DecryptHelper.kt$DecryptHelper$private val encodedRegex = Regex("""&lt;script\s+type="application/json"&gt;(.*?)&lt;/script&gt;""", RegexOption.DOT_MATCHES_ALL)</ID>
     <ID>MaxLineLength:DeviceSelectorDialog.kt$DeviceSelectorDialog$newBuilder.setMessage("No se encontraron TVs automáticamente.\nAsegúrate de tener la app abierta en la TV.")</ID>
     <ID>MaxLineLength:DeviceUtils.kt$DeviceUtils$if (characteristics.contains("tv", ignoreCase = true) || characteristics.contains("leanback", ignoreCase = true)) return true</ID>
-    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$poster = getPosterUrl(doramaData.get("poster_path")?.asString ?: doramaData.get("poster")?.asString)</ID>
-    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$poster = getPosterUrl(movieData.get("poster_path")?.asString ?: movieData.get("poster")?.asString)</ID>
-    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$val doramaData = apolloState.entrySet().firstOrNull { (key, _) -&gt; key.startsWith("Dorama:") || key.startsWith("Movie:") }?.value?.asJsonObject</ID>
-    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$val href = element.selectFirst("div.styles__Buttons-sc-78uayx-17 a")?.attr("href") ?: return@mapNotNull null</ID>
-    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$val movieData = apolloState.entrySet().firstOrNull { (key, _) -&gt; key.startsWith("Movie:") || key.startsWith("Dorama:") }?.value?.asJsonObject</ID>
-    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$val overview = document.selectFirst("meta[name=description], meta[property=og:description]")?.attr("content")</ID>
-    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$val serverName = URL(serverUrl).host.split(".").first { it != "www" }.replaceFirstChar { it.titlecase(Locale.ROOT) }</ID>
-    <ID>MaxLineLength:DownloadsFragment.kt$DownloadsFragment$android.widget.Toast.makeText(requireContext(), "Enviando a ${device.name}...", android.widget.Toast.LENGTH_SHORT).show()</ID>
-    <ID>MaxLineLength:DownloadsFragment.kt$DownloadsFragment$android.widget.Toast.makeText(requireContext(), "Error al transmitir: $err", android.widget.Toast.LENGTH_LONG).show()</ID>
-    <ID>MaxLineLength:DownloadsFragment.kt$DownloadsFragment$android.widget.Toast.makeText(requireContext(), "Error iniciando servidor local en el teléfono", android.widget.Toast.LENGTH_SHORT).show()</ID>
-    <ID>MaxLineLength:DownloadsFragment.kt$DownloadsFragment$android.widget.Toast.makeText(requireContext(), "La descarga aún no se ha completado", android.widget.Toast.LENGTH_SHORT).show()</ID>
-    <ID>MaxLineLength:DownloadsFragment.kt$DownloadsFragment$android.widget.Toast.makeText(requireContext(), "📺 Transmitiendo en ${device.name}", android.widget.Toast.LENGTH_SHORT).show()</ID>
+    <ID>MaxLineLength:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$typeElement.isJsonArray -&gt; typeElement.asJsonArray.any { value -&gt; stringValue(value) in supportedTypes }</ID>
+    <ID>MaxLineLength:DoramasflixProvider.kt$DoramasflixProvider$private fun listRating(content: Content): Double?</ID>
     <ID>MaxLineLength:DownloadsFragment.kt$DownloadsFragment$putString("subtitle", if (video.seasonNumber != null) "S${video.seasonNumber} E${video.episodeNumber}" else "")</ID>
     <ID>MaxLineLength:DownloadsFragment.kt$DownloadsFragment$val subtitle = if (video.seasonNumber != null) "S${video.seasonNumber} E${video.episodeNumber}" else "Descarga local"</ID>
     <ID>MaxLineLength:EinschaltenExtractor.kt$EinschaltenExtractor.Service$"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"</ID>
@@ -1647,13 +1654,8 @@
     <ID>MaxLineLength:Extractor.kt$Extractor.Companion$val</ID>
     <ID>MaxLineLength:FanpelisProvider.kt$FanpelisProvider$override val logo = "https://fanpelis.to/wp-content/uploads/2025/02/cropped-play-button-icon-trendy-flat-260nw-752745979-e1738708582632-192x192.webp"</ID>
     <ID>MaxLineLength:FanpelisProvider.kt$FanpelisProvider.Service$suspend</ID>
-    <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor$AttestResponse</ID>
-    <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor$override val aliasUrls = listOf("https://bf0skv.org","https://bysejikuar.com","https://moflix-stream.link","https://bysezoxexe.com","https://bysebuho.com","https://filemoon.sx","https://bysekoze.com","https://bysesayeveum.com")</ID>
     <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor$val encodedSignature = Base64.encodeToString(rawSignature, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)</ID>
-    <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor$val x = Base64.encodeToString(publicKey.w.affineX.toByteArray().stripLeadingZero(), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)</ID>
-    <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor$val y = Base64.encodeToString(publicKey.w.affineY.toByteArray().stripLeadingZero(), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)</ID>
-    <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor.Service$suspend</ID>
-    <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor.Service.Companion$const val DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"</ID>
+    <ID>MaxLineLength:FilemoonExtractor.kt$FilemoonExtractor.Service.Companion.&lt;no name provided&gt;$override fun loadForRequest(url: okhttp3.HttpUrl): List&lt;okhttp3.Cookie&gt;</ID>
     <ID>MaxLineLength:FilmPalastProvider.kt$FilmPalastProvider$released = tmdbMovie?.released?.let { "${it.get(java.util.Calendar.YEAR)}" } ?: document.selectFirst("ul#detail-content-list &gt; li:has(p:matchesOwn(Release)) a")?.text()?.trim()</ID>
     <ID>MaxLineLength:FilmPalastProvider.kt$FilmPalastProvider$released = tmdbTvShow?.released?.let { "${it.get(java.util.Calendar.YEAR)}" } ?: document.selectFirst("ul#detail-content-list &gt; li:has(p:matchesOwn(Release)) a")?.text()?.trim()</ID>
     <ID>MaxLineLength:FilmPalastProvider.kt$FilmPalastProvider$seasonBlock.select("ul.staffelEpisodenList li a.getStaffelStream")</ID>
@@ -1769,7 +1771,6 @@
     <ID>MaxLineLength:LatanimeProvider.kt$LatanimeProvider$val posterUrl = it.selectFirst("img")?.attr("data-src") ?: it.selectFirst("img")?.attr("src") ?: ""</ID>
     <ID>MaxLineLength:LoadXExtractor.kt$LoadXExtractor$.</ID>
     <ID>MaxLineLength:LoadXExtractor.kt$LoadXExtractor.Service$@Header("User-Agent") userAgent: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:139.0) Gecko/20100101 Firefox/139.0"</ID>
-    <ID>MaxLineLength:LocalMediaServer.kt$LocalMediaServer$it.isFile &amp;&amp; (it.extension == "mp4" || it.extension == "mkv" || it.extension == "ts" || !it.name.endsWith(".exo"))</ID>
     <ID>MaxLineLength:LuluVdoExtractor.kt$LuluVdoExtractor$"User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"</ID>
     <ID>MaxLineLength:LuluVdoExtractor.kt$LuluVdoExtractor.Service$"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"</ID>
     <ID>MaxLineLength:MEGAKinoProvider.kt$MEGAKinoProvider$private const val DEFAULT_AGENT = "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0"</ID>
@@ -2157,8 +2158,6 @@
     <ID>MaxLineLength:SettingsTvFragment.kt$SettingsTvFragment$val BLOCKED = listOf("streamingcommunityz.green", "streamingunity.club", "streamingunity.bike", "streamingcommunityz.buzz")</ID>
     <ID>MaxLineLength:SflixProvider.kt$SflixProvider$override val logo = "https://img.sflix.to/xxrz/400x400/100/66/35/66356c25ce98cb12993249e21742b129/66356c25ce98cb12993249e21742b129.png"</ID>
     <ID>MaxLineLength:ShowOptionsMobileDialog.kt$ShowOptionsMobileDialog$UserDataCache.addMovieToFavorites(context, provider, resolvedMovie.copy().apply { isFavorite = true })</ID>
-    <ID>MaxLineLength:ShowOptionsMobileDialog.kt$ShowOptionsMobileDialog$android.widget.Toast.makeText(context, "Error al enviar: $err", android.widget.Toast.LENGTH_LONG).show()</ID>
-    <ID>MaxLineLength:ShowOptionsMobileDialog.kt$ShowOptionsMobileDialog$android.widget.Toast.makeText(context, "📺 Abriendo reproductor en ${device.name}...", android.widget.Toast.LENGTH_SHORT).show()</ID>
     <ID>MaxLineLength:ShowOptionsMobileDialog.kt$ShowOptionsMobileDialog$val allEpisodes = episodeDao.getEpisodesByTvShowIdAndSeason(tvShowId, episode.season?.id).filter { it.number &lt;= episodeNumber }</ID>
     <ID>MaxLineLength:ShowOptionsTvDialog.kt$ShowOptionsTvDialog$UserDataCache.addMovieToFavorites(context, provider, resolvedMovie.copy().apply { isFavorite = true })</ID>
     <ID>MaxLineLength:ShowOptionsTvDialog.kt$ShowOptionsTvDialog$val allEpisodes = episodeDao.getEpisodesByTvShowIdAndSeason(tvShowId, episode.season?.id).filter { it.number &lt;= episodeNumber }</ID>
@@ -2408,8 +2407,6 @@
     <ID>NestedBlockDepth:CloseloadExtractor.kt$CloseloadExtractor$private fun smartBruteForce(inputData: String, magicNum: Long, offset: Int): String?</ID>
     <ID>NestedBlockDepth:CuevanaEuProvider.kt$CuevanaEuProvider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
     <ID>NestedBlockDepth:CuevanaEuProvider.kt$CuevanaEuProvider$private suspend fun fallbackGetEpisodesBySeason(seasonId: String): List&lt;Episode&gt;</ID>
-    <ID>NestedBlockDepth:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getMovie(id: String): Movie</ID>
-    <ID>NestedBlockDepth:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getTvShow(id: String): TvShow</ID>
     <ID>NestedBlockDepth:EpisodeManager.kt$EpisodeManager$suspend fun addEpisodesFromDb(type: Video.Type.Episode, database: AppDatabase)</ID>
     <ID>NestedBlockDepth:Extractor.kt$Extractor.Companion$suspend fun extract(link: String, server: Video.Server? = null): Video</ID>
     <ID>NestedBlockDepth:FlixLatamProvider.kt$FlixLatamProvider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
@@ -2421,9 +2418,6 @@
     <ID>NestedBlockDepth:HDFilmeProvider.kt$HDFilmeProvider$override suspend fun getTvShow(id: String): TvShow</ID>
     <ID>NestedBlockDepth:HDFilmeProvider.kt$HDFilmeProvider$private fun parseSitemap(body: ResponseBody): List&lt;SitemapEntry&gt;</ID>
     <ID>NestedBlockDepth:JsUnpacker.kt$JsUnpacker$fun unpack(): String?</ID>
-    <ID>NestedBlockDepth:LocalMediaServer.kt$LocalMediaServer$private fun findFileForDownload(dir: File, downloadId: String): File?</ID>
-    <ID>NestedBlockDepth:LocalMediaServer.kt$LocalMediaServer$private fun getLocalIpAddress(context: Context): String?</ID>
-    <ID>NestedBlockDepth:LocalMediaServer.kt$LocalMediaServer$private fun serveOfflineDownload(session: IHTTPSession, downloadId: String): Response</ID>
     <ID>NestedBlockDepth:MEGAKinoProvider.kt$MEGAKinoProvider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
     <ID>NestedBlockDepth:MEGAKinoProvider.kt$MEGAKinoProvider$override suspend fun search(query: String, page: Int): List&lt;AppAdapter.Item&gt;</ID>
     <ID>NestedBlockDepth:NetworkClient.kt$NetworkClient$private fun createBaseClient(): OkHttpClient</ID>
@@ -2482,8 +2476,6 @@
     <ID>NewLineAtEndOfFile:CineCityProvider.kt$com.streamflixreborn.streamflix.providers.CineCityProvider.kt</ID>
     <ID>NewLineAtEndOfFile:Converters.kt$com.streamflixreborn.streamflix.database.Converters.kt</ID>
     <ID>NewLineAtEndOfFile:CryptoAES.kt$com.streamflixreborn.streamflix.utils.CryptoAES.kt</ID>
-    <ID>NewLineAtEndOfFile:DoramasflixModels.kt$com.streamflixreborn.streamflix.models.doramasflix.DoramasflixModels.kt</ID>
-    <ID>NewLineAtEndOfFile:DoramasflixProvider.kt$com.streamflixreborn.streamflix.providers.DoramasflixProvider.kt</ID>
     <ID>NewLineAtEndOfFile:FlixLatamModels.kt$com.streamflixreborn.streamflix.models.flixlatam.FlixLatamModels.kt</ID>
     <ID>NewLineAtEndOfFile:FlixLatamProvider.kt$com.streamflixreborn.streamflix.providers.FlixLatamProvider.kt</ID>
     <ID>NewLineAtEndOfFile:FrembedExtractor.kt$com.streamflixreborn.streamflix.extractors.FrembedExtractor.kt</ID>
@@ -2647,8 +2639,16 @@
     <ID>ReturnCount:CuevanaEuProvider.kt$CuevanaEuProvider$private fun fixImageUrl(url: String): String?</ID>
     <ID>ReturnCount:CuevanaEuProvider.kt$CuevanaEuProvider$private suspend inline fun &lt;reified T&gt; getFastApi( path: String, params: Map&lt;String, String&gt;, ): T?</ID>
     <ID>ReturnCount:DeviceUtils.kt$DeviceUtils$fun isTvDevice(context: Context): Boolean</ID>
-    <ID>ReturnCount:DoramasflixProvider.kt$DoramasflixProvider$override suspend fun getServers(id: String, videoType: Video.Type): List&lt;Video.Server&gt;</ID>
-    <ID>ReturnCount:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun getRealLink(link: String): String</ID>
+    <ID>ReturnCount:DoramasflixLogic.kt$DoramasflixLogic$fun graphQlErrorMessage(body: String?): String?</ID>
+    <ID>ReturnCount:DoramasflixLogic.kt$DoramasflixLogic$fun normalizeAirDate(airDate: String?): String?</ID>
+    <ID>ReturnCount:DoramasflixLogic.kt$DoramasflixLogic$fun resolveApiRating( rating: Double?, ratingCount: Int?, ): DoramasflixRatingDecision</ID>
+    <ID>ReturnCount:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$private fun findAggregateRating(element: JsonElement): Double?</ID>
+    <ID>ReturnCount:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$private fun findStructuredContent(element: JsonElement): JsonObject?</ID>
+    <ID>ReturnCount:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$private fun findTypedObject( element: JsonElement, type: String, ): JsonObject?</ID>
+    <ID>ReturnCount:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$private fun visibleRating(document: Document): Double?</ID>
+    <ID>ReturnCount:DoramasflixProvider.kt$DoramasflixProvider$private fun isPrimeload( link: String, serverName: String?, ): Boolean</ID>
+    <ID>ReturnCount:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun featuredDorama(content: Content): Show?</ID>
+    <ID>ReturnCount:DoramasflixProvider.kt$DoramasflixProvider$private suspend fun featuredMovie(content: Content): Show?</ID>
     <ID>ReturnCount:EinschaltenProvider.kt$EinschaltenProvider$override suspend fun getGenre(id: String, page: Int): Genre</ID>
     <ID>ReturnCount:EinschaltenProvider.kt$EinschaltenProvider$override suspend fun search(query: String, page: Int): List&lt;AppAdapter.Item&gt;</ID>
     <ID>ReturnCount:Episode.kt$Episode$fun isSame(episode: Episode): Boolean</ID>
@@ -2701,11 +2701,6 @@
     <ID>ReturnCount:LamovieProvider.kt$LamovieProvider$override suspend fun search(query: String, page: Int): List&lt;AppAdapter.Item&gt;</ID>
     <ID>ReturnCount:LamovieProvider.kt$LamovieProvider$private fun parsePost(post: JsonObject): Show?</ID>
     <ID>ReturnCount:LatanimeProvider.kt$LatanimeProvider$override suspend fun search(query: String, page: Int): List&lt;AppAdapter.Item&gt;</ID>
-    <ID>ReturnCount:LocalMediaServer.kt$LocalMediaServer$fun startServer(): String?</ID>
-    <ID>ReturnCount:LocalMediaServer.kt$LocalMediaServer$private fun findFileForDownload(dir: File, downloadId: String): File?</ID>
-    <ID>ReturnCount:LocalMediaServer.kt$LocalMediaServer$private fun getLocalIpAddress(context: Context): String?</ID>
-    <ID>ReturnCount:LocalMediaServer.kt$LocalMediaServer$private fun serveFileWithRanges(session: IHTTPSession, file: File): Response</ID>
-    <ID>ReturnCount:LocalMediaServer.kt$LocalMediaServer$private fun serveOfflineDownload(session: IHTTPSession, downloadId: String): Response</ID>
     <ID>ReturnCount:MStreamProvider.kt$MStreamProvider$override suspend fun search(query: String, page: Int): List&lt;AppAdapter.Item&gt;</ID>
     <ID>ReturnCount:MStreamProvider.kt$MStreamProvider$private fun getService(): MStreamService</ID>
     <ID>ReturnCount:MainMobileActivity.kt$MainMobileActivity$override fun onCreate(savedInstanceState: Bundle?)</ID>
@@ -2850,7 +2845,6 @@
     <ID>SwallowedException:CloseloadExtractor.kt$CloseloadExtractor$e: IllegalArgumentException</ID>
     <ID>SwallowedException:CuevanaEuProvider.kt$CuevanaEuProvider$e: Exception</ID>
     <ID>SwallowedException:DeviceUtils.kt$DeviceUtils$e: Exception</ID>
-    <ID>SwallowedException:DoramasflixProvider.kt$DoramasflixProvider$e: Exception</ID>
     <ID>SwallowedException:EinschaltenProvider.kt$EinschaltenProvider$e: Exception</ID>
     <ID>SwallowedException:Extensions.kt$e: Exception</ID>
     <ID>SwallowedException:FlixLatamProvider.kt$FlixLatamProvider$e: Exception</ID>
@@ -2868,7 +2862,6 @@
     <ID>SwallowedException:LaCartoonsProvider.kt$LaCartoonsProvider$e: Exception</ID>
     <ID>SwallowedException:LamovieProvider.kt$LamovieProvider$e: Exception</ID>
     <ID>SwallowedException:LatanimeProvider.kt$LatanimeProvider$e: Exception</ID>
-    <ID>SwallowedException:LocalMediaServer.kt$LocalMediaServer$e: Exception</ID>
     <ID>SwallowedException:MEGAKinoProvider.kt$MEGAKinoProvider$e: Exception</ID>
     <ID>SwallowedException:MStreamDayExtractor.kt$MStreamDayExtractor$e: Exception</ID>
     <ID>SwallowedException:MStreamProvider.kt$MStreamProvider$e: Exception</ID>
@@ -2922,6 +2915,7 @@
     <ID>SwallowedException:WebViewResolver.kt$WebViewResolver$e: Exception</ID>
     <ID>SwallowedException:WiflixProvider.kt$WiflixProvider$e: Exception</ID>
     <ID>ThrowingExceptionsWithoutMessageOrCause:FrenchMangaProvider.kt$FrenchMangaProvider$Exception()</ID>
+    <ID>ThrowsCount:DoramasflixProvider.kt$DoramasflixProvider$private fun ApiResponse.requireData(context: String): Data</ID>
     <ID>ThrowsCount:FilmyOnlineCcProvider.kt$FilmyOnlineCcProvider$private fun getBootstrapRoot(document: Document): JSONObject</ID>
     <ID>ThrowsCount:GuardaSerieProvider.kt$GuardaSerieProvider$private suspend fun getDocument(url: String): Document</ID>
     <ID>ThrowsCount:ZaluknijProvider.kt$ZaluknijProvider$private suspend fun getDocument(url: String): Document</ID>
@@ -2958,7 +2952,8 @@
     <ID>TooGenericExceptionCaught:DeviceDiscoveryManager.kt$DeviceDiscoveryManager.&lt;no name provided&gt;$e: Exception</ID>
     <ID>TooGenericExceptionCaught:DeviceUtils.kt$DeviceUtils$e: Exception</ID>
     <ID>TooGenericExceptionCaught:DnsResolver.kt$DnsResolver$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:DoramasflixProvider.kt$DoramasflixProvider$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DoramasflixPageMetadata.kt$DoramasflixPageMetadata$error: Exception</ID>
+    <ID>TooGenericExceptionCaught:DoramasflixProvider.kt$DoramasflixProvider$error: Exception</ID>
     <ID>TooGenericExceptionCaught:EinschaltenProvider.kt$EinschaltenProvider$e: Exception</ID>
     <ID>TooGenericExceptionCaught:EpisodeManager.kt$EpisodeManager$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Extensions.kt$e: Exception</ID>
@@ -2990,6 +2985,7 @@
     <ID>TooGenericExceptionCaught:LamovieProvider.kt$LamovieProvider$e: Exception</ID>
     <ID>TooGenericExceptionCaught:LatanimeProvider.kt$LatanimeProvider$e: Exception</ID>
     <ID>TooGenericExceptionCaught:LocalMediaServer.kt$LocalMediaServer$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LocalMediaServer.kt$e: Exception</ID>
     <ID>TooGenericExceptionCaught:MEGAKinoProvider.kt$MEGAKinoProvider$e: Exception</ID>
     <ID>TooGenericExceptionCaught:MStreamDayExtractor.kt$MStreamDayExtractor$e: Exception</ID>
     <ID>TooGenericExceptionCaught:MStreamProvider.kt$MStreamProvider$e: Exception</ID>
@@ -3006,6 +3002,7 @@
     <ID>TooGenericExceptionCaught:NetworkClient.kt$NetworkClient$e: Exception</ID>
     <ID>TooGenericExceptionCaught:NetworkClient.kt$NetworkClient.&lt;no name provided&gt;$e2: Exception</ID>
     <ID>TooGenericExceptionCaught:NetworkClient.kt$NetworkClient.&lt;no name provided&gt;$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OfflineStreaming.kt$e: Exception</ID>
     <ID>TooGenericExceptionCaught:OnRegardeOuExtractor.kt$OnRegardeOuExtractor$e: Exception</ID>
     <ID>TooGenericExceptionCaught:OpenSubtitles.kt$OpenSubtitles$e: Exception</ID>
     <ID>TooGenericExceptionCaught:PDrainExtractor.kt$PDrainExtractor$e: Exception</ID>
@@ -3102,7 +3099,24 @@
     <ID>TooGenericExceptionThrown:DailymotionExtractor.kt$DailymotionExtractor$throw Exception("Manifest URL not found")</ID>
     <ID>TooGenericExceptionThrown:DoodLaExtractor.kt$DoodLaExtractor$throw Exception("Could not find md5 path")</ID>
     <ID>TooGenericExceptionThrown:DoodLaExtractor.kt$DoodLaExtractor$throw Exception("Failed to load embed page")</ID>
-    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Not yet implemented")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixPageMetadata.kt$DoramasflixPageMetadata$throw Exception("Doramasflix actor details failed: HTTP ${error.code()}", error)</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixPageMetadata.kt$DoramasflixPageMetadata.Companion$throw Exception("Doramasflix actor details could not be loaded.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception( "Doramasflix currently offers this title only on Primeload, which StreamFlix does not support yet.", )</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("$context failed: $message")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("$context is temporarily rate limiting requests. Please try again shortly.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("$context returned no data.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix could not find dorama '$slug'.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix could not find movie '$slug'.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix could not resolve movie '$slug'.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix could not resolve series '$slug'.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix could not resolve the episode playback ID.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix could not resolve the movie playback ID.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix could not resolve the series ID.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix currently has no playback sources for this title.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix currently has no supported playback sources for this title.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Doramasflix returned invalid playback source URLs for this title.")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Invalid Doramasflix season ID: $seasonId")</ID>
+    <ID>TooGenericExceptionThrown:DoramasflixProvider.kt$DoramasflixProvider$throw Exception("Unknown Doramasflix category: $id")</ID>
     <ID>TooGenericExceptionThrown:DroploadExtractor.kt$DroploadExtractor$throw Exception("Failed to load page")</ID>
     <ID>TooGenericExceptionThrown:DroploadExtractor.kt$DroploadExtractor$throw Exception("Packed JS not found")</ID>
     <ID>TooGenericExceptionThrown:DroploadExtractor.kt$DroploadExtractor$throw Exception("Stream URL not found in file field")</ID>
@@ -3348,7 +3362,10 @@
     <ID>TooManyFunctions:CineHaxProvider.kt$CineHaxProvider : Provider</ID>
     <ID>TooManyFunctions:CloudSyncManager.kt$CloudSyncManager</ID>
     <ID>TooManyFunctions:CuevanaEuProvider.kt$CuevanaEuProvider : BaseProvider</ID>
+    <ID>TooManyFunctions:DoramasflixLogic.kt$DoramasflixLogic</ID>
+    <ID>TooManyFunctions:DoramasflixPageMetadata.kt$DoramasflixPageMetadata$Companion</ID>
     <ID>TooManyFunctions:DoramasflixProvider.kt$DoramasflixProvider : Provider</ID>
+    <ID>TooManyFunctions:DownloadsFragment.kt$DownloadsFragment : Fragment</ID>
     <ID>TooManyFunctions:EinschaltenProvider.kt$EinschaltenProvider : BaseProvider</ID>
     <ID>TooManyFunctions:EpisodeDao.kt$EpisodeDao</ID>
     <ID>TooManyFunctions:EpisodeManager.kt$EpisodeManager</ID>
@@ -3444,7 +3461,6 @@
     <ID>UnusedParameter:AnimeOnlineNinjaProvider.kt$AnimeOnlineNinjaProvider$source: Int</ID>
     <ID>UnusedParameter:FrenchStreamProvider.kt$FrenchStreamProvider$document: Document</ID>
     <ID>UnusedParameter:HDFilmeProvider.kt$HDFilmeProvider$page: Int</ID>
-    <ID>UnusedParameter:LocalMediaServer.kt$LocalMediaServer$context: Context</ID>
     <ID>UnusedParameter:MkissaProvider.kt$MkissaProvider$detailed: Boolean</ID>
     <ID>UnusedParameter:SoloLatinoProvider.kt$SoloLatinoProvider$referer: String</ID>
     <ID>UnusedParameter:TvWebSocketServer.kt$TvWebSocketServer$isPlaying: Boolean</ID>
@@ -3453,7 +3469,6 @@
     <ID>UnusedPrivateMember:AnimeWorldProvider.kt$AnimeWorldProvider$private fun getCookieValue(document: Document): String</ID>
     <ID>UnusedPrivateMember:CloudSyncManager.kt$CloudSyncManager$private fun clearLocalUserState(context: Context)</ID>
     <ID>UnusedPrivateMember:CuevanaEuProvider.kt$CuevanaEuProvider$private suspend fun fetchRyusakiStreamUrl(tmdbId: String, contentType: String, serverId: String, nonce: String, season: String?, episode: String?): String?</ID>
-    <ID>UnusedPrivateMember:DownloadsFragment.kt$DownloadsFragment$private fun castDownloadedVideoToTv(video: OfflineVideoEntity)</ID>
     <ID>UnusedPrivateMember:FilmyOnlineCcProvider.kt$FilmyOnlineCcProvider$private fun JSONArray.toGenres(): List&lt;Genre&gt;</ID>
     <ID>UnusedPrivateMember:FilmyOnlineCcProvider.kt$FilmyOnlineCcProvider$private fun JSONArray?.toRecommendationItems(): List&lt;Show&gt;</ID>
     <ID>UnusedPrivateMember:FilmyOnlineCcProvider.kt$FilmyOnlineCcProvider$private fun collectChannelObjects(root: JSONObject): List&lt;JSONObject&gt;</ID>
@@ -3543,7 +3558,6 @@
     <ID>WildcardImport:CineCityProvider.kt$import okhttp3.*</ID>
     <ID>WildcardImport:CineHaxProvider.kt$import com.streamflixreborn.streamflix.models.*</ID>
     <ID>WildcardImport:CuevanaEuProvider.kt$import com.streamflixreborn.streamflix.models.*</ID>
-    <ID>WildcardImport:DoramasflixProvider.kt$import com.streamflixreborn.streamflix.models.*</ID>
     <ID>WildcardImport:FilemoonExtractor.kt$import java.security.*</ID>
     <ID>WildcardImport:FilemoonExtractor.kt$import retrofit2.http.*</ID>
     <ID>WildcardImport:FlixLatamProvider.kt$import com.streamflixreborn.streamflix.models.*</ID>

@@ -249,12 +249,13 @@ class ShowOptionsTvDialog(
                     val updatedEpisode = episode.copy().apply {
                         merge(episode)
                         watchHistory = null
+                        watchedDate = null
+                        isWatched = false
                     }
                     AppDatabase.getInstance(context).episodeDao().save(updatedEpisode)
                     UserDataCache.syncEpisodeToCache(context, provider, updatedEpisode)
                     
                     episode.tvShow?.let { tvShow ->
-                        // Rimuoviamo isWatching solo se NON ci sono altri episodi in corso
                         val episodeDao = AppDatabase.getInstance(context).episodeDao()
                         if (!episodeDao.hasAnyWatchHistoryForTvShow(tvShow.id)) {
                             AppDatabase.getInstance(context).tvShowDao().save(tvShow.copy().apply {
@@ -271,7 +272,7 @@ class ShowOptionsTvDialog(
             }
 
             visibility = when {
-                episode.watchHistory != null -> View.VISIBLE
+                episode.watchHistory != null || episode.isWatched || episode.watchedDate != null -> View.VISIBLE
                 episode.tvShow?.isWatching ?: false -> View.VISIBLE
                 else -> View.GONE
             }
@@ -362,6 +363,8 @@ class ShowOptionsTvDialog(
                     val updatedMovie = freshMovie.copy().apply {
                         merge(freshMovie)
                         watchHistory = null
+                        watchedDate = null
+                        isWatched = false
                     }
                     AppDatabase.getInstance(context).movieDao().save(updatedMovie)
                     UserDataCache.syncMovieToCache(context, provider, updatedMovie)
@@ -372,7 +375,9 @@ class ShowOptionsTvDialog(
             }
 
             visibility = when {
-                freshMovie.watchHistory != null -> View.VISIBLE
+                freshMovie.watchHistory != null ||
+                    freshMovie.isWatched ||
+                    freshMovie.watchedDate != null -> View.VISIBLE
                 else -> View.GONE
             }
         }

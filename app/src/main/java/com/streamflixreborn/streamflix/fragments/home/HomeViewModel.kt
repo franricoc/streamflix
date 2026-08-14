@@ -279,11 +279,6 @@ class HomeViewModel(database: AppDatabase) : ViewModel() {
                             },
                     ),
 
-                    Category(
-                        name = Category.RECENTLY_WATCHED,
-                        list = history.recentlyWatched,
-                    ),
-
                     // FAVORITES
                     Category(
                         name = Category.FAVORITE_MOVIES,

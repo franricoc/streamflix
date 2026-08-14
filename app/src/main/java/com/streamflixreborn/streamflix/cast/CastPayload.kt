@@ -17,7 +17,7 @@ data class CastPayload(
     val startPositionMs: Long = 0L,
     val durationMs: Long = 0L,
     val isOfflineDownload: Boolean = false,
-    val videoType: Video.Type? = null,
+    @Transient val videoType: Video.Type? = null,
     val mediaId: String? = null
 ) : Serializable {
 

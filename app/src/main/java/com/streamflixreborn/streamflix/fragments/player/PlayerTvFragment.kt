@@ -115,6 +115,14 @@ class PlayerTvFragment : Fragment() {
         private const val NEXT_EPISODE_OVERLAY_MIN_THRESHOLD_MS = 30_000L
         private const val NEXT_EPISODE_OVERLAY_ALPHA_UNFOCUSED = 0.72f
         private const val NEXT_EPISODE_OVERLAY_ALPHA_FOCUSED = 0.96f
+        private const val MAX_PLAYBACK_RETRIES = 2
+        private const val PLAYBACK_RETRY_DELAY_MS = 1_500L
+        private const val HTTP_STATUS_FORBIDDEN = 403
+        private const val HTTP_STATUS_REQUEST_TIMEOUT = 408
+        private const val HTTP_STATUS_TOO_MANY_REQUESTS = 429
+        private const val HTTP_5XX_STATUS_MIN = 500
+        private const val HTTP_5XX_STATUS_MAX = 599
+        private const val MAX_ERROR_CAUSE_DEPTH = 8
     }
 
     private data class BypassSession(
@@ -155,6 +163,7 @@ class PlayerTvFragment : Fragment() {
     private var nextEpisodePrefetchTargetId: String? = null
     private var nextEpisodePrefetchJob: Job? = null
     private var nextEpisodeOverlayDismissed = false
+    private var playbackRetryCount = 0
     private val chooserReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -1381,11 +1390,39 @@ class PlayerTvFragment : Fragment() {
                     super.onPlayerError(error)
                     Log.e("PlayerTvFragment", "onPlayerError: ", error)
 
-                    val nextServer = servers.getOrNull(servers.indexOf(currentServer) + 1)
+                    val currentIdx = servers.indexOf(currentServer)
+
+                    // Transient/HTTP errors (403, 429, 5xx, network drops) usually clear up on a
+                    // retry: re-resolve the same server (fresh URL/token) before abandoning it.
+                    if (isRetryableError(error) && playbackRetryCount < MAX_PLAYBACK_RETRIES) {
+                        playbackRetryCount++
+                        val retryMessage = "Playback error, retrying ${currentServer?.name} " +
+                            "($playbackRetryCount/$MAX_PLAYBACK_RETRIES)"
+                        Log.i("PlayerTvFragment", retryMessage)
+                        lifecycleScope.launch {
+                            delay(PLAYBACK_RETRY_DELAY_MS)
+                            val server = currentServer ?: return@launch
+                            if (servers.contains(server)) {
+                                viewModel.getVideo(server)
+                            } else {
+                                // Cast/local stream: rebuild the media item and resume.
+                                val video = currentVideo
+                                if (video != null) displayVideo(video, server, player.currentPosition)
+                            }
+                        }
+                        return
+                    }
+                    playbackRetryCount = 0
+
+                    val nextServer = servers.getOrNull(currentIdx + 1)
                     if (nextServer != null) {
                         Log.i("PlayerTvFragment", "Playback failed, trying next server: ${nextServer.name}")
                         viewModel.getVideo(nextServer)
+                        return
                     }
+
+                    // No more servers: surface the error instead of leaving a black screen.
+                    showPlaybackErrorDialog(error)
                 }
             }
             player.addListener(listener)
@@ -2029,6 +2066,64 @@ class PlayerTvFragment : Fragment() {
 
             viewModel.reloadServersAfterBypass()
         }
+    }
+
+    private fun isRetryableError(error: PlaybackException): Boolean {
+        val status = extractHttpStatusCode(error)
+        if (status != null) {
+            return status == HTTP_STATUS_FORBIDDEN ||
+                status == HTTP_STATUS_REQUEST_TIMEOUT ||
+                status == HTTP_STATUS_TOO_MANY_REQUESTS ||
+                status in HTTP_5XX_STATUS_MIN..HTTP_5XX_STATUS_MAX
+        }
+        return error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+            error.errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED
+    }
+
+    private fun extractHttpStatusCode(error: PlaybackException): Int? {
+        var t: Throwable? = error
+        var depth = 0
+        while (t != null && depth < MAX_ERROR_CAUSE_DEPTH) {
+            if (t is HttpDataSource.InvalidResponseCodeException) {
+                return t.responseCode
+            }
+            t = t.cause
+            depth++
+        }
+        return error.cause?.message
+            ?.let { Regex("Response code: (\\d{3})").find(it)?.groupValues?.get(1)?.toIntOrNull() }
+    }
+
+    private fun showPlaybackErrorDialog(error: PlaybackException) {
+        if (!isAdded || activity == null) return
+        val message = error.message ?: "Error de reproducción"
+        val hint =
+            if (isCastPlayback) {
+                "\n\nNo se pudo reproducir el contenido enviado desde el teléfono. " +
+                    "Verifica que el teléfono y la TV estén en la misma red Wi-Fi y que " +
+                    "la app del teléfono permanezca abierta."
+            } else {
+                "\n\n¿Reintentar o salir?"
+            }
+        androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+            .setTitle("Error de reproducción")
+            .setMessage("$message$hint")
+            .setPositiveButton("Reintentar") { _, _ ->
+                playbackRetryCount = 0
+                val server = currentServer
+                if (server != null && servers.contains(server)) {
+                    viewModel.getVideo(server)
+                } else {
+                    val video = currentVideo
+                    if (video != null && server != null) {
+                        displayVideo(video, server, player.currentPosition)
+                    } else {
+                        findNavController().navigateUp()
+                    }
+                }
+            }
+            .setNegativeButton("Salir") { _, _ -> findNavController().navigateUp() }
+            .show()
     }
 
     private fun applyBypassCookies(url: String, cookieHeader: String?) {
