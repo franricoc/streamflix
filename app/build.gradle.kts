@@ -26,8 +26,8 @@ android {
         applicationId = "com.streamflixreborn.streamflix"
         minSdk = 21
         targetSdk = 35
-        versionCode = 158
-        versionName = "1.7.229.4"
+        versionCode = 160
+        versionName = "1.7.229.7"
 
         buildConfigField("String", "APP_LAYOUT", "\"${properties.getProperty("APP_LAYOUT") ?: "universal"}\"")
         buildConfigField("String", "TMDB_API_KEY", "\"${properties.getProperty("TMDB_API_KEY") ?: ""}\"")
