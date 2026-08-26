@@ -2,6 +2,10 @@ package com.streamflixreborn.streamflix.cast
 
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSpec
@@ -36,8 +40,75 @@ class LocalMediaServer(
 ) : NanoHTTPD(port) {
     private val appContext: Context = context.applicationContext
 
+    // Doze / App Standby cut CPU and network access to this app shortly after the screen
+    // turns off, which stalls any TV pulling bytes from this server ("se queda cargando").
+    // While requests are flowing we hold a partial wake lock + high-perf wifi lock, and
+    // release both after a short idle window so we don't drain the battery when idle.
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: android.net.wifi.WifiManager.WifiLock? = null
+    private val lockHandler = Handler(Looper.getMainLooper())
+    private val releaseLocksRunnable = Runnable { maybeReleaseLocks() }
+
+    @Volatile
+    private var lastRequestElapsedMs = 0L
+
+    private fun noteRequestActivity() {
+        lastRequestElapsedMs = SystemClock.elapsedRealtime()
+        acquireLocks()
+        lockHandler.removeCallbacks(releaseLocksRunnable)
+        lockHandler.postDelayed(releaseLocksRunnable, LOCK_IDLE_RELEASE_MS)
+    }
+
+    private fun acquireLocks() {
+        try {
+            if (wakeLock == null) {
+                val pm = appContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+                wakeLock =
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "StreamFlix:LocalMediaServer").apply {
+                        setReferenceCounted(false)
+                    }
+            }
+            if (wifiLock == null) {
+                val wm = appContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+                @Suppress("DEPRECATION")
+                wifiLock = wm.createWifiLock(android.net.wifi.WifiManager.WIFI_MODE_FULL_HIGH_PERF, "StreamFlix:LocalMediaServer").apply {
+                    setReferenceCounted(false)
+                }
+            }
+            if (wakeLock?.isHeld != true) wakeLock?.acquire()
+            if (wifiLock?.isHeld != true) wifiLock?.acquire()
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not acquire cast keep-alive locks", e)
+        }
+    }
+
+    private fun maybeReleaseLocks() {
+        val idleMs = SystemClock.elapsedRealtime() - lastRequestElapsedMs
+        if (idleMs < LOCK_IDLE_RELEASE_MS) {
+            // A request landed while we were waiting to release; reschedule.
+            lockHandler.postDelayed(releaseLocksRunnable, LOCK_IDLE_RELEASE_MS - idleMs)
+            return
+        }
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+            if (wifiLock?.isHeld == true) wifiLock?.release()
+            Log.d(TAG, "Released cast keep-alive locks (idle)")
+        } catch (ignored: Exception) {
+        }
+    }
+
+    private fun releaseLocksNow() {
+        lockHandler.removeCallbacks(releaseLocksRunnable)
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+            if (wifiLock?.isHeld == true) wifiLock?.release()
+        } catch (ignored: Exception) {
+        }
+    }
+
     companion object {
         private const val TAG = "LocalMediaServer"
+        private const val LOCK_IDLE_RELEASE_MS = 90_000L
 
         @Volatile
         private var instance: LocalMediaServer? = null
@@ -62,6 +133,7 @@ class LocalMediaServer(
     }
 
     fun stopServer() {
+        releaseLocksNow()
         if (isAlive) {
             stop()
             Log.d(TAG, "LocalMediaServer stopped")
@@ -69,6 +141,7 @@ class LocalMediaServer(
     }
 
     override fun serve(session: IHTTPSession): Response {
+        noteRequestActivity()
         val uri = session.uri
         Log.d(TAG, "Incoming HTTP request: $uri")
 

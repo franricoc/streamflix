@@ -17,6 +17,13 @@ data class CastPayload(
     val startPositionMs: Long = 0L,
     val durationMs: Long = 0L,
     val isOfflineDownload: Boolean = false,
+
+    /**
+     * When true (offline downloads only) the TV pulls the whole file from the phone once,
+     * stores it locally and plays from its own storage, so playback no longer depends on
+     * the phone staying awake. Only used for progressive content; HLS keeps direct streaming.
+     */
+    val fullTransfer: Boolean = false,
     @Transient val videoType: Video.Type? = null,
     val mediaId: String? = null
 ) : Serializable {

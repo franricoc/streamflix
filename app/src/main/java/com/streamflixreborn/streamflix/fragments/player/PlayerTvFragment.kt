@@ -265,20 +265,65 @@ class PlayerTvFragment : Fragment() {
     private var isCastPlayback = false
 
     fun onNewCastPayload(payload: com.streamflixreborn.streamflix.cast.CastPayload) {
-        if (payload.streamUrl.isNotEmpty()) {
-            isCastPlayback = true
-            // Restore the token state the phone was using, so the player's interceptor keeps
-            // injecting the query into HLS segments the same way the phone did.
-            TokenManager.maintainToken = payload.maintainToken
-            if (payload.maintainToken) {
-                payload.tokenQuery?.let { TokenManager.latestQuery = it }
+        if (payload.streamUrl.isEmpty()) {
+            isCastPlayback = false
+            initializeVideo()
+            return
+        }
+        isCastPlayback = true
+        // Restore the token state the phone was using, so the player's interceptor keeps
+        // injecting the query into HLS segments the same way the phone did.
+        TokenManager.maintainToken = payload.maintainToken
+        if (payload.maintainToken) {
+            payload.tokenQuery?.let { TokenManager.latestQuery = it }
+        }
+
+        lifecycleScope.launch {
+            var source = payload.streamUrl
+
+            // Full-transfer casts: pull the whole file from the phone once and play the local
+            // copy, so playback survives the phone's screen turning off (Doze throttles the
+            // phone's LocalMediaServer and stalls direct streaming). On failure we degrade to
+            // the old direct-streaming behavior instead of leaving the user with nothing.
+            if (payload.isOfflineDownload && payload.fullTransfer) {
+                Toast.makeText(
+                    requireContext(),
+                    "📥 Transfiriendo desde el teléfono...",
+                    Toast.LENGTH_LONG,
+                ).show()
+                source =
+                    try {
+                        val file =
+                            withContext(Dispatchers.IO) {
+                                com.streamflixreborn.streamflix.cast.PushedMediaStore.storeFrom(
+                                    context = requireContext().applicationContext,
+                                    fromUrl = payload.streamUrl,
+                                    key = payload.mediaId ?: payload.title,
+                                    mimeType = payload.mimeType,
+                                )
+                            }
+                        Toast.makeText(
+                            requireContext(),
+                            "✅ Transferencia completa: reproduciendo copia local",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        android.net.Uri.fromFile(file).toString()
+                    } catch (e: Exception) {
+                        Log.e("PlayerTvFragment", "Full transfer failed, falling back to direct stream", e)
+                        Toast.makeText(
+                            requireContext(),
+                            "⚠️ No se pudo transferir; reproduciendo directo del teléfono",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                        payload.streamUrl
+                    }
             }
 
             // Pass the source exactly as the phone plays it: ExoPlayer handles data: URIs
             // natively, and manually extracting a URL from an embedded playlist is unreliable
             // (it could pick a segment or the encryption-key URI instead of the playlist).
             val castVideo = com.streamflixreborn.streamflix.models.Video(
-                source = payload.streamUrl,
+                source = source,
                 type = payload.mimeType,
                 headers = payload.headers,
                 maintainToken = payload.maintainToken,
@@ -288,9 +333,6 @@ class PlayerTvFragment : Fragment() {
             )
             val castServer = com.streamflixreborn.streamflix.models.Video.Server(id = "cast", name = "StreamFlix Cast")
             displayVideo(castVideo, castServer, payload.startPositionMs)
-        } else {
-            isCastPlayback = false
-            initializeVideo()
         }
     }
 

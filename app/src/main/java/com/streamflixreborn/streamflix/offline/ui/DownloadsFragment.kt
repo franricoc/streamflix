@@ -226,6 +226,9 @@ class DownloadsFragment : Fragment() {
             mimeType = video.mimeType,
             mediaId = video.id,
             isOfflineDownload = true,
+            // Always send the complete media (file or HLS playlist tree) to the TV so it
+            // plays locally and no longer depends on the phone staying awake.
+            fullTransfer = true,
         )
 
         sendCastPayloadToSelectedDevice(payload, video.title, subtitle)

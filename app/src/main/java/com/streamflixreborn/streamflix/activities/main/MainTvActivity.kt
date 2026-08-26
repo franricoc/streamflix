@@ -395,6 +395,12 @@ class MainTvActivity : FragmentActivity() {
             // stall while stale sockets close.
             tvWebSocketServer?.let { stopTvCastServerAsync(it) }
             tvWebSocketServer = null
+            // The pushed-media store is temporary by design: when the app is really
+            // closing (not just being recreated) drop everything the phone transferred.
+            // Files still held open by an active player keep playing until released.
+            if (isFinishing) {
+                com.streamflixreborn.streamflix.cast.PushedMediaStore.deleteAll(this)
+            }
         } catch (e: Exception) {
             android.util.Log.e("MainTvActivity", "Error stopping TV cast server", e)
         }

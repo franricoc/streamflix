@@ -951,6 +951,9 @@ class PlayerMobileFragment : Fragment() {
                     videoType = args.videoType,
                     mediaId = args.id,
                     isOfflineDownload = true,
+                    // Always send the complete media (file or HLS playlist tree) to the TV
+                    // so it plays locally and survives the phone's screen turning off.
+                    fullTransfer = entity != null,
                 )
             sendCastToSelectedDevice(payload, title, subtitleText)
         }
