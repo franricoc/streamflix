@@ -33,11 +33,13 @@ object CineHaxProvider : Provider {
     private const val UNLIMPLAY_HOST = "unlimplay.com"
     private const val REMUX_HOST = "remux.unlimplay.com"
 
-    private val LANGUAGE_ORDER = listOf("latino", "subtitulado", "castellano")
+    private val LANGUAGE_ORDER = listOf("latino", "subtitulado", "castellano", "español", "espanol")
     private val LANGUAGE_LABELS = mapOf(
         "latino" to "Latino",
         "subtitulado" to "Subtitulado",
         "castellano" to "Castellano",
+        "español" to "Castellano",
+        "espanol" to "Castellano",
     )
     private val PRIORITY_SERVERS = listOf("remux")
 
@@ -51,25 +53,71 @@ object CineHaxProvider : Provider {
         "top_rated_tv" to "Series mejor valoradas",
         "now_playing_movies" to "En cartelera",
         "upcoming_movies" to "Próximamente",
+        "popular_korean_movies" to "Películas coreanas",
+        "warner_bros_pictures" to "Warner Bros. Pictures",
+        "dreamWorks_animation" to "DreamWorks Animation",
+        "marvel" to "Marvel Studios",
+        "blumhouse" to "Blumhouse",
+        "netflix_series" to "Series de Netflix",
+        "hbo" to "HBO",
+        "hulu" to "Hulu",
+        "amazon_prime" to "Amazon Prime",
+        "action_movies" to "Películas de Acción",
+        "comedy_movies" to "Películas de Comedia",
+        "romance_movies" to "Películas de Romance",
+        "horror_movies" to "Películas de Terror",
+        "adventure_movies" to "Películas de Aventura",
+        "fantasy_movies" to "Películas de Fantasía",
+        "history_movies" to "Películas de Historia",
+        "music_movies" to "Películas de Música",
+        "mystery_movies" to "Películas de Misterio",
+        "war_movies" to "Películas Bélicas",
+        "western_movies" to "Películas Western",
+        "sci_fi_fantasy_movie" to "Películas de Ciencia Ficción y Fantasía",
+        "action_adventure_tv" to "Series de Acción y Aventura",
+        "comedy_tv" to "Series de Comedia",
+        "kids_tv" to "Series Infantiles",
+        "sci_fi_fantasy_tv" to "Series de Ciencia Ficción y Fantasía",
+        "soap_tv" to "Telenovelas",
+        "war_politics_tv" to "Series de Guerra y Política",
     )
 
     private val GENRES = listOf(
         "movie:action" to "Acción",
         "movie:adventure" to "Aventura",
+        "movie:animation" to "Animación",
         "movie:comedy" to "Comedia",
+        "movie:crime" to "Crimen",
+        "movie:documentary" to "Documental",
+        "movie:drama" to "Drama",
+        "movie:family" to "Familia",
         "movie:fantasy" to "Fantasía",
         "movie:history" to "Historia",
         "movie:horror" to "Terror",
         "movie:music" to "Música",
         "movie:mystery" to "Misterio",
         "movie:romance" to "Romance",
+        "movie:science-fiction" to "Ciencia ficción",
+        "movie:tv-movie" to "Película de TV",
+        "movie:thriller" to "Suspense",
         "movie:war" to "Bélica",
         "movie:western" to "Western",
         "tv:action-adventure" to "Acción y aventura",
+        "tv:animation" to "Animación",
+        "tv:comedy" to "Comedia",
+        "tv:crime" to "Crimen",
+        "tv:documentary" to "Documental",
+        "tv:drama" to "Drama",
+        "tv:family" to "Familia",
         "tv:kids" to "Infantil",
+        "tv:mystery" to "Misterio",
+        "tv:news" to "Noticias",
+        "tv:reality" to "Reality",
         "tv:sci-fi-fantasy" to "Ciencia ficción y fantasía",
         "tv:soap" to "Telenovela",
+        "tv:talk" to "Talk Show",
         "tv:war-politics" to "Guerra y política",
+        "tv:western" to "Western",
     )
 
     // region HTTP
@@ -163,11 +211,19 @@ object CineHaxProvider : Provider {
         val html = json.optJSONObject("data")?.optString("html").orEmpty()
         if (html.isBlank()) return emptyList()
 
-        return Jsoup.parse(html).select("a[href*=/watch/]").mapNotNull { a ->
-            val id = Regex("""id=(\d+)""").find(a.attr("href"))?.groupValues?.get(1) ?: return@mapNotNull null
-            val title = a.selectFirst("h3")?.text().orEmpty()
+        val seen = mutableSetOf<String>()
+        return Jsoup.parse(html).select("a[href]").mapNotNull { a ->
+            val href = a.attr("href")
+            val id = Regex("""id=(\d+)""").find(href)?.groupValues?.get(1) ?: return@mapNotNull null
+            if (!seen.add(id)) return@mapNotNull null
+            val title = a.selectFirst("h3")?.text()?.takeIf { it.isNotBlank() }
+                ?: a.selectFirst("h2")?.text()?.takeIf { it.isNotBlank() }
+                ?: a.selectFirst("h4")?.text()?.takeIf { it.isNotBlank() }
+                ?: a.selectFirst("img")?.attr("alt")?.takeIf { it.isNotBlank() }
+                ?: "CineHax $id"
             val poster = a.selectFirst("img")?.attr("src")
-            if (type == "tv") {
+            val isTv = type == "tv" || href.contains("tipo=serie") || href.contains("type=tv") || href.contains("season=")
+            if (isTv) {
                 TvShow(id = id, title = title, poster = poster, banner = poster)
             } else {
                 Movie(id = id, title = title, poster = poster, banner = poster)
@@ -193,7 +249,7 @@ object CineHaxProvider : Provider {
     // region Detail
     //
     // cinehax.com used to server-render a schema.org JSON-LD block with the title/overview/
-    // rating/genres, but that block disappeared from /watch/ pages (verified against multiple
+    // rating/genres, but that block disappeared from detail pages (verified against multiple
     // ids with cache-busting - not a stale-cache fluke). The same data is still on the page in
     // other forms though: the title/backdrop are query params on the "data-url" embed link (the
     // same one getServers() already reads), the overview sits right after an <h3>Descripción</h3>,
@@ -254,7 +310,7 @@ object CineHaxProvider : Provider {
 
         val genres = Regex("""px-2 py-1 bg-white/5 border border-gray-700 rounded-full text-white text-xs">\s*([^<]+?)\s*</div>""")
             .findAll(html)
-            .map { it.groupValues[1].trim() }
+            .map { org.jsoup.parser.Parser.unescapeEntities(it.groupValues[1].trim(), false) }
             .filter { it.isNotEmpty() }
             .map { Genre(id = it.lowercase(), name = it) }
             .toList()
@@ -280,7 +336,7 @@ object CineHaxProvider : Provider {
     }
 
     override suspend fun getMovie(id: String): Movie {
-        val meta = parseWatchPage(get("$baseUrl/watch/?type=movie&id=$id"))
+        val meta = parseWatchPage(get("$baseUrl/ver/?tipo=pelicula&id=$id"))
         return Movie(
             id = id,
             title = meta.title,
@@ -295,7 +351,7 @@ object CineHaxProvider : Provider {
     }
 
     override suspend fun getTvShow(id: String): TvShow {
-        val html = get("$baseUrl/watch/?type=tv&id=$id&season=1&episode=1")
+        val html = get("$baseUrl/ver/?tipo=serie&id=$id&season=1&episode=1")
         val meta = parseWatchPage(html)
         // The season chips and every episode link on the page both carry "season=N"; collecting
         // every distinct N this way is more robust than pinning to one exact CSS structure.
@@ -323,18 +379,22 @@ object CineHaxProvider : Provider {
     override suspend fun getEpisodesBySeason(seasonId: String): List<Episode> {
         val tvId = seasonId.substringBeforeLast("-")
         val seasonNumber = seasonId.substringAfterLast("-").toIntOrNull() ?: 1
-        val html = get("$baseUrl/watch/?type=tv&id=$tvId&season=$seasonNumber&episode=1")
+        val html = get("$baseUrl/ver/?tipo=serie&id=$tvId&season=$seasonNumber&episode=1")
 
-        // Episode entries are the only "season=N&episode=" anchors that contain a thumbnail
-        // <img> - the season-selector chips link to the same URL shape but have no image.
-        return Jsoup.parse(html).select("a[href*=season=$seasonNumber&episode=]:has(img)")
+        // Episode entries are the "id=$tvId&season=N&episode=" anchors containing an image thumbnail
+        val doc = Jsoup.parse(html)
+        return doc.select("a[href*=\"id=$tvId\"][href*=\"season=$seasonNumber\"][href*=\"episode=\"]:has(img)")
             .mapNotNull { a ->
-                val number = Regex("""episode=(\d+)""").find(a.attr("href"))?.groupValues?.get(1)?.toIntOrNull()
+                val href = a.attr("href")
+                val number = Regex("""episode=(\d+)""").find(href)?.groupValues?.get(1)?.toIntOrNull()
                     ?: return@mapNotNull null
+                val title = a.selectFirst("h4")?.text()?.takeIf { it.isNotBlank() }
+                    ?: a.selectFirst("img")?.attr("alt")?.takeIf { it.isNotBlank() }
+                    ?: "Episodio $number"
                 Episode(
                     id = "$tvId|$seasonNumber|$number",
                     number = number,
-                    title = "Episodio $number",
+                    title = title,
                     poster = a.selectFirst("img")?.attr("src"),
                 )
             }
@@ -343,7 +403,7 @@ object CineHaxProvider : Provider {
     }
 
     override suspend fun getPeople(id: String, page: Int): People {
-        // cinehax.com's /watch/ pages don't list cast/crew anywhere (verified: no actor names,
+        // cinehax.com's /ver/ pages don't list cast/crew anywhere (verified: no actor names,
         // profile images, or "Reparto" section in the markup), so there's no source to scrape.
         TODO("Not yet implemented")
     }
@@ -354,13 +414,13 @@ object CineHaxProvider : Provider {
 
     override suspend fun getServers(id: String, videoType: Video.Type): List<Video.Server> {
         val watchUrl = when (videoType) {
-            is Video.Type.Movie -> "$baseUrl/watch/?type=movie&id=$id"
+            is Video.Type.Movie -> "$baseUrl/ver/?tipo=pelicula&id=$id"
             is Video.Type.Episode -> {
                 val parts = id.split("|")
                 val tvId = parts.getOrNull(0) ?: return emptyList()
                 val season = parts.getOrNull(1) ?: "1"
                 val episode = parts.getOrNull(2) ?: "1"
-                "$baseUrl/watch/?type=tv&id=$tvId&season=$season&episode=$episode"
+                "$baseUrl/ver/?tipo=serie&id=$tvId&season=$season&episode=$episode"
             }
             else -> return emptyList()
         }
@@ -418,3 +478,4 @@ object CineHaxProvider : Provider {
 
     // endregion
 }
+
