@@ -8,7 +8,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/EpisodeViewHolder.kt"
-            line="491"
+            line="493"
             column="39"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/EpisodeViewHolder.kt"
-            line="500"
+            line="502"
             column="13"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/EpisodeViewHolder.kt"
-            line="502"
+            line="504"
             column="35"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/EpisodeViewHolder.kt"
-            line="504"
+            line="506"
             column="13"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/MovieViewHolder.kt"
-            line="326"
+            line="368"
             column="13"/>
     </issue>
 
@@ -63,7 +63,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/MovieViewHolder.kt"
-            line="423"
+            line="475"
             column="13"/>
     </issue>
 
@@ -74,7 +74,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/MovieViewHolder.kt"
-            line="424"
+            line="476"
             column="13"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/MovieViewHolder.kt"
-            line="469"
+            line="535"
             column="13"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/MovieViewHolder.kt"
-            line="529"
+            line="608"
             column="13"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/MovieViewHolder.kt"
-            line="530"
+            line="609"
             column="13"/>
     </issue>
 
@@ -118,18 +118,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/MovieViewHolder.kt"
-            line="558"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="CheckResult"
-        message="The result of `fallback` is not used"
-        errorLine1="            fallback(R.drawable.glide_fallback_cover)"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/ui/ShowOptionsTvDialog.kt"
-            line="283"
+            line="670"
             column="13"/>
     </issue>
 
@@ -140,7 +129,18 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/ShowOptionsTvDialog.kt"
-            line="383"
+            line="284"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="CheckResult"
+        message="The result of `fallback` is not used"
+        errorLine1="            fallback(R.drawable.glide_fallback_cover)"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/ui/ShowOptionsTvDialog.kt"
+            line="388"
             column="13"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/TvShowViewHolder.kt"
-            line="186"
+            line="225"
             column="13"/>
     </issue>
 
@@ -162,7 +162,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/TvShowViewHolder.kt"
-            line="492"
+            line="613"
             column="17"/>
     </issue>
 
@@ -173,18 +173,29 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/adapters/viewholders/TvShowViewHolder.kt"
-            line="640"
+            line="761"
             column="17"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 23 (current min is 21): `android.net.ConnectivityManager#getActiveNetwork`"
+        errorLine1="        val linkAddresses = cm?.getLinkProperties(cm?.activeNetwork)?.linkAddresses"
+        errorLine2="                                                      ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/cast/OfflineStreaming.kt"
+            line="84"
+            column="55"/>
     </issue>
 
     <issue
         id="OldTargetApi"
         message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
-        errorLine1="        targetSdk 35"
-        errorLine2="        ~~~~~~~~~~~~">
+        errorLine1="        targetSdk = 35"
+        errorLine2="        ~~~~~~~~~~~~~~">
         <location
-            file="build.gradle"
-            line="23"
+            file="build.gradle.kts"
+            line="28"
             column="9"/>
     </issue>
 
@@ -200,29 +211,13 @@
     </issue>
 
     <issue
-        id="SuspiciousIndentation"
-        message="The indentation string here is different from on the previous line (`&quot; &quot;` vs `\t`)"
-        errorLine1="   val sliderItems = coroutineScope {"
-        errorLine2="~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/providers/StreamingItaProvider.kt"
-            line="90"
-            column="1"/>
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/providers/StreamingItaProvider.kt"
-            line="87"
-            column="1"
-            message="Previous line indentation here"/>
-    </issue>
-
-    <issue
         id="UnusedAttribute"
         message="Attribute `networkSecurityConfig` is only used in API level 24 and higher (current min is 21)"
         errorLine1="        android:networkSecurityConfig=&quot;@xml/network_security_config&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="76"
+            line="78"
             column="9"/>
     </issue>
 
@@ -233,7 +228,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="79"
+            line="81"
             column="9"/>
     </issue>
 
@@ -244,7 +239,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="96"
+            line="98"
             column="13"/>
     </issue>
 
@@ -733,13 +728,24 @@
     </issue>
 
     <issue
+        id="WifiManagerPotentialLeak"
+        message="The WIFI_SERVICE must be looked up on the Application context or memory will leak on devices &lt; Android N. Try changing `appContext` to `appContext.getApplicationContext()`"
+        errorLine1="                val wm = appContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/cast/LocalMediaServer.kt"
+            line="72"
+            column="26"/>
+    </issue>
+
+    <issue
         id="AppBundleLocaleChanges"
         message="Found dynamic locale changes, but did not find corresponding Play Core library calls for downloading languages and splitting by language is not disabled in the `bundle` configuration"
         errorLine1="        configuration.setLocale(locale)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/utils/AppLanguageManager.kt"
-            line="32"
+            line="31"
             column="9"/>
     </issue>
 
@@ -761,7 +767,7 @@
         errorLine2="                                                                                             ~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/ProfileSelectorTvDialog.kt"
-            line="52"
+            line="53"
             column="94"/>
     </issue>
 
@@ -772,7 +778,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="21"
+            line="22"
             column="5"/>
     </issue>
 
@@ -783,7 +789,7 @@
         errorLine2="     ~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="67"
+            line="69"
             column="6"/>
     </issue>
 
@@ -793,31 +799,42 @@
         errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-8.14-bin.zip"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/wrapper/gradle-wrapper.properties"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/wrapper/gradle-wrapper.properties"
             line="4"
             column="17"/>
     </issue>
 
     <issue
         id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.application than 8.13.2 is available: 9.3.1"
+        message="A newer version of com.android.application than 8.13.2 is available: 9.3.2"
         errorLine1="agp = &quot;8.13.2&quot;"
         errorLine2="      ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="5"
             column="7"/>
     </issue>
 
     <issue
         id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.library than 8.13.2 is available: 9.3.1"
+        message="A newer version of com.android.library than 8.13.2 is available: 9.3.2"
         errorLine1="agp = &quot;8.13.2&quot;"
         errorLine2="      ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="5"
             column="7"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of org.chromium.net:cronet-embedded than 119.6045.31 is available: 500.0.2"
+        errorLine1="    implementation(&quot;org.chromium.net:cronet-embedded:119.6045.31&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="137"
+            column="20"/>
     </issue>
 
     <issue
@@ -826,7 +843,7 @@
         errorLine1="navigation = &quot;2.8.8&quot;"
         errorLine2="             ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="8"
             column="14"/>
     </issue>
@@ -837,7 +854,7 @@
         errorLine1="navigation = &quot;2.8.8&quot;"
         errorLine2="             ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="8"
             column="14"/>
     </issue>
@@ -848,7 +865,7 @@
         errorLine1="navigation = &quot;2.8.8&quot;"
         errorLine2="             ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="8"
             column="14"/>
     </issue>
@@ -859,7 +876,7 @@
         errorLine1="media3 = &quot;1.8.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="11"
             column="10"/>
     </issue>
@@ -870,7 +887,7 @@
         errorLine1="media3 = &quot;1.8.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="11"
             column="10"/>
     </issue>
@@ -881,7 +898,7 @@
         errorLine1="media3 = &quot;1.8.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="11"
             column="10"/>
     </issue>
@@ -892,7 +909,7 @@
         errorLine1="media3 = &quot;1.8.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="11"
             column="10"/>
     </issue>
@@ -903,7 +920,7 @@
         errorLine1="media3 = &quot;1.8.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="11"
             column="10"/>
     </issue>
@@ -914,9 +931,20 @@
         errorLine1="media3 = &quot;1.8.0&quot;"
         errorLine2="         ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="11"
             column="10"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.appcompat:appcompat than 1.7.1 is available: 1.8.0"
+        errorLine1="appcompat = &quot;1.7.1&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="12"
+            column="13"/>
     </issue>
 
     <issue
@@ -925,7 +953,7 @@
         errorLine1="constraintlayout = &quot;2.2.1&quot;"
         errorLine2="                   ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="13"
             column="20"/>
     </issue>
@@ -936,9 +964,20 @@
         errorLine1="coreKtx = &quot;1.17.0&quot;"
         errorLine2="          ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="14"
             column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.datastore:datastore-preferences than 1.1.7 is available: 1.2.1"
+        errorLine1="datastore = &quot;1.1.7&quot; # 1.2.x requires minSdk 23; app minSdk is 21"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="15"
+            column="13"/>
     </issue>
 
     <issue
@@ -947,19 +986,19 @@
         errorLine1="work = &quot;2.10.0&quot;"
         errorLine2="       ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="17"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="18"
             column="8"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.fragment:fragment-ktx than 1.8.6 is available: 1.8.9"
+        message="A newer version of androidx.fragment:fragment-ktx than 1.8.6 is available: 1.9.0"
         errorLine1="fragmentKtx = &quot;1.8.6&quot;"
         errorLine2="              ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="21"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="22"
             column="15"/>
     </issue>
 
@@ -969,8 +1008,8 @@
         errorLine1="lifecycle = &quot;2.8.7&quot;"
         errorLine2="            ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="22"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="23"
             column="13"/>
     </issue>
 
@@ -980,8 +1019,8 @@
         errorLine1="lifecycle = &quot;2.8.7&quot;"
         errorLine2="            ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="22"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="23"
             column="13"/>
     </issue>
 
@@ -991,8 +1030,8 @@
         errorLine1="room = &quot;2.7.0&quot;"
         errorLine2="       ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="25"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="26"
             column="8"/>
     </issue>
 
@@ -1002,8 +1041,8 @@
         errorLine1="room = &quot;2.7.0&quot;"
         errorLine2="       ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="25"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="26"
             column="8"/>
     </issue>
 
@@ -1013,8 +1052,8 @@
         errorLine1="room = &quot;2.7.0&quot;"
         errorLine2="       ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="25"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="26"
             column="8"/>
     </issue>
 
@@ -1024,8 +1063,8 @@
         errorLine1="material = &quot;1.13.0&quot;"
         errorLine2="           ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="26"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="27"
             column="12"/>
     </issue>
 
@@ -1035,8 +1074,8 @@
         errorLine1="browser = &quot;1.7.0&quot;"
         errorLine2="          ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="30"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="31"
             column="11"/>
     </issue>
 
@@ -1046,8 +1085,8 @@
         errorLine1="androidxTestJunit = &quot;1.2.1&quot;"
         errorLine2="                    ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="36"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="40"
             column="21"/>
     </issue>
 
@@ -1057,9 +1096,31 @@
         errorLine1="espresso = &quot;3.6.1&quot;"
         errorLine2="           ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="37"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="41"
             column="12"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of io.github.jan-tennert.supabase:bom than 3.2.2 is available: 3.7.0"
+        errorLine1="    implementation(platform(&quot;io.github.jan-tennert.supabase:bom:3.2.2&quot;))"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="138"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of io.ktor:ktor-client-okhttp than 3.2.2 is available: 3.5.2"
+        errorLine1="    implementation(&quot;io.ktor:ktor-client-okhttp:3.2.2&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="142"
+            column="20"/>
     </issue>
 
     <issue
@@ -1068,7 +1129,7 @@
         errorLine1="kotlin = &quot;2.2.10&quot;"
         errorLine2="         ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="6"
             column="10"/>
     </issue>
@@ -1079,7 +1140,7 @@
         errorLine1="kotlin = &quot;2.2.10&quot;"
         errorLine2="         ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="6"
             column="10"/>
     </issue>
@@ -1090,7 +1151,7 @@
         errorLine1="kotlin = &quot;2.2.10&quot;"
         errorLine2="         ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
             line="6"
             column="10"/>
     </issue>
@@ -1101,8 +1162,8 @@
         errorLine1="glide = &quot;5.0.7&quot;"
         errorLine2="        ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="16"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="17"
             column="9"/>
     </issue>
 
@@ -1112,8 +1173,8 @@
         errorLine1="glide = &quot;5.0.7&quot;"
         errorLine2="        ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="16"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="17"
             column="9"/>
     </issue>
 
@@ -1123,41 +1184,41 @@
         errorLine1="glide = &quot;5.0.7&quot;"
         errorLine2="        ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="16"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="17"
             column="9"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of com.squareup.okhttp3:logging-interceptor than 4.12.0 is available: 5.4.0"
+        message="A newer version of com.squareup.okhttp3:logging-interceptor than 4.12.0 is available: 5.5.0"
         errorLine1="okhttp = &quot;4.12.0&quot;"
         errorLine2="         ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="18"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="19"
             column="10"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of com.squareup.okhttp3:okhttp than 4.12.0 is available: 5.4.0"
+        message="A newer version of com.squareup.okhttp3:okhttp than 4.12.0 is available: 5.5.0"
         errorLine1="okhttp = &quot;4.12.0&quot;"
         errorLine2="         ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="18"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="19"
             column="10"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of com.squareup.okhttp3:okhttp-dnsoverhttps than 4.12.0 is available: 5.4.0"
+        message="A newer version of com.squareup.okhttp3:okhttp-dnsoverhttps than 4.12.0 is available: 5.5.0"
         errorLine1="okhttp = &quot;4.12.0&quot;"
         errorLine2="         ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="18"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="19"
             column="10"/>
     </issue>
 
@@ -1167,8 +1228,8 @@
         errorLine1="retrofit = &quot;2.11.0&quot;"
         errorLine2="           ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="19"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="20"
             column="12"/>
     </issue>
 
@@ -1178,8 +1239,8 @@
         errorLine1="retrofit = &quot;2.11.0&quot;"
         errorLine2="           ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="19"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="20"
             column="12"/>
     </issue>
 
@@ -1189,19 +1250,19 @@
         errorLine1="retrofit = &quot;2.11.0&quot;"
         errorLine2="           ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="19"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="20"
             column="12"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.jsoup:jsoup than 1.21.2 is available: 1.23.1"
+        message="A newer version of org.jsoup:jsoup than 1.21.2 is available: 1.23.2"
         errorLine1="jsoup = &quot;1.21.2&quot;"
         errorLine2="        ~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="20"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="21"
             column="9"/>
     </issue>
 
@@ -1211,8 +1272,8 @@
         errorLine1="rhino = &quot;1.8.0&quot;"
         errorLine2="        ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="27"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="28"
             column="9"/>
     </issue>
 
@@ -1222,19 +1283,19 @@
         errorLine1="kotlinxSerializationJson = &quot;1.8.0&quot;"
         errorLine2="                           ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="28"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="29"
             column="28"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.conscrypt:conscrypt-android than 2.5.2 is available: 2.6.1"
+        message="A newer version of org.conscrypt:conscrypt-android than 2.5.2 is available: 2.6.3"
         errorLine1="conscrypt = &quot;2.5.2&quot;"
         errorLine2="            ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="29"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="30"
             column="13"/>
     </issue>
 
@@ -1244,8 +1305,8 @@
         errorLine1="zxing = &quot;3.5.1&quot;"
         errorLine2="        ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="32"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="33"
             column="9"/>
     </issue>
 
@@ -1255,9 +1316,20 @@
         errorLine1="javaWebsocket = &quot;1.5.3&quot;"
         errorLine2="                ~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="33"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="34"
             column="17"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jlleitschuh.gradle.ktlint than 13.1.0 is available: 14.2.0"
+        errorLine1="ktlint = &quot;13.1.0&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="36"
+            column="10"/>
     </issue>
 
     <issue
@@ -1267,7 +1339,7 @@
         errorLine2="     ~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="22"
+            line="23"
             column="6"/>
     </issue>
 
@@ -1429,16 +1501,27 @@
 
     <issue
         id="Aligned16KB"
-        message="The native library `arm64-v8a/libconscrypt_jni.so` (from `org.conscrypt:conscrypt-android:2.5.2`) is not 16 KB aligned">
+        message="The native library `arm64-v8a/libcronet.119.0.6045.31.so` (from `org.chromium.net:cronet-embedded:119.6045.31`) is not 16 KB aligned"
+        errorLine1="    implementation(&quot;org.chromium.net:cronet-embedded:119.6045.31&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="$GRADLE_USER_HOME/caches/8.14/transforms/90bd4df49c1413ad708a030f671b104e/transformed/conscrypt-android-2.5.2/jni/arm64-v8a/libconscrypt_jni.so"/>
+            file="build.gradle.kts"
+            line="137"
+            column="20"/>
     </issue>
 
     <issue
         id="Aligned16KB"
         message="The native library `arm64-v8a/libconscrypt_jni.so` (from `org.conscrypt:conscrypt-android:2.5.2`) is not 16 KB aligned">
         <location
-            file="$GRADLE_USER_HOME/caches/8.14/transforms/90bd4df49c1413ad708a030f671b104e/transformed/conscrypt-android-2.5.2/jni/arm64-v8a/libconscrypt_jni.so"/>
+            file="$GRADLE_USER_HOME/caches/8.14/transforms/ea3a0e230fb430bc30a456703463ee52/transformed/conscrypt-android-2.5.2/jni/arm64-v8a/libconscrypt_jni.so"/>
+    </issue>
+
+    <issue
+        id="Aligned16KB"
+        message="The native library `arm64-v8a/libcronet.119.0.6045.31.so` (from `org.chromium.net:cronet-embedded:119.6045.31`) is not 16 KB aligned">
+        <location
+            file="$GRADLE_USER_HOME/caches/8.14/transforms/ca0898bde9eb39d2821aba122de335a8/transformed/cronet-embedded-119.6045.31/jni/arm64-v8a/libcronet.119.0.6045.31.so"/>
     </issue>
 
     <issue
@@ -1447,8 +1530,8 @@
         errorLine1="conscrypt-android = { module = &quot;org.conscrypt:conscrypt-android&quot;, version.ref = &quot;conscrypt&quot; }"
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="$HOME/codebuff/streamflix/gradle/libs.versions.toml"
-            line="86"
+            file="$HOME/Documentos/antigravity/playnext/streamflix/gradle/libs.versions.toml"
+            line="91"
             column="22"/>
     </issue>
 
@@ -1712,7 +1795,7 @@
         errorLine2="                                                                                 ~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="443"
+            line="444"
             column="82"/>
     </issue>
 
@@ -1723,7 +1806,7 @@
         errorLine2="                                                                    ~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="444"
+            line="445"
             column="69"/>
     </issue>
 
@@ -1734,7 +1817,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="520"
+            line="589"
             column="5"/>
     </issue>
 
@@ -1745,11 +1828,11 @@
         errorLine2=" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ar/strings.xml"
-            line="163"
+            line="164"
             column="2"/>
         <location
             file="src/main/res/values/strings.xml"
-            line="317"
+            line="336"
             column="5"
             message="Conflicting number of arguments (0) here"/>
     </issue>
@@ -1860,7 +1943,7 @@
         errorLine2="                             ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/GlideCustomModule.kt"
-            line="36"
+            line="35"
             column="30"/>
     </issue>
 
@@ -1871,7 +1954,7 @@
         errorLine2="                             ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/GlideCustomModule.kt"
-            line="37"
+            line="36"
             column="30"/>
     </issue>
 
@@ -1959,7 +2042,7 @@
         errorLine2="            ~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/GlideCustomModule.kt"
-            line="35"
+            line="34"
             column="13"/>
     </issue>
 
@@ -2008,13 +2091,46 @@
     </issue>
 
     <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            if (wakeLock?.isHeld != true) wakeLock?.acquire()"
+        errorLine2="                                          ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/cast/LocalMediaServer.kt"
+            line="78"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="        appAdapter.notifyDataSetChanged()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/fragments/favorites/FavoritesMobileFragment.kt"
+            line="126"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="        appAdapter.notifyDataSetChanged()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/fragments/favorites/FavoritesTvFragment.kt"
+            line="118"
+            column="9"/>
+    </issue>
+
+    <issue
         id="NotifyDataSetChanged"
         message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
         errorLine1="            adapter.notifyDataSetChanged()"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/ProfileSelectorTvDialog.kt"
-            line="153"
+            line="158"
             column="13"/>
     </issue>
 
@@ -2025,7 +2141,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/ProfileSelectorTvDialog.kt"
-            line="160"
+            line="165"
             column="9"/>
     </issue>
 
@@ -2036,7 +2152,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainMobileActivity.kt"
-            line="380"
+            line="393"
             column="13"/>
     </issue>
 
@@ -2047,7 +2163,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/providers/AnimeOnlineNinjaProvider.kt"
-            line="56"
+            line="63"
             column="5"/>
     </issue>
 
@@ -2069,7 +2185,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/providers/FilmyOnlineCcProvider.kt"
-            line="54"
+            line="56"
             column="5"/>
     </issue>
 
@@ -2091,7 +2207,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/providers/PoseidonHD2Provider.kt"
-            line="37"
+            line="39"
             column="5"/>
     </issue>
 
@@ -2103,6 +2219,17 @@
         <location
             file="src/main/java/com/streamflixreborn/streamflix/providers/TlnovelasProvider.kt"
             line="31"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="Do not place Android context classes in static fields (static reference to `WebViewResolver` which has field `context` pointing to `Context`); this is a memory leak"
+        errorLine1="    private var webViewResolver: WebViewResolver? = null"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/providers/ZaluknijProvider.kt"
+            line="46"
             column="5"/>
     </issue>
 
@@ -2410,7 +2537,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="12"
+            line="13"
             column="12"/>
     </issue>
 
@@ -2421,7 +2548,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="16"
+            line="17"
             column="12"/>
     </issue>
 
@@ -2432,7 +2559,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="19"
+            line="20"
             column="12"/>
     </issue>
 
@@ -2593,7 +2720,62 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="37"
+            line="38"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.home_recently_watched` appears to be unused"
+        errorLine1="    &lt;string name=&quot;home_recently_watched&quot;>Recently Watched&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="62"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.favorites_reorder_item` appears to be unused"
+        errorLine1="    &lt;string name=&quot;favorites_reorder_item&quot;>Reorder favorite&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="72"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.favorites_move_left` appears to be unused"
+        errorLine1="    &lt;string name=&quot;favorites_move_left&quot;>Move left&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.favorites_move_right` appears to be unused"
+        errorLine1="    &lt;string name=&quot;favorites_move_right&quot;>Move right&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="74"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.favorites_show_options` appears to be unused"
+        errorLine1="    &lt;string name=&quot;favorites_show_options&quot;>Show normal options&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="75"
             column="13"/>
     </issue>
 
@@ -2604,7 +2786,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="84"
+            line="100"
             column="13"/>
     </issue>
 
@@ -2615,7 +2797,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="116"
+            line="132"
             column="13"/>
     </issue>
 
@@ -2626,7 +2808,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="133"
+            line="149"
             column="13"/>
     </issue>
 
@@ -2637,7 +2819,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="265"
+            line="284"
             column="13"/>
     </issue>
 
@@ -2648,7 +2830,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="266"
+            line="285"
             column="13"/>
     </issue>
 
@@ -2659,7 +2841,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="285"
+            line="304"
             column="13"/>
     </issue>
 
@@ -2670,7 +2852,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="305"
+            line="324"
             column="13"/>
     </issue>
 
@@ -2681,7 +2863,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="309"
+            line="328"
             column="13"/>
     </issue>
 
@@ -2692,7 +2874,18 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="313"
+            line="332"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.supabase_config_required` appears to be unused"
+        errorLine1="    &lt;string name=&quot;supabase_config_required&quot;>Configure Supabase before using account sync&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="396"
             column="13"/>
     </issue>
 
@@ -2703,7 +2896,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="379"
+            line="448"
             column="13"/>
     </issue>
 
@@ -2714,7 +2907,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="395"
+            line="464"
             column="13"/>
     </issue>
 
@@ -2725,7 +2918,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="402"
+            line="471"
             column="13"/>
     </issue>
 
@@ -2736,7 +2929,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="403"
+            line="472"
             column="13"/>
     </issue>
 
@@ -2747,7 +2940,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="404"
+            line="473"
             column="13"/>
     </issue>
 
@@ -2758,7 +2951,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="470"
+            line="539"
             column="13"/>
     </issue>
 
@@ -2769,7 +2962,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="471"
+            line="540"
             column="13"/>
     </issue>
 
@@ -2780,7 +2973,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="472"
+            line="541"
             column="13"/>
     </issue>
 
@@ -2791,7 +2984,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="473"
+            line="542"
             column="13"/>
     </issue>
 
@@ -2802,7 +2995,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="474"
+            line="543"
             column="13"/>
     </issue>
 
@@ -2813,7 +3006,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="523"
+            line="592"
             column="13"/>
     </issue>
 
@@ -2824,7 +3017,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="527"
+            line="596"
             column="13"/>
     </issue>
 
@@ -2835,7 +3028,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="528"
+            line="597"
             column="13"/>
     </issue>
 
@@ -2912,7 +3105,7 @@
         errorLine2="                             ~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="53"
+            line="54"
             column="30"/>
     </issue>
 
@@ -2923,7 +3116,7 @@
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ar/strings.xml"
-            line="170"
+            line="171"
             column="36"/>
     </issue>
 
@@ -2934,7 +3127,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-it/strings.xml"
-            line="275"
+            line="276"
             column="39"/>
     </issue>
 
@@ -2945,7 +3138,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-fr/strings.xml"
-            line="277"
+            line="278"
             column="39"/>
     </issue>
 
@@ -2956,7 +3149,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-es/strings.xml"
-            line="311"
+            line="312"
             column="39"/>
     </issue>
 
@@ -2967,7 +3160,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="321"
+            line="340"
             column="39"/>
     </issue>
 
@@ -2978,7 +3171,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-de/strings.xml"
-            line="382"
+            line="383"
             column="39"/>
     </issue>
 
@@ -3068,7 +3261,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_movie_mobile.xml"
-            line="32"
+            line="59"
             column="9"/>
     </issue>
 
@@ -3079,7 +3272,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_movie_mobile.xml"
-            line="47"
+            line="74"
             column="9"/>
     </issue>
 
@@ -3090,7 +3283,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_movie_tv.xml"
-            line="47"
+            line="74"
             column="9"/>
     </issue>
 
@@ -3101,7 +3294,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_movie_tv.xml"
-            line="62"
+            line="89"
             column="9"/>
     </issue>
 
@@ -3112,7 +3305,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_tv_show_mobile.xml"
-            line="32"
+            line="59"
             column="9"/>
     </issue>
 
@@ -3123,7 +3316,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_tv_show_mobile.xml"
-            line="47"
+            line="74"
             column="9"/>
     </issue>
 
@@ -3134,7 +3327,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_tv_show_tv.xml"
-            line="47"
+            line="74"
             column="9"/>
     </issue>
 
@@ -3145,7 +3338,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_tv_show_tv.xml"
-            line="62"
+            line="89"
             column="9"/>
     </issue>
 
@@ -3251,6 +3444,61 @@
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        val embedUri = Uri.parse(embedDataUrl)"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/providers/CineHaxProvider.kt"
+            line="301"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        val url = Uri.parse(link)"
+        errorLine2="                  ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/extractors/CloseloadExtractor.kt"
+            line="158"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs(context).edit().apply {"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/sync/CloudAccountStore.kt"
+            line="17"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs(context).edit().putString(LEGACY_OWNER, userId).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/sync/CloudAccountStore.kt"
+            line="26"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)"
+        errorLine2="        ^">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/sync/CloudMutationStore.kt"
+            line="42"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
         errorLine1="        session?.mayLaunchUrl(Uri.parse(url), null, null)"
         errorLine2="                              ~~~~~~~~~~~~~~">
         <location
@@ -3339,12 +3587,23 @@
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val dataSpec = DataSpec(Uri.parse(originalUrl))"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    val dataSpec = DataSpec(Uri.parse(originalUrl))"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/cast/LocalMediaServer.kt"
-            line="101"
-            column="33"/>
+            line="284"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        cacheDataSource.open(DataSpec(Uri.parse(originalUrl)))"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/cast/LocalMediaServer.kt"
+            line="333"
+            column="39"/>
     </issue>
 
     <issue
@@ -3354,7 +3613,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainMobileActivity.kt"
-            line="146"
+            line="148"
             column="38"/>
     </issue>
 
@@ -3552,7 +3811,7 @@
         errorLine2="            ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/player/PlayerMobileFragment.kt"
-            line="1633"
+            line="1990"
             column="13"/>
     </issue>
 
@@ -3563,7 +3822,7 @@
         errorLine2="                                 ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/player/PlayerMobileFragment.kt"
-            line="1650"
+            line="2007"
             column="34"/>
     </issue>
 
@@ -3574,7 +3833,7 @@
         errorLine2="            ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/player/PlayerTvFragment.kt"
-            line="1853"
+            line="1991"
             column="13"/>
     </issue>
 
@@ -3585,7 +3844,7 @@
         errorLine2="                                 ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/player/PlayerTvFragment.kt"
-            line="1982"
+            line="2175"
             column="34"/>
     </issue>
 
@@ -3629,8 +3888,19 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/ProfileSelectorTvDialog.kt"
-            line="45"
+            line="46"
             column="35"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                    val uri = android.net.Uri.parse(cfPath)"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/extractors/RpmvidExtractor.kt"
+            line="132"
+            column="31"/>
     </issue>
 
     <issue
@@ -3640,7 +3910,7 @@
         errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/search/SearchTvFragment.kt"
-            line="317"
+            line="322"
             column="54"/>
     </issue>
 
@@ -3651,7 +3921,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/search/SearchTvFragment.kt"
-            line="322"
+            line="327"
             column="13"/>
     </issue>
 
@@ -3684,7 +3954,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsMobileFragment.kt"
-            line="491"
+            line="495"
             column="21"/>
     </issue>
 
@@ -3695,7 +3965,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsMobileFragment.kt"
-            line="499"
+            line="503"
             column="59"/>
     </issue>
 
@@ -3706,7 +3976,7 @@
         errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsMobileFragment.kt"
-            line="503"
+            line="507"
             column="57"/>
     </issue>
 
@@ -3717,7 +3987,7 @@
         errorLine2="            ^">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsMobileFragment.kt"
-            line="820"
+            line="824"
             column="13"/>
     </issue>
 
@@ -3728,7 +3998,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsTvFragment.kt"
-            line="539"
+            line="543"
             column="21"/>
     </issue>
 
@@ -3739,7 +4009,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsTvFragment.kt"
-            line="547"
+            line="551"
             column="59"/>
     </issue>
 
@@ -3750,7 +4020,7 @@
         errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsTvFragment.kt"
-            line="551"
+            line="555"
             column="57"/>
     </issue>
 
@@ -3761,7 +4031,7 @@
         errorLine2="            ^">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsTvFragment.kt"
-            line="850"
+            line="854"
             column="13"/>
     </issue>
 
@@ -3772,7 +4042,7 @@
         errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SettingsTvFragment.kt"
-            line="2100"
+            line="2118"
             column="30"/>
     </issue>
 
@@ -3855,6 +4125,61 @@
 
     <issue
         id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)"
+        errorLine2="        ^">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/sync/SupabaseProvider.kt"
+            line="48"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)"
+        errorLine2="        ^">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/sync/SupabaseProvider.kt"
+            line="86"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                Intent(Intent.ACTION_VIEW, Uri.parse(SETUP_INSTRUCTIONS_URL)),"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SupabaseSettingsController.kt"
+            line="31"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            val projectRef = Uri.parse(SupabaseProvider.getUrl(context)).host"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SupabaseSettingsController.kt"
+            line="45"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(destination)))"
+        errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/streamflixreborn/streamflix/fragments/settings/SupabaseSettingsController.kt"
+            line="54"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
         errorLine1="            val uri = Uri.parse(compositeId)"
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~">
@@ -3910,199 +4235,12 @@
 
     <issue
         id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="375"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="399"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="423"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="447"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="466"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="555"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="587"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="594"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="601"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="608"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            with(prefs.edit()) {"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="615"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        fun remove() = with(prefs.edit()) {"
-        errorLine2="                            ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserPreferences.kt"
-            line="621"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        getPrefs(context).edit().putBoolean(KEY_HAS_COMPLETED_ONBOARDING, completed).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserProfileManager.kt"
-            line="39"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        getPrefs(context).edit().putBoolean(KEY_PENDING_SPOTLIGHT, pending).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserProfileManager.kt"
-            line="44"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        getPrefs(context).edit().putString(KEY_ACTIVE_PROFILE_ID, profileId).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserProfileManager.kt"
-            line="71"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        getPrefs(context).edit().putString(KEY_PROFILES, jsonArray.toString()).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserProfileManager.kt"
-            line="112"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        val editor = getPrefs(context).edit()"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/streamflixreborn/streamflix/utils/UserProfileManager.kt"
-            line="124"
-            column="22"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
         errorLine1="        val uri = Uri.parse(link)"
         errorLine2="                  ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/extractors/VidxGoExtractor.kt"
-            line="30"
+            line="32"
             column="19"/>
     </issue>
 
@@ -4113,7 +4251,7 @@
         errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/extractors/VidxGoExtractor.kt"
-            line="54"
+            line="56"
             column="30"/>
     </issue>
 
@@ -4124,7 +4262,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/extractors/VidxGoExtractor.kt"
-            line="92"
+            line="94"
             column="46"/>
     </issue>
 
@@ -4135,7 +4273,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/extractors/VidxGoExtractor.kt"
-            line="154"
+            line="156"
             column="26"/>
     </issue>
 
@@ -4146,7 +4284,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/extractors/VidxGoExtractor.kt"
-            line="201"
+            line="203"
             column="46"/>
     </issue>
 
@@ -4168,8 +4306,96 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/utils/WebViewResolver.kt"
-            line="336"
+            line="458"
             column="44"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;com.caverock:androidsvg-aar:1.4&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="136"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;org.chromium.net:cronet-embedded:119.6045.31&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="137"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(platform(&quot;io.github.jan-tennert.supabase:bom:3.2.2&quot;))"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="138"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;io.github.jan-tennert.supabase:auth-kt&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="139"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;io.github.jan-tennert.supabase:postgrest-kt&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="140"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;io.github.jan-tennert.supabase:realtime-kt&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="141"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;io.ktor:ktor-client-okhttp:3.2.2&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="142"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use the existing version catalog reference (`libs.junit`) instead"
+        errorLine1="    testImplementation(&quot;junit:junit:4.13.2&quot;)"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="143"
+            column="24"/>
     </issue>
 
     <issue
@@ -4190,7 +4416,7 @@
         errorLine2="                                   ^">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/utils/WebViewResolver.kt"
-            line="140"
+            line="170"
             column="36"/>
     </issue>
 
@@ -4399,7 +4625,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/cast/ui/CastRemoteControlDialog.kt"
-            line="29"
+            line="30"
             column="20"/>
     </issue>
 
@@ -4410,7 +4636,7 @@
         errorLine2="                    ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/cast/ui/CastRemoteControlDialog.kt"
-            line="29"
+            line="30"
             column="21"/>
     </issue>
 
@@ -4421,7 +4647,7 @@
         errorLine2="                    ~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/cast/ui/CastRemoteControlDialog.kt"
-            line="58"
+            line="59"
             column="21"/>
     </issue>
 
@@ -4432,7 +4658,7 @@
         errorLine2="                    ~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/cast/ui/CastRemoteControlDialog.kt"
-            line="65"
+            line="66"
             column="21"/>
     </issue>
 
@@ -4443,7 +4669,7 @@
         errorLine2="                    ~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/cast/ui/CastRemoteControlDialog.kt"
-            line="75"
+            line="76"
             column="21"/>
     </issue>
 
@@ -4454,7 +4680,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/cast/ui/CastRemoteControlDialog.kt"
-            line="86"
+            line="87"
             column="21"/>
     </issue>
 
@@ -4487,7 +4713,7 @@
         errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainMobileActivity.kt"
-            line="649"
+            line="700"
             column="48"/>
     </issue>
 
@@ -4498,7 +4724,7 @@
         errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainMobileActivity.kt"
-            line="649"
+            line="700"
             column="49"/>
     </issue>
 
@@ -4509,7 +4735,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainMobileActivity.kt"
-            line="731"
+            line="782"
             column="24"/>
     </issue>
 
@@ -4520,7 +4746,7 @@
         errorLine2="                        ~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainMobileActivity.kt"
-            line="731"
+            line="782"
             column="25"/>
     </issue>
 
@@ -4531,7 +4757,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainTvActivity.kt"
-            line="401"
+            line="461"
             column="24"/>
     </issue>
 
@@ -4542,7 +4768,7 @@
         errorLine2="                        ~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/activities/main/MainTvActivity.kt"
-            line="401"
+            line="461"
             column="25"/>
     </issue>
 
@@ -4630,7 +4856,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/ProfileSelectorTvDialog.kt"
-            line="121"
+            line="126"
             column="40"/>
     </issue>
 
@@ -4641,7 +4867,7 @@
         errorLine2="                                        ~~~~~~~">
         <location
             file="src/main/java/com/streamflixreborn/streamflix/ui/ProfileSelectorTvDialog.kt"
-            line="121"
+            line="126"
             column="41"/>
     </issue>
 

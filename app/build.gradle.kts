@@ -26,7 +26,7 @@ android {
         applicationId = "com.streamflixreborn.streamflix"
         minSdk = 21
         targetSdk = 35
-        versionCode = 161
+        versionCode = 163
         versionName = "1.7.230.1"
 
         buildConfigField("String", "APP_LAYOUT", "\"${properties.getProperty("APP_LAYOUT") ?: "universal"}\"")
