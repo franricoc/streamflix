@@ -126,6 +126,7 @@ object ProviderRegistry {
             "PlutoTvItProvider",
             "PlutoTvUsProvider",
             "CineCityProvider",
+            "CineHaxProvider",
             "VavooProvider",
             "AfterDarkProvider",
             "AnimeBumProvider",

@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
  * language -> server label -> real embed URL (remux.unlimplay.com is a first-party direct MP4
  * CDN; the rest are hosts already covered by the shared [Extractor] system).
  */
+@StreamflixProvider(name = "CineHax", language = "es", movies = true, tvShows = true)
 object CineHaxProvider : Provider {
 
     override val name = "CineHax"

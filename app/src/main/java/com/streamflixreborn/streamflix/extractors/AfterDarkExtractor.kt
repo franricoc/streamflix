@@ -147,7 +147,7 @@ class AfterDarkExtractor( var newUrl: String = "" ) : Extractor() {
                         }
                     }
                 }
-            } catch (e: Exception) { }
+            } catch (e: Exception) { android.util.Log.w("AfterDark", "Error parsing server entry: ${e.message}") }
         }
         
         return allServers

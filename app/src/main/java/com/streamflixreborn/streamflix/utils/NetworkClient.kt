@@ -25,7 +25,7 @@ import android.os.Build
 
 object NetworkClient {
 
-    private const val TAG = "Cine24hBypass"
+    private const val TAG = "NetworkClient"
     
     // User-Agent Mobile standard per massima compatibilità con Cloudflare
     const val USER_AGENT = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"

@@ -7,32 +7,17 @@ import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.logging.HttpLoggingInterceptor
-import java.security.SecureRandom
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 import java.net.InetAddress
 
 object DnsResolver : Dns {
     private const val TAG = "DnsResolver"
     private val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC)
 
-    private val trustAllCerts = arrayOf<TrustManager>(
-        object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
-            override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
-            override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
-        }
-    )
-    private val sslContext = SSLContext.getInstance("TLS").apply { init(null, trustAllCerts, SecureRandom()) }
-    private val trustManager = trustAllCerts[0] as X509TrustManager
-
+    // Use the system default trust store — DoH providers (Cloudflare, Google, etc.) have
+    // valid certificates, so trusting only the system CA set is both safer and sufficient.
     private var client: OkHttpClient = OkHttpClient.Builder()
         .readTimeout(30, TimeUnit.SECONDS)
         .connectTimeout(30, TimeUnit.SECONDS)
-        .sslSocketFactory(sslContext.socketFactory, trustManager)
-        .hostnameVerifier { _, _ -> true }
         .addInterceptor(logging)
         .build()
 

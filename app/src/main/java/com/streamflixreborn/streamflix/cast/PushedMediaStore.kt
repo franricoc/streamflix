@@ -313,9 +313,11 @@ object PushedMediaStore {
             .joinToString("") { "%02x".format(it) }
             .take(16)
 
-    /** Deletes every stored transfer. Called when the TV app actually finishes. */
+    /** Deletes every stored transfer and stops the sweep. Called when the TV app finishes. */
     fun deleteAll(context: Context) {
-        val dir = storeDir(context)
+        mainHandler.removeCallbacks(sweepRunnable)
+        sweepScheduled = false
+        val dir = storeDirHolder[0] ?: return
         val deleted = dir.listFiles()?.sumOf { if (it.delete()) 1 else 0 } ?: 0
         if (deleted > 0) Log.i(TAG, "Deleted $deleted pushed media files on exit")
     }
