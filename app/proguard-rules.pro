@@ -116,6 +116,8 @@
 # -----------------------------------------------------------------------------
 -keep class org.jsoup.** { *; }
 -keep class org.mozilla.javascript.** { *; }
+-dontwarn java.beans.**
+-dontwarn jdk.dynalink.**
 -keep class fi.iki.elonen.** { *; }
 -keep class com.caverock.androidsvg.** { *; }
 -keep class com.google.zxing.** { *; }

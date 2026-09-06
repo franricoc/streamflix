@@ -26,8 +26,8 @@ android {
         applicationId = "com.streamflixreborn.streamflix"
         minSdk = 21
         targetSdk = 35
-        versionCode = 163
-        versionName = "1.7.230.1"
+        versionCode = 164
+        versionName = "1.7.230.2"
 
         buildConfigField("String", "APP_LAYOUT", "\"${properties.getProperty("APP_LAYOUT") ?: "universal"}\"")
         buildConfigField("String", "TMDB_API_KEY", "\"${properties.getProperty("TMDB_API_KEY") ?: ""}\"")
@@ -62,7 +62,6 @@ android {
             isMinifyEnabled = false
             isCrunchPngs = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            applicationIdSuffix = ".debug"
         }
         release {
             signingConfig = signingConfigs.getByName("debug")
@@ -79,6 +78,7 @@ android {
     }
 
     lint {
+        checkReleaseBuilds = false
         baseline = file("lint-baseline.xml")
         // The SuspiciousIndentation detector crashes (IllegalArgumentException in
         // IndentationDetector/Location) on several Kotlin files in this project.

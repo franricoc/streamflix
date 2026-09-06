@@ -6,6 +6,9 @@ import androidx.media3.common.MimeTypes
 import com.streamflixreborn.streamflix.adapters.AppAdapter
 import com.streamflixreborn.streamflix.extractors.Extractor
 import com.streamflixreborn.streamflix.models.*
+import com.streamflixreborn.streamflix.utils.TMDb3
+import com.streamflixreborn.streamflix.utils.TMDb3.original
+import com.streamflixreborn.streamflix.utils.TMDb3.w500
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -132,6 +135,7 @@ object CineHaxProvider : Provider {
                     "User-Agent",
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
                 )
+                .header("Referer", "$baseUrl/")
                 .build()
             chain.proceed(request)
         }
@@ -142,6 +146,37 @@ object CineHaxProvider : Provider {
         httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw Exception("HTTP ${response.code} for $url")
             return response.body?.string().orEmpty()
+        }
+    }
+
+    @Volatile
+    private var cachedNonce: String? = null
+    @Volatile
+    private var nonceTimestamp: Long = 0L
+
+    private fun getNonce(): String {
+        val now = System.currentTimeMillis()
+        val existing = cachedNonce
+        if (existing != null && (now - nonceTimestamp) < 15 * 60 * 1000L) {
+            return existing
+        }
+        return synchronized(this) {
+            val current = cachedNonce
+            if (current != null && (now - nonceTimestamp) < 15 * 60 * 1000L) {
+                return@synchronized current
+            }
+            try {
+                val homeHtml = get("$baseUrl/")
+                val nonce = Regex("""["']nonce["']\s*:\s*["']([a-f0-9]+)["']""")
+                    .find(homeHtml)?.groupValues?.get(1)
+                    ?: "8094ec4022"
+                cachedNonce = nonce
+                nonceTimestamp = System.currentTimeMillis()
+                nonce
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to scrape nonce: ${e.message}")
+                cachedNonce ?: "8094ec4022"
+            }
         }
     }
 
@@ -178,7 +213,7 @@ object CineHaxProvider : Provider {
     private fun humanizeKey(key: String) = key.replace('_', ' ').replaceFirstChar { it.uppercase() }
 
     override suspend fun getHome(): List<Category> {
-        val json = JSONObject(get("$baseUrl/wp-json/primeshow/v1/home-data"))
+        val json = JSONObject(get("$baseUrl/wp-json/cinehax/v1/home-data"))
         val categories = mutableListOf<Category>()
         json.keys().forEach { key ->
             val items = json.optJSONArray(key) ?: return@forEach
@@ -197,7 +232,8 @@ object CineHaxProvider : Provider {
         }
         if (page > 1) return emptyList()
 
-        val url = "$baseUrl/wp-admin/admin-ajax.php?action=tmdb_live_search&query=${URLEncoder.encode(query, "UTF-8")}"
+        val nonce = getNonce()
+        val url = "$baseUrl/wp-admin/admin-ajax.php?action=tmdb_live_search&query=${URLEncoder.encode(query, "UTF-8")}&nonce=$nonce"
         val json = JSONObject(get(url))
         if (!json.optBoolean("success")) return emptyList()
         val results = json.optJSONArray("data") ?: return emptyList()
@@ -205,8 +241,9 @@ object CineHaxProvider : Provider {
     }
 
     private fun fetchExplorePage(type: String, page: Int, genre: String = "", sort: String = "popular"): List<Show> {
+        val nonce = getNonce()
         val url = "$baseUrl/wp-admin/admin-ajax.php?action=load_explore_data" +
-                "&page=$page&type=$type&genre=$genre&network=&language=&sort=$sort&q="
+                "&page=$page&type=$type&genre=$genre&network=&language=&sort=$sort&q=&nonce=$nonce"
         val json = JSONObject(get(url))
         if (!json.optBoolean("success")) return emptyList()
         val html = json.optJSONObject("data")?.optString("html").orEmpty()
@@ -296,11 +333,6 @@ object CineHaxProvider : Provider {
     }
 
     private fun parseWatchPageFromDom(html: String): WatchPageMeta {
-        val embedDataUrl = Regex("""data-url="(https://$UNLIMPLAY_HOST[^"]*)"""")
-            .find(html)?.groupValues?.get(1)?.replace("&#038;", "&")
-            ?: throw Exception("No se pudo leer la metadata de CineHax")
-        val embedUri = Uri.parse(embedDataUrl)
-
         val overview = Regex("""Descripción</h3>\s*<p[^>]*>([^<]*)</p>""")
             .find(html)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }
 
@@ -316,15 +348,19 @@ object CineHaxProvider : Provider {
             .map { Genre(id = it.lowercase(), name = it) }
             .toList()
 
+        val poster = extractPoster(html)
+        val trailer = extractTrailer(html)
+        val title = Jsoup.parse(html).selectFirst("h1")?.text()?.takeIf { it.isNotBlank() } ?: "CineHax"
+
         return WatchPageMeta(
-            title = embedUri.getQueryParameter("title").orEmpty(),
+            title = title,
             overview = overview,
-            poster = extractPoster(html),
-            backdrop = embedUri.getQueryParameter("backdrop"),
+            poster = poster,
+            backdrop = poster,
             rating = rating,
             released = released,
             genres = genres,
-            trailer = extractTrailer(html),
+            trailer = trailer,
         )
     }
 
@@ -337,6 +373,49 @@ object CineHaxProvider : Provider {
     }
 
     override suspend fun getMovie(id: String): Movie {
+        val tmdbMovie = try {
+            val movieId = id.toIntOrNull()
+            if (movieId != null) {
+                TMDb3.Movies.details(
+                    movieId = movieId,
+                    appendToResponse = listOf(
+                        TMDb3.Params.AppendToResponse.Movie.CREDITS,
+                        TMDb3.Params.AppendToResponse.Movie.RECOMMENDATIONS,
+                        TMDb3.Params.AppendToResponse.Movie.VIDEOS,
+                        TMDb3.Params.AppendToResponse.Movie.EXTERNAL_IDS,
+                    ),
+                    language = "es-ES"
+                )
+            } else null
+        } catch (e: Exception) {
+            Log.w(TAG, "TMDb3 details failed for movie $id: ${e.message}")
+            null
+        }
+
+        if (tmdbMovie != null) {
+            return Movie(
+                id = tmdbMovie.id.toString(),
+                title = tmdbMovie.title,
+                overview = tmdbMovie.overview,
+                released = tmdbMovie.releaseDate,
+                runtime = tmdbMovie.runtime,
+                trailer = tmdbMovie.videos?.results
+                    ?.sortedBy { it.publishedAt ?: "" }
+                    ?.firstOrNull { it.site == TMDb3.Video.VideoSite.YOUTUBE }
+                    ?.let { "https://www.youtube.com/watch?v=${it.key}" },
+                rating = tmdbMovie.voteAverage.toDouble(),
+                poster = tmdbMovie.posterPath?.original ?: tmdbMovie.posterPath?.w500,
+                banner = tmdbMovie.backdropPath?.original,
+                imdbId = tmdbMovie.externalIds?.imdbId,
+                genres = tmdbMovie.genres.map { Genre(it.id.toString(), it.name) },
+                cast = tmdbMovie.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList(),
+                directors = tmdbMovie.credits?.crew?.filter { it.job == "Director" }?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList(),
+                recommendations = tmdbMovie.recommendations?.results?.mapNotNull { (it as? TMDb3.Movie)?.let { m ->
+                    Movie(id = m.id.toString(), title = m.title, poster = m.posterPath?.w500, banner = m.backdropPath?.w500)
+                } } ?: emptyList(),
+            )
+        }
+
         val meta = parseWatchPage(get("$baseUrl/ver/?tipo=pelicula&id=$id"))
         return Movie(
             id = id,
@@ -352,10 +431,55 @@ object CineHaxProvider : Provider {
     }
 
     override suspend fun getTvShow(id: String): TvShow {
+        val tmdbTv = try {
+            val tvId = id.toIntOrNull()
+            if (tvId != null) {
+                TMDb3.TvSeries.details(
+                    seriesId = tvId,
+                    appendToResponse = listOf(
+                        TMDb3.Params.AppendToResponse.Tv.CREDITS,
+                        TMDb3.Params.AppendToResponse.Tv.RECOMMENDATIONS,
+                        TMDb3.Params.AppendToResponse.Tv.VIDEOS,
+                        TMDb3.Params.AppendToResponse.Tv.EXTERNAL_IDS,
+                    ),
+                    language = "es-ES"
+                )
+            } else null
+        } catch (e: Exception) {
+            Log.w(TAG, "TMDb3 details failed for tv $id: ${e.message}")
+            null
+        }
+
+        if (tmdbTv != null) {
+            val seasons = tmdbTv.seasons?.filter { (it.seasonNumber ?: 0) > 0 }?.map { s ->
+                Season(
+                    id = "$id-${s.seasonNumber}",
+                    number = s.seasonNumber ?: 1,
+                    title = s.name ?: "Temporada ${s.seasonNumber}",
+                    poster = s.posterPath?.w500,
+                )
+            } ?: listOf(Season(id = "$id-1", number = 1, title = "Temporada 1"))
+
+            return TvShow(
+                id = tmdbTv.id.toString(),
+                title = tmdbTv.name,
+                overview = tmdbTv.overview,
+                released = tmdbTv.firstAirDate,
+                rating = tmdbTv.voteAverage.toDouble(),
+                poster = tmdbTv.posterPath?.original ?: tmdbTv.posterPath?.w500,
+                banner = tmdbTv.backdropPath?.original,
+                trailer = tmdbTv.videos?.results
+                    ?.sortedBy { it.publishedAt ?: "" }
+                    ?.firstOrNull { it.site == TMDb3.Video.VideoSite.YOUTUBE }
+                    ?.let { "https://www.youtube.com/watch?v=${it.key}" },
+                genres = tmdbTv.genres.map { Genre(it.id.toString(), it.name) },
+                seasons = seasons,
+                cast = tmdbTv.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: emptyList(),
+            )
+        }
+
         val html = get("$baseUrl/ver/?tipo=serie&id=$id&season=1&episode=1")
         val meta = parseWatchPage(html)
-        // The season chips and every episode link on the page both carry "season=N"; collecting
-        // every distinct N this way is more robust than pinning to one exact CSS structure.
         val seasonNumbers = Regex("""season=(\d+)""").findAll(html)
             .mapNotNull { it.groupValues[1].toIntOrNull() }
             .distinct()
@@ -380,9 +504,35 @@ object CineHaxProvider : Provider {
     override suspend fun getEpisodesBySeason(seasonId: String): List<Episode> {
         val tvId = seasonId.substringBeforeLast("-")
         val seasonNumber = seasonId.substringAfterLast("-").toIntOrNull() ?: 1
-        val html = get("$baseUrl/ver/?tipo=serie&id=$tvId&season=$seasonNumber&episode=1")
 
-        // Episode entries are the "id=$tvId&season=N&episode=" anchors containing an image thumbnail
+        val tmdbEpisodes = try {
+            val seriesIdInt = tvId.toIntOrNull()
+            if (seriesIdInt != null) {
+                TMDb3.TvSeasons.details(
+                    seriesId = seriesIdInt,
+                    seasonNumber = seasonNumber,
+                    language = "es-ES"
+                ).episodes?.map { ep ->
+                    Episode(
+                        id = "$tvId|$seasonNumber|${ep.episodeNumber}",
+                        number = ep.episodeNumber ?: 1,
+                        title = ep.name ?: "Episodio ${ep.episodeNumber}",
+                        overview = ep.overview,
+                        poster = ep.stillPath?.w500,
+                        released = ep.airDate,
+                    )
+                }
+            } else null
+        } catch (e: Exception) {
+            Log.w(TAG, "TMDb3 season details failed for $seasonId: ${e.message}")
+            null
+        }
+
+        if (!tmdbEpisodes.isNullOrEmpty()) {
+            return tmdbEpisodes
+        }
+
+        val html = try { get("$baseUrl/ver/?tipo=serie&id=$tvId&season=$seasonNumber&episode=1") } catch (e: Exception) { "" }
         val doc = Jsoup.parse(html)
         return doc.select("a[href*=\"id=$tvId\"][href*=\"season=$seasonNumber\"][href*=\"episode=\"]:has(img)")
             .mapNotNull { a ->
@@ -404,9 +554,24 @@ object CineHaxProvider : Provider {
     }
 
     override suspend fun getPeople(id: String, page: Int): People {
-        // cinehax.com's /ver/ pages don't list cast/crew anywhere (verified: no actor names,
-        // profile images, or "Reparto" section in the markup), so there's no source to scrape.
-        TODO("Not yet implemented")
+        val person = try {
+            val personId = id.toIntOrNull()
+            if (personId != null) {
+                TMDb3.People.details(
+                    personId = personId,
+                    appendToResponse = if (page > 1) null else listOf(TMDb3.Params.AppendToResponse.Person.COMBINED_CREDITS),
+                    language = "es-ES"
+                )
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+
+        return People(
+            id = id,
+            name = person?.name ?: "Persona $id",
+            image = person?.profilePath?.w500,
+        )
     }
 
     // endregion
@@ -426,11 +591,29 @@ object CineHaxProvider : Provider {
             else -> return emptyList()
         }
 
-        val doc = Jsoup.parse(get(watchUrl))
-        val embedPageUrls = doc.select("[data-url*=$UNLIMPLAY_HOST]")
-            .map { it.attr("data-url") }
+        val html = try { get(watchUrl) } catch (e: Exception) { "" }
+        val doc = Jsoup.parse(html)
+        val embedPageUrls = doc.select("[data-url*=$UNLIMPLAY_HOST], [data-src*=$UNLIMPLAY_HOST], iframe[src*=$UNLIMPLAY_HOST]")
+            .flatMap { listOf(it.attr("data-url"), it.attr("data-src"), it.attr("src")) }
+            .filter { it.contains(UNLIMPLAY_HOST) }
+            .map { if (it.startsWith("//")) "https:$it" else it }
             .distinct()
-        if (embedPageUrls.isEmpty()) return emptyList()
+            .toMutableList()
+
+        if (embedPageUrls.isEmpty()) {
+            val fallbackUrl = when (videoType) {
+                is Video.Type.Movie -> "https://$UNLIMPLAY_HOST/f/embed/movie/$id"
+                is Video.Type.Episode -> {
+                    val parts = id.split("|")
+                    val tvId = parts.getOrNull(0) ?: id
+                    val season = parts.getOrNull(1) ?: "1"
+                    val episode = parts.getOrNull(2) ?: "1"
+                    "https://$UNLIMPLAY_HOST/f/embed/serie/$tvId/$season/$episode"
+                }
+                else -> null
+            }
+            if (fallbackUrl != null) embedPageUrls.add(fallbackUrl)
+        }
 
         val servers = mutableListOf<Video.Server>()
         for (embedPageUrl in embedPageUrls) {
@@ -445,7 +628,7 @@ object CineHaxProvider : Provider {
 
     private fun resolveUnlimplayServers(embedPageUrl: String): List<Video.Server> {
         val embedHtml = get(embedPageUrl)
-        val embedsJson = Regex("""const EMBEDS\s*=\s*(\{.*?\});""")
+        val embedsJson = Regex("""(?:const\s+EMBEDS\s*=\s*|finalizePlayer\s*\(\s*)(\{.*?\})\s*(?:;|\))""", RegexOption.DOT_MATCHES_ALL)
             .find(embedHtml)?.groupValues?.get(1)
             ?: return emptyList()
         val embeds = JSONObject(embedsJson)
@@ -471,8 +654,19 @@ object CineHaxProvider : Provider {
     }
 
     override suspend fun getVideo(server: Video.Server): Video {
-        if (server.src.contains(REMUX_HOST)) {
+        if (server.src.contains(REMUX_HOST) || server.src.endsWith(".mp4")) {
             return Video(source = server.src, type = MimeTypes.VIDEO_MP4)
+        }
+        if (server.src.contains(".m3u8")) {
+            return Video(
+                source = server.src,
+                type = MimeTypes.APPLICATION_M3U8,
+                headers = mapOf(
+                    "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                    "Referer" to "https://$UNLIMPLAY_HOST/",
+                    "Origin" to "https://$UNLIMPLAY_HOST"
+                )
+            )
         }
         return Extractor.extract(server.src, server)
     }

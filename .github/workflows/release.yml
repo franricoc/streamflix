@@ -55,6 +55,7 @@ jobs:
 
       - name: Sign Universal APK
         id: sign_apk
+        if: ${{ secrets.KEYSTORE != '' }}
         uses: r0adkll/sign-android-release@v2
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -68,7 +69,11 @@ jobs:
       - name: Stage Universal APK
         run: |
           mkdir -p dist
-          cp "${{ steps.sign_apk.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}.apk
+          if [ -n "${{ secrets.KEYSTORE }}" ] && [ -f "${{ steps.sign_apk.outputs.signedReleaseFile }}" ]; then
+            cp "${{ steps.sign_apk.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}.apk
+          else
+            cp app/build/outputs/apk/release/app-release.apk dist/streamflix-${{ github.ref_name }}.apk
+          fi
 
       # --- Mobile-only APK ---
       - name: Set Mobile version
@@ -79,6 +84,7 @@ jobs:
 
       - name: Sign Mobile APK
         id: sign_apk_mobile
+        if: ${{ secrets.KEYSTORE != '' }}
         uses: r0adkll/sign-android-release@v2
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -90,7 +96,12 @@ jobs:
           BUILD_TOOLS_VERSION: "36.0.0"
 
       - name: Stage Mobile APK
-        run: cp "${{ steps.sign_apk_mobile.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}-only-mobile.apk
+        run: |
+          if [ -n "${{ secrets.KEYSTORE }}" ] && [ -f "${{ steps.sign_apk_mobile.outputs.signedReleaseFile }}" ]; then
+            cp "${{ steps.sign_apk_mobile.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}-only-mobile.apk
+          else
+            cp app/build/outputs/apk/release/app-release.apk dist/streamflix-${{ github.ref_name }}-only-mobile.apk
+          fi
 
       # --- TV-only APK ---
       - name: Set TV version
@@ -101,6 +112,7 @@ jobs:
 
       - name: Sign TV APK
         id: sign_apk_tv
+        if: ${{ secrets.KEYSTORE != '' }}
         uses: r0adkll/sign-android-release@v2
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -112,7 +124,12 @@ jobs:
           BUILD_TOOLS_VERSION: "36.0.0"
 
       - name: Stage TV APK
-        run: cp "${{ steps.sign_apk_tv.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}-only-tv.apk
+        run: |
+          if [ -n "${{ secrets.KEYSTORE }}" ] && [ -f "${{ steps.sign_apk_tv.outputs.signedReleaseFile }}" ]; then
+            cp "${{ steps.sign_apk_tv.outputs.signedReleaseFile }}" dist/streamflix-${{ github.ref_name }}-only-tv.apk
+          else
+            cp app/build/outputs/apk/release/app-release.apk dist/streamflix-${{ github.ref_name }}-only-tv.apk
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
