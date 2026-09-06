@@ -60,6 +60,19 @@
         tools:text="Description" />
 
     <ImageView
+        android:id="@+id/btn_exo_share"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_share"
+        android:tint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="@id/tv_exo_subtitle"
+        app:layout_constraintEnd_toStartOf="@id/btn_exo_cast"
+        app:layout_constraintTop_toTopOf="@id/tv_exo_title"
+        tools:ignore="ContentDescription,UseAppTint" />
+
+    <ImageView
         android:id="@+id/btn_exo_cast"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -297,7 +310,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="visible"
-        app:constraint_referenced_ids="btn_exo_back,tv_exo_title,tv_exo_subtitle,btn_exo_cast,btn_exo_external_player,exo_center_controls,exo_progress,exo_bottom_bar" />
+        app:constraint_referenced_ids="btn_exo_back,tv_exo_title,tv_exo_subtitle,btn_exo_share,btn_exo_cast,btn_exo_external_player,exo_center_controls,exo_progress,exo_bottom_bar" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

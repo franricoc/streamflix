@@ -227,7 +227,30 @@ class TvShowViewModel(
         _state.emit(State.Loading)
 
         try {
-            val tvShow = UserPreferences.currentProvider!!.getTvShow(id)
+            val provider = UserPreferences.currentProvider!!
+            var tvShow = try {
+                provider.getTvShow(id)
+            } catch (e: Exception) {
+                val numericId = id.toIntOrNull()
+                if (numericId != null && provider !is com.streamflixreborn.streamflix.providers.TmdbProvider) {
+                    val tmdbTv = com.streamflixreborn.streamflix.utils.TmdbUtils.getTvShowById(numericId)
+                    if (tmdbTv != null) {
+                        val searchResults = runCatching { provider.search(tmdbTv.title) }.getOrDefault(emptyList())
+                        val match = searchResults.filterIsInstance<TvShow>().firstOrNull()
+                        if (match != null) {
+                            provider.getTvShow(match.id)
+                        } else throw e
+                    } else throw e
+                } else throw e
+            }
+
+            if (tvShow.recommendations.isEmpty() && UserPreferences.enableTmdb) {
+                val year = tvShow.released?.get(java.util.Calendar.YEAR)
+                val tmdbTv = com.streamflixreborn.streamflix.utils.TmdbUtils.getTvShow(tvShow.title, year)
+                if (tmdbTv != null && tmdbTv.recommendations.isNotEmpty()) {
+                    tvShow = tvShow.copy(recommendations = tmdbTv.recommendations)
+                }
+            }
 
             if (!ArtworkRepair.isRemoteArtworkUrl(tvShow.poster) && ArtworkRepair.isRemoteArtworkUrl(fallbackPoster)) {
                 tvShow.poster = fallbackPoster

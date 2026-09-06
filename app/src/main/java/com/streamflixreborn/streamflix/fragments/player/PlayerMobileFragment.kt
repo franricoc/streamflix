@@ -734,6 +734,29 @@ class PlayerMobileFragment : Fragment() {
             ).show()
         }
 
+        binding.pvPlayer.controller.binding.btnExoShare.setOnClickListener {
+            val vid = currentVideo
+            val srv = currentServer
+            if (vid != null && vid.source.isNotEmpty()) {
+                val embed = srv?.src?.takeIf { it.isNotBlank() } ?: srv?.id
+                com.streamflixreborn.streamflix.utils.ShareHelper.shareResolvedStream(
+                    context = requireContext(),
+                    title = resolvePlayerTitle(),
+                    subtitle = resolvePlayerSubtitle(),
+                    resolvedStreamUrl = vid.source,
+                    headers = vid.headers,
+                    embedUrl = embed,
+                    serverName = srv?.name,
+                )
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "El video aún no se ha cargado",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
         binding.pvPlayer.controller.binding.btnExoCast.setOnClickListener {
             // Offline playback: the original provider URL would 403 on the TV (no headers/cookies)
             // and is useless without a download. Instead the phone serves the downloaded file
@@ -768,20 +791,55 @@ class PlayerMobileFragment : Fragment() {
                 )
             }
 
-            val payload = com.streamflixreborn.streamflix.cast.CastPayload(
-                action = "PLAY",
-                title = title,
-                subtitle = subtitleText,
-                posterUrl = posterUrl,
-                streamUrl = vid.source,
-                headers = vid.headers,
-                mimeType = vid.type,
-                maintainToken = vid.maintainToken,
-                tokenQuery = if (vid.maintainToken) TokenManager.latestQuery else null,
-                subtitles = subtitlesList,
-                startPositionMs = currentPos,
-                isOfflineDownload = false
-            )
+            val currentVideoType = args.videoType
+            val payload = when (currentVideoType) {
+                is Video.Type.Episode -> com.streamflixreborn.streamflix.cast.CastPayload(
+                    action = "PLAY",
+                    title = title,
+                    subtitle = subtitleText,
+                    posterUrl = posterUrl,
+                    streamUrl = vid.source,
+                    headers = vid.headers,
+                    mimeType = vid.type,
+                    maintainToken = vid.maintainToken,
+                    tokenQuery = if (vid.maintainToken) TokenManager.latestQuery else null,
+                    subtitles = subtitlesList,
+                    startPositionMs = currentPos,
+                    isOfflineDownload = false,
+                    mediaId = args.id,
+                    contentType = "episode",
+                    providerName = UserPreferences.currentProvider?.name,
+                    episodeId = currentVideoType.id,
+                    episodeNumber = currentVideoType.number,
+                    seasonNumber = currentVideoType.season.number,
+                    tvShowId = currentVideoType.tvShow.id,
+                    tvShowTitle = currentVideoType.tvShow.title,
+                    tvShowPoster = currentVideoType.tvShow.poster,
+                    tvShowBanner = currentVideoType.tvShow.banner,
+                    episodeTitle = currentVideoType.title,
+                    releaseDate = currentVideoType.tvShow.releaseDate,
+                    imdbId = currentVideoType.tvShow.imdbId,
+                )
+                is Video.Type.Movie -> com.streamflixreborn.streamflix.cast.CastPayload(
+                    action = "PLAY",
+                    title = title,
+                    subtitle = subtitleText,
+                    posterUrl = posterUrl,
+                    streamUrl = vid.source,
+                    headers = vid.headers,
+                    mimeType = vid.type,
+                    maintainToken = vid.maintainToken,
+                    tokenQuery = if (vid.maintainToken) TokenManager.latestQuery else null,
+                    subtitles = subtitlesList,
+                    startPositionMs = currentPos,
+                    isOfflineDownload = false,
+                    mediaId = args.id,
+                    contentType = "movie",
+                    providerName = UserPreferences.currentProvider?.name,
+                    releaseDate = currentVideoType.releaseDate,
+                    imdbId = currentVideoType.imdbId,
+                )
+            }
 
             com.streamflixreborn.streamflix.cast.ui.DeviceSelectorDialog.show(requireContext()) { device ->
                 if (::player.isInitialized) {
@@ -937,8 +995,9 @@ class PlayerMobileFragment : Fragment() {
                 return@launch
             }
 
-            val payload =
-                com.streamflixreborn.streamflix.cast.CastPayload(
+            val currentVideoType = args.videoType
+            val payload = when (currentVideoType) {
+                is Video.Type.Episode -> com.streamflixreborn.streamflix.cast.CastPayload(
                     action = "PLAY",
                     title = title,
                     subtitle = subtitleText,
@@ -948,13 +1007,43 @@ class PlayerMobileFragment : Fragment() {
                             "${com.streamflixreborn.streamflix.cast.encodeIdForUrl(args.id)}",
                     mimeType = entity?.mimeType,
                     startPositionMs = currentPos,
-                    videoType = args.videoType,
                     mediaId = args.id,
                     isOfflineDownload = true,
-                    // Always send the complete media (file or HLS playlist tree) to the TV
-                    // so it plays locally and survives the phone's screen turning off.
                     fullTransfer = entity != null,
+                    contentType = "episode",
+                    providerName = UserPreferences.currentProvider?.name,
+                    episodeId = currentVideoType.id,
+                    episodeNumber = currentVideoType.number,
+                    seasonNumber = currentVideoType.season.number,
+                    tvShowId = currentVideoType.tvShow.id,
+                    tvShowTitle = currentVideoType.tvShow.title,
+                    tvShowPoster = currentVideoType.tvShow.poster,
+                    tvShowBanner = currentVideoType.tvShow.banner,
+                    episodeTitle = currentVideoType.title,
+                    releaseDate = currentVideoType.tvShow.releaseDate,
+                    imdbId = currentVideoType.tvShow.imdbId,
+                    fileSizeBytes = entity?.downloadedBytes?.takeIf { it > 0 } ?: entity?.totalBytes ?: 0L,
                 )
+                is Video.Type.Movie -> com.streamflixreborn.streamflix.cast.CastPayload(
+                    action = "PLAY",
+                    title = title,
+                    subtitle = subtitleText,
+                    posterUrl = posterUrl,
+                    streamUrl =
+                        "$serverBaseUrl/offline_stream/" +
+                            "${com.streamflixreborn.streamflix.cast.encodeIdForUrl(args.id)}",
+                    mimeType = entity?.mimeType,
+                    startPositionMs = currentPos,
+                    mediaId = args.id,
+                    isOfflineDownload = true,
+                    fullTransfer = entity != null,
+                    contentType = "movie",
+                    providerName = UserPreferences.currentProvider?.name,
+                    releaseDate = currentVideoType.releaseDate,
+                    imdbId = currentVideoType.imdbId,
+                    fileSizeBytes = entity?.downloadedBytes?.takeIf { it > 0 } ?: entity?.totalBytes ?: 0L,
+                )
+            }
             sendCastToSelectedDevice(payload, title, subtitleText)
         }
     }

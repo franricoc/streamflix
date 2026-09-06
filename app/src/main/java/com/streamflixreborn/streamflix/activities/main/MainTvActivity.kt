@@ -163,23 +163,28 @@ class MainTvActivity : FragmentActivity() {
                 }
 
                 setOnClickListener {
-                    val options = arrayOf("👤 Cambiar de Perfil", "📺 Cambiar de Proveedor")
-                    android.app.AlertDialog.Builder(this@MainTvActivity)
-                        .setTitle("Cuenta y Proveedor")
-                        .setItems(options) { _, which ->
-                            when (which) {
-                                0 -> {
-                                    UserProfileManager.isSessionProfileSelected = false
-                                    ProfileSelectorTvDialog(this@MainTvActivity) { selectedProfile ->
-                                        UserProfileManager.setActiveProfile(this@MainTvActivity, selectedProfile.id)
-                                        UserProfileManager.isSessionProfileSelected = true
-                                        recreate()
-                                    }.show()
+                    val profiles = UserProfileManager.getProfiles(this@MainTvActivity)
+                    if (profiles.size > 1) {
+                        val options = arrayOf("👤 Cambiar de Perfil", "📺 Cambiar de Proveedor")
+                        android.app.AlertDialog.Builder(this@MainTvActivity)
+                            .setTitle("Cuenta y Proveedor")
+                            .setItems(options) { _, which ->
+                                when (which) {
+                                    0 -> {
+                                        UserProfileManager.isSessionProfileSelected = false
+                                        ProfileSelectorTvDialog(this@MainTvActivity) { selectedProfile ->
+                                            UserProfileManager.setActiveProfile(this@MainTvActivity, selectedProfile.id)
+                                            UserProfileManager.isSessionProfileSelected = true
+                                            recreate()
+                                        }.show()
+                                    }
+                                    1 -> navController.navigate(R.id.providers)
                                 }
-                                1 -> navController.navigate(R.id.providers)
                             }
-                        }
-                        .show()
+                            .show()
+                    } else {
+                        navController.navigate(R.id.providers)
+                    }
                 }
             }
 
@@ -350,21 +355,23 @@ class MainTvActivity : FragmentActivity() {
 
         Toast.makeText(this, "📺 Reproduciendo desde móvil: ${payload.title}", Toast.LENGTH_SHORT).show()
 
+        // Sync provider if passed
+        payload.providerName?.let { providerName ->
+            if (!providerName.equals(UserPreferences.currentProvider?.name, ignoreCase = true)) {
+                Provider.providers.keys.find { it.name.equals(providerName, ignoreCase = true) }?.let {
+                    UserPreferences.currentProvider = it
+                }
+            }
+        }
+
+        val videoType = payload.toVideoType()
+        val mediaId = payload.mediaId ?: payload.episodeId ?: "cast_${System.currentTimeMillis()}"
+
         val currentFragment = getCurrentFragment()
         if (currentFragment is PlayerTvFragment) {
             currentFragment.onNewCastPayload(payload)
             return
         }
-
-        val videoType = payload.videoType ?: com.streamflixreborn.streamflix.models.Video.Type.Movie(
-            id = payload.mediaId ?: "cast_${System.currentTimeMillis()}",
-            title = payload.title,
-            releaseDate = payload.subtitle ?: "",
-            poster = payload.posterUrl ?: "",
-            imdbId = null
-        )
-
-        val mediaId = payload.mediaId ?: "cast_${System.currentTimeMillis()}"
 
         val bundle = Bundle().apply {
             putString("id", mediaId)

@@ -446,16 +446,42 @@ class ShowOptionsMobileDialog(
                 is Video.Type.Episode -> videoType.poster ?: videoType.tvShow.poster
             }
 
-            val payload = com.streamflixreborn.streamflix.cast.CastPayload(
-                action = "PLAY",
-                title = title,
-                subtitle = subtitleText,
-                posterUrl = posterUrl,
-                streamUrl = "",
-                videoType = videoType,
-                mediaId = id,
-                isOfflineDownload = false
-            )
+            val payload = when (videoType) {
+                is Video.Type.Episode -> com.streamflixreborn.streamflix.cast.CastPayload(
+                    action = "PLAY",
+                    title = title,
+                    subtitle = subtitleText,
+                    posterUrl = posterUrl,
+                    streamUrl = "",
+                    mediaId = id,
+                    isOfflineDownload = false,
+                    contentType = "episode",
+                    providerName = UserPreferences.currentProvider?.name,
+                    episodeId = videoType.id,
+                    episodeNumber = videoType.number,
+                    seasonNumber = videoType.season.number,
+                    tvShowId = videoType.tvShow.id,
+                    tvShowTitle = videoType.tvShow.title,
+                    tvShowPoster = videoType.tvShow.poster,
+                    tvShowBanner = videoType.tvShow.banner,
+                    episodeTitle = videoType.title,
+                    releaseDate = videoType.tvShow.releaseDate,
+                    imdbId = videoType.tvShow.imdbId,
+                )
+                is Video.Type.Movie -> com.streamflixreborn.streamflix.cast.CastPayload(
+                    action = "PLAY",
+                    title = title,
+                    subtitle = subtitleText,
+                    posterUrl = posterUrl,
+                    streamUrl = "",
+                    mediaId = id,
+                    isOfflineDownload = false,
+                    contentType = "movie",
+                    providerName = UserPreferences.currentProvider?.name,
+                    releaseDate = videoType.releaseDate,
+                    imdbId = videoType.imdbId,
+                )
+            }
 
             android.widget.Toast.makeText(
                 context,

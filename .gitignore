@@ -12,3 +12,4 @@ cookies.txt
 *.apk
 *.jar
 package-lock.json
+debug.keystore

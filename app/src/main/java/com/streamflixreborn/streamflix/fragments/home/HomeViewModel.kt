@@ -340,58 +340,71 @@ class HomeViewModel(database: AppDatabase) : ViewModel() {
         getHome()
     }
 
-    private suspend fun enrichContinueWatchingEpisodes(episodes: List<Episode>): List<Episode> = coroutineScope {
-        val provider = UserPreferences.currentProvider ?: return@coroutineScope episodes
+    private val inFlightEnrichments = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
-        episodes.map { episode ->
-            async {
-                val tvShowId = episode.tvShow?.id ?: return@async episode
-                val resolvedTvShow = continueWatchingTvShowCache[tvShowId] ?: runCatching {
-                    provider.getTvShow(tvShowId)
-                }.getOrNull()?.also { fetchedTvShow ->
-                    continueWatchingTvShowCache[tvShowId] = fetchedTvShow
-                }
+    private fun enrichContinueWatchingEpisodes(episodes: List<Episode>): List<Episode> {
+        val provider = UserPreferences.currentProvider ?: return episodes
 
-                val mergedTvShow = resolvedTvShow?.copy().apply {
-                    this?.let { show ->
-                        episode.tvShow?.let { existingTvShow -> show.merge(existingTvShow) }
-                    }
-                } ?: episode.tvShow
+        return episodes.map { episode ->
+            val tvShowId = episode.tvShow?.id ?: return@map episode
+            val resolvedTvShow = continueWatchingTvShowCache[tvShowId]
 
-                val resolvedSeason = episode.season?.let { season ->
-                    mergedTvShow?.seasons?.firstOrNull { it.id == season.id || it.number == season.number }
-                        ?: season
-                }
-
-                val resolvedEpisode = if (UserPreferences.enableTmdb) {
-                    val seasonId = resolvedSeason?.id
-                        ?: episode.season?.id
-                    seasonId?.let { key ->
-                        continueWatchingSeasonEpisodesCache[key] ?: runCatching {
-                            provider.getEpisodesBySeason(key)
-                        }.getOrDefault(emptyList()).also { fetchedEpisodes ->
-                            if (fetchedEpisodes.isNotEmpty()) {
-                                continueWatchingSeasonEpisodesCache[key] = fetchedEpisodes
-                            }
+            if (resolvedTvShow == null && inFlightEnrichments.add(tvShowId)) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val fetched = runCatching { provider.getTvShow(tvShowId) }.getOrNull()
+                        if (fetched != null) {
+                            continueWatchingTvShowCache[tvShowId] = fetched
+                            UserDataNotifier.notifyChanged()
                         }
-                    }?.firstOrNull { seasonEpisode ->
-                        seasonEpisode.id == episode.id || seasonEpisode.number == episode.number
+                    } finally {
+                        inFlightEnrichments.remove(tvShowId)
                     }
-                } else {
-                    null
-                }
-
-                episode.copy(
-                    title = resolvedEpisode?.title ?: episode.title,
-                    overview = resolvedEpisode?.overview ?: episode.overview,
-                    poster = resolvedEpisode?.poster ?: episode.poster,
-                    tvShow = mergedTvShow,
-                    season = resolvedSeason,
-                ).apply {
-                    merge(episode)
                 }
             }
-        }.awaitAll()
+
+            val mergedTvShow = resolvedTvShow?.copy().apply {
+                this?.let { show ->
+                    episode.tvShow?.let { existingTvShow -> show.merge(existingTvShow) }
+                }
+            } ?: episode.tvShow
+
+            val resolvedSeason = episode.season?.let { season ->
+                mergedTvShow?.seasons?.firstOrNull { it.id == season.id || it.number == season.number }
+                    ?: season
+            }
+
+            val seasonId = resolvedSeason?.id ?: episode.season?.id
+            val cachedEpisodes = seasonId?.let { continueWatchingSeasonEpisodesCache[it] }
+
+            if (UserPreferences.enableTmdb && cachedEpisodes == null && seasonId != null && inFlightEnrichments.add("season_$seasonId")) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val fetched = runCatching { provider.getEpisodesBySeason(seasonId) }.getOrDefault(emptyList())
+                        if (fetched.isNotEmpty()) {
+                            continueWatchingSeasonEpisodesCache[seasonId] = fetched
+                            UserDataNotifier.notifyChanged()
+                        }
+                    } finally {
+                        inFlightEnrichments.remove("season_$seasonId")
+                    }
+                }
+            }
+
+            val resolvedEpisode = cachedEpisodes?.firstOrNull { seasonEpisode ->
+                seasonEpisode.id == episode.id || seasonEpisode.number == episode.number
+            }
+
+            episode.copy(
+                title = resolvedEpisode?.title ?: episode.title,
+                overview = resolvedEpisode?.overview ?: episode.overview,
+                poster = resolvedEpisode?.poster ?: episode.poster,
+                tvShow = mergedTvShow,
+                season = resolvedSeason,
+            ).apply {
+                merge(episode)
+            }
+        }
     }
 
     fun getHome() = viewModelScope.launch(Dispatchers.IO) {

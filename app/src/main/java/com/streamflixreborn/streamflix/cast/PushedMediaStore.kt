@@ -107,6 +107,37 @@ object PushedMediaStore {
     ): Boolean = mimeType?.contains("mpegurl", ignoreCase = true) == true ||
         url.contains(".m3u8", ignoreCase = true)
 
+    /** Safety margin (in bytes) left untouched in the TV's internal storage (400 MB). */
+    private const val MIN_FREE_STORAGE_SAFETY_MARGIN = 400 * 1024 * 1024L
+
+    /** Minimum free space on TV to even consider full transfer (1.2 GB). */
+    private const val ABSOLUTE_MIN_USABLE_SPACE = 1200 * 1024 * 1024L
+
+    /**
+     * Checks whether the TV has enough free storage to safely receive and store [fileSizeBytes].
+     * If the TV has low storage or if [fileSizeBytes] exceeds available storage minus safety margin,
+     * returns false so the TV degrades to direct streaming instead of exhausting disk and crashing.
+     */
+    fun canStoreSafely(context: Context, fileSizeBytes: Long): Boolean {
+        return try {
+            val dir = storeDir(context)
+            val freeBytes = dir.usableSpace
+            if (freeBytes < ABSOLUTE_MIN_USABLE_SPACE) {
+                Log.w(TAG, "TV has only ${freeBytes / (1024 * 1024)} MB free; skipping local transfer")
+                return false
+            }
+            val required = if (fileSizeBytes > 0L) fileSizeBytes else 800 * 1024 * 1024L
+            val enough = freeBytes > (required + MIN_FREE_STORAGE_SAFETY_MARGIN)
+            if (!enough) {
+                Log.w(TAG, "Not enough space for ${required / (1024 * 1024)} MB (free: ${freeBytes / (1024 * 1024)} MB)")
+            }
+            enough
+        } catch (e: Exception) {
+            Log.w(TAG, "Error checking usable storage space", e)
+            false
+        }
+    }
+
     /**
      * Progressive path: downloads [fromUrl] completely under a stable name derived from [key].
      * Writes to a `.part` temp file first so an interrupted transfer never leaves a file that
@@ -129,6 +160,10 @@ object PushedMediaStore {
                 while (true) {
                     val read = input.read(buf)
                     if (read <= 0) break
+                    if (dir.usableSpace < MIN_FREE_STORAGE_SAFETY_MARGIN) {
+                        part.delete()
+                        throw IllegalStateException("TV storage reached critical limit during transfer")
+                    }
                     output.write(buf, 0, read)
                     written += read
                 }

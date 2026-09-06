@@ -97,9 +97,32 @@ class MovieViewModel(id: String, private val database: AppDatabase) : ViewModel(
         _state.emit(State.Loading)
 
         try {
-            val movie = UserPreferences.currentProvider!!.getMovie(id)
+            val provider = UserPreferences.currentProvider!!
+            var movie = try {
+                provider.getMovie(id)
+            } catch (e: Exception) {
+                val numericId = id.toIntOrNull()
+                if (numericId != null && provider !is com.streamflixreborn.streamflix.providers.TmdbProvider) {
+                    val tmdbMovie = com.streamflixreborn.streamflix.utils.TmdbUtils.getMovieById(numericId)
+                    if (tmdbMovie != null) {
+                        val searchResults = runCatching { provider.search(tmdbMovie.title) }.getOrDefault(emptyList())
+                        val match = searchResults.filterIsInstance<Movie>().firstOrNull()
+                        if (match != null) {
+                            provider.getMovie(match.id)
+                        } else throw e
+                    } else throw e
+                } else throw e
+            }
 
-            database.movieDao().getById(id)?.let { movieDb ->
+            if (movie.recommendations.isEmpty() && UserPreferences.enableTmdb) {
+                val year = movie.released?.get(java.util.Calendar.YEAR)
+                val tmdbMovie = com.streamflixreborn.streamflix.utils.TmdbUtils.getMovie(movie.title, year)
+                if (tmdbMovie != null && tmdbMovie.recommendations.isNotEmpty()) {
+                    movie = movie.copy(recommendations = tmdbMovie.recommendations)
+                }
+            }
+
+            database.movieDao().getById(movie.id)?.let { movieDb ->
                 movie.merge(movieDb)
             }
             database.movieDao().insert(movie)

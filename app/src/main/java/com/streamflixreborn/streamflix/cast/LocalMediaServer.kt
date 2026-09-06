@@ -108,7 +108,9 @@ class LocalMediaServer(
 
     companion object {
         private const val TAG = "LocalMediaServer"
-        private const val LOCK_IDLE_RELEASE_MS = 90_000L
+        // Keep locks held for 15 minutes of inactivity so the phone does not enter Doze
+        // and drop the connection when the TV's ExoPlayer buffers ahead.
+        private const val LOCK_IDLE_RELEASE_MS = 15 * 60 * 1000L
 
         @Volatile
         private var instance: LocalMediaServer? = null
@@ -204,6 +206,8 @@ class LocalMediaServer(
 
         val res = NanoHTTPD.newFixedLengthResponse(Response.Status.OK, HLS_MIME, rewritten)
         res.addHeader("Accept-Ranges", "bytes")
+        res.addHeader("Access-Control-Allow-Origin", "*")
+        res.addHeader("Connection", "keep-alive")
         return res
     }
 
@@ -320,6 +324,8 @@ private fun serveFromCache(
             }
         }
     res.addHeader("Accept-Ranges", "bytes")
+    res.addHeader("Access-Control-Allow-Origin", "*")
+    res.addHeader("Connection", "keep-alive")
     return res
 }
 
@@ -430,7 +436,11 @@ private fun serveFileWithRanges(
             NanoHTTPD.newFixedLengthResponse(Response.Status.OK, mime, FileInputStream(file), fileLength).apply {
                 addHeader("Content-Length", fileLength.toString())
             }
-        }.also { it.addHeader("Accept-Ranges", "bytes") }
+        }.also {
+            it.addHeader("Accept-Ranges", "bytes")
+            it.addHeader("Access-Control-Allow-Origin", "*")
+            it.addHeader("Connection", "keep-alive")
+        }
     } catch (e: Exception) {
         Log.e("LocalMediaServer", "Error serving file with ranges", e)
         NanoHTTPD.newFixedLengthResponse(
@@ -456,6 +466,7 @@ private class CacheInputStream(
     private val startPosition: Long,
 ) : InputStream() {
     private var isOpened = false
+    private val singleByteBuffer = ByteArray(1)
 
     private fun ensureOpened() {
         if (!isOpened) {
@@ -467,9 +478,8 @@ private class CacheInputStream(
 
     override fun read(): Int {
         ensureOpened()
-        val buffer = ByteArray(1)
-        val read = dataSource.read(buffer, 0, 1)
-        return if (read <= 0) -1 else buffer[0].toInt() and UNSIGNED_BYTE_MASK
+        val read = dataSource.read(singleByteBuffer, 0, 1)
+        return if (read <= 0) -1 else singleByteBuffer[0].toInt() and UNSIGNED_BYTE_MASK
     }
 
     override fun read(

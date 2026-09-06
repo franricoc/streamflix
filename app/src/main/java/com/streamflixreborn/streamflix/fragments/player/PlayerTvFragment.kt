@@ -270,12 +270,17 @@ class PlayerTvFragment : Fragment() {
             initializeVideo()
             return
         }
-        isCastPlayback = true
-        // Restore the token state the phone was using, so the player's interceptor keeps
-        // injecting the query into HLS segments the same way the phone did.
-        TokenManager.maintainToken = payload.maintainToken
-        if (payload.maintainToken) {
-            payload.tokenQuery?.let { TokenManager.latestQuery = it }
+        val videoType = payload.toVideoType()
+        if (videoType is Video.Type.Episode) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                EpisodeManager.addEpisodesFromDb(videoType, database)
+                withContext(Dispatchers.Main) {
+                    updatePlayerHeader(videoType)
+                    setupEpisodeNavigationButtons()
+                }
+            }
+        } else {
+            updatePlayerHeader(videoType)
         }
 
         lifecycleScope.launch {
@@ -286,37 +291,53 @@ class PlayerTvFragment : Fragment() {
             // phone's LocalMediaServer and stalls direct streaming). On failure we degrade to
             // the old direct-streaming behavior instead of leaving the user with nothing.
             if (payload.isOfflineDownload && payload.fullTransfer) {
-                Toast.makeText(
-                    requireContext(),
-                    "📥 Transfiriendo desde el teléfono...",
-                    Toast.LENGTH_LONG,
-                ).show()
-                source =
-                    try {
-                        val file =
-                            withContext(Dispatchers.IO) {
-                                com.streamflixreborn.streamflix.cast.PushedMediaStore.storeFrom(
-                                    context = requireContext().applicationContext,
-                                    fromUrl = payload.streamUrl,
-                                    key = payload.mediaId ?: payload.title,
-                                    mimeType = payload.mimeType,
-                                )
-                            }
-                        Toast.makeText(
-                            requireContext(),
-                            "✅ Transferencia completa: reproduciendo copia local",
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                        android.net.Uri.fromFile(file).toString()
-                    } catch (e: Exception) {
-                        Log.e("PlayerTvFragment", "Full transfer failed, falling back to direct stream", e)
-                        Toast.makeText(
-                            requireContext(),
-                            "⚠️ No se pudo transferir; reproduciendo directo del teléfono",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                        payload.streamUrl
-                    }
+                val isHls = com.streamflixreborn.streamflix.cast.PushedMediaStore.isHlsSource(payload.mimeType, payload.streamUrl)
+                val canStore = com.streamflixreborn.streamflix.cast.PushedMediaStore.canStoreSafely(
+                    context = requireContext().applicationContext,
+                    fileSizeBytes = payload.fileSizeBytes,
+                )
+
+                if (canStore && !isHls) {
+                    Toast.makeText(
+                        requireContext(),
+                        "📥 Transfiriendo desde el teléfono...",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    source =
+                        try {
+                            val file =
+                                withContext(Dispatchers.IO) {
+                                    com.streamflixreborn.streamflix.cast.PushedMediaStore.storeFrom(
+                                        context = requireContext().applicationContext,
+                                        fromUrl = payload.streamUrl,
+                                        key = payload.mediaId ?: payload.title,
+                                        mimeType = payload.mimeType,
+                                    )
+                                }
+                            Toast.makeText(
+                                requireContext(),
+                                "✅ Transferencia completa: reproduciendo copia local",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                            android.net.Uri.fromFile(file).toString()
+                        } catch (e: Exception) {
+                            Log.e("PlayerTvFragment", "Full transfer failed, falling back to direct stream", e)
+                            Toast.makeText(
+                                requireContext(),
+                                "⚠️ Espacio insuficiente en TV; reproduciendo directo del teléfono",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                            payload.streamUrl
+                        }
+                } else {
+                    Log.i("PlayerTvFragment", "Streaming offline download directly from phone (low TV storage or HLS)")
+                    Toast.makeText(
+                        requireContext(),
+                        "📺 Reproduciendo directo del teléfono (modo ahorro de espacio)",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    source = payload.streamUrl
+                }
             }
 
             // Pass the source exactly as the phone plays it: ExoPlayer handles data: URIs

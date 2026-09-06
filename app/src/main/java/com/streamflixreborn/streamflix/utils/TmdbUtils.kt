@@ -5,6 +5,7 @@ import com.streamflixreborn.streamflix.models.Genre
 import com.streamflixreborn.streamflix.models.Movie
 import com.streamflixreborn.streamflix.models.People
 import com.streamflixreborn.streamflix.models.Season
+import com.streamflixreborn.streamflix.models.Show
 import com.streamflixreborn.streamflix.models.TvShow
 import com.streamflixreborn.streamflix.utils.TMDb3.original
 import com.streamflixreborn.streamflix.utils.TMDb3.w500
@@ -18,6 +19,32 @@ object TmdbUtils {
     private const val UNKNOWN_AGE_RATING = Int.MIN_VALUE
     private val movieAgeCache = ConcurrentHashMap<String, Int>()
     private val tvAgeCache = ConcurrentHashMap<String, Int>()
+
+    fun mapTmdbRecommendations(recommendations: TMDb3.PageResult<TMDb3.MultiItem>?): List<Show> {
+        return recommendations?.results?.mapNotNull { item ->
+            when (item) {
+                is TMDb3.Movie -> Movie(
+                    id = item.id.toString(),
+                    title = item.title,
+                    overview = item.overview,
+                    released = item.releaseDate,
+                    rating = item.voteAverage.toDouble(),
+                    poster = item.posterPath?.w500 ?: item.posterPath?.original,
+                    banner = item.backdropPath?.original,
+                )
+                is TMDb3.Tv -> TvShow(
+                    id = item.id.toString(),
+                    title = item.name,
+                    overview = item.overview,
+                    released = item.firstAirDate,
+                    rating = item.voteAverage.toDouble(),
+                    poster = item.posterPath?.w500 ?: item.posterPath?.original,
+                    banner = item.backdropPath?.original,
+                )
+                else -> null
+            }
+        } ?: emptyList()
+    }
 
     suspend fun getMovie(title: String, year: Int? = null, language: String? = null): Movie? {
         if (!UserPreferences.enableTmdb) return null
@@ -52,6 +79,7 @@ object TmdbUtils {
                 imdbId = details.externalIds?.imdbId,
                 genres = details.genres.map { Genre(it.id.toString(), it.name) },
                 cast = details.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: listOf(),
+                recommendations = mapTmdbRecommendations(details.recommendations),
             )
         } catch (_: Exception) { null }
     }
@@ -96,6 +124,7 @@ object TmdbUtils {
                 },
                 genres = details.genres.map { Genre(it.id.toString(), it.name) },
                 cast = details.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: listOf(),
+                recommendations = mapTmdbRecommendations(details.recommendations),
             )
         } catch (_: Exception) { null }
     }
@@ -184,6 +213,7 @@ object TmdbUtils {
                 imdbId = details.externalIds?.imdbId,
                 genres = details.genres.map { Genre(it.id.toString(), it.name) },
                 cast = details.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: listOf(),
+                recommendations = mapTmdbRecommendations(details.recommendations),
             )
         } catch (_: Exception) { null }
     }
@@ -245,6 +275,7 @@ object TmdbUtils {
                 },
                 genres = details.genres.map { Genre(it.id.toString(), it.name) },
                 cast = details.credits?.cast?.map { People(it.id.toString(), it.name, it.profilePath?.w500) } ?: listOf(),
+                recommendations = mapTmdbRecommendations(details.recommendations),
             )
         } catch (_: Exception) { null }
     }

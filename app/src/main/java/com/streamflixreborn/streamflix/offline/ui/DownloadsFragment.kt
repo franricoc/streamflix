@@ -18,6 +18,7 @@ import com.streamflixreborn.streamflix.offline.DownloadModule
 import com.streamflixreborn.streamflix.offline.database.OfflineDatabase
 import com.streamflixreborn.streamflix.offline.database.OfflineVideoEntity
 import com.streamflixreborn.streamflix.utils.DialogTheme
+import com.streamflixreborn.streamflix.utils.UserPreferences
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -217,6 +218,7 @@ class DownloadsFragment : Fragment() {
         val streamUrl = "$serverBaseUrl/offline_stream/${com.streamflixreborn.streamflix.cast.encodeIdForUrl(video.id)}"
         val subtitle = if (video.seasonNumber != null) "S${video.seasonNumber} E${video.episodeNumber}" else "Descarga local"
 
+        val isEpisode = video.seasonNumber != null && video.episodeNumber != null
         val payload = com.streamflixreborn.streamflix.cast.CastPayload(
             action = "PLAY",
             title = video.title,
@@ -229,6 +231,13 @@ class DownloadsFragment : Fragment() {
             // Always send the complete media (file or HLS playlist tree) to the TV so it
             // plays locally and no longer depends on the phone staying awake.
             fullTransfer = true,
+            contentType = if (isEpisode) "episode" else "movie",
+            providerName = UserPreferences.currentProvider?.name,
+            episodeId = if (isEpisode) video.id else null,
+            episodeNumber = video.episodeNumber,
+            seasonNumber = video.seasonNumber,
+            tvShowTitle = if (isEpisode) video.title else null,
+            fileSizeBytes = video.downloadedBytes.takeIf { it > 0 } ?: video.totalBytes,
         )
 
         sendCastPayloadToSelectedDevice(payload, video.title, subtitle)

@@ -174,13 +174,27 @@ object PlaybackSession {
     }
 
     private fun buildPlayer(context: Context): ExoPlayer {
+        val isTv = context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
+        val maxBufferMs = if (extraBuffering) {
+            if (isTv) 120_000 else 180_000
+        } else {
+            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS
+        }
+        val targetBufferBytes = if (extraBuffering) {
+            if (isTv) 30 * 1024 * 1024 else 50 * 1024 * 1024
+        } else {
+            DefaultLoadControl.DEFAULT_TARGET_BUFFER_BYTES
+        }
+
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-                if (extraBuffering) 300_000 else DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
+                maxBufferMs,
                 DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
                 DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
             )
+            .setTargetBufferBytes(targetBufferBytes)
+            .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
         val baseBuilder = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1 && !softwareDecoder) {

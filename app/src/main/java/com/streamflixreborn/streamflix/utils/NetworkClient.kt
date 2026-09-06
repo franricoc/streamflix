@@ -82,8 +82,39 @@ object NetworkClient {
             .build()
     }
 
+    fun getAcceptLanguageHeader(): String {
+        return try {
+            val context = StreamFlixApp.instance.applicationContext
+            val lang = AppLanguageManager.getSelectedLanguage(context)
+            val locale = if (lang == AppLanguageManager.SYSTEM_LANGUAGE) {
+                java.util.Locale.getDefault()
+            } else {
+                java.util.Locale.forLanguageTag(lang)
+            }
+            val tag = locale.toLanguageTag()
+            val language = locale.language
+            if (tag.isNotBlank() && language.isNotBlank() && !language.equals("en", ignoreCase = true)) {
+                "$tag,$language;q=0.9,en-US;q=0.8,en;q=0.7"
+            } else {
+                "en-US,en;q=0.9"
+            }
+        } catch (e: Exception) {
+            "en-US,en;q=0.9"
+        }
+    }
+
     private fun createBaseClient(): OkHttpClient {
+        val cacheDir = java.io.File(StreamFlixApp.instance.cacheDir, "http-cache")
+        val httpCache = try {
+            okhttp3.Cache(cacheDir, 30L * 1024L * 1024L) // 30 MB
+        } catch (e: Exception) {
+            null
+        }
+
         val builder = OkHttpClient.Builder()
+            .apply {
+                if (httpCache != null) cache(httpCache)
+            }
             .addInterceptor { chain ->
                 val original = chain.request()
                 val requestBuilder = original.newBuilder()
@@ -95,7 +126,7 @@ object NetworkClient {
                 if (original.header("Accept") == null)
                     requestBuilder.header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
                 if (original.header("Accept-Language") == null)
-                    requestBuilder.header("Accept-Language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7")
+                    requestBuilder.header("Accept-Language", getAcceptLanguageHeader())
                 if (!isCorsRequest && original.header("Sec-Fetch-Dest") == null)
                     requestBuilder.header("Sec-Fetch-Dest", "document")
                 if (!isCorsRequest && original.header("Sec-Fetch-Mode") == null)

@@ -550,7 +550,81 @@ class MainMobileActivity : FragmentActivity() {
             return true
         }
 
+        // Handle shared content deep links: streamflix://content?... or https://streamflix.app/content?...
+        val isContentDeepLink = (data.scheme == "streamflix" && data.host == "content") ||
+                ((data.scheme == "https" || data.scheme == "http") &&
+                        data.host == "streamflix.app" &&
+                        data.path?.contains("content") == true)
+
+        if (isContentDeepLink) {
+            handleContentDeepLink(data)
+            return true
+        }
+
         return false
+    }
+
+    private fun handleContentDeepLink(uri: android.net.Uri) {
+        val parsed = com.streamflixreborn.streamflix.utils.ShareHelper.parseDeepLink(uri) ?: return
+        val providerName = parsed.providerName
+
+        // Switch to the correct provider if needed
+        if (!providerName.isNullOrBlank() && !providerName.equals(UserPreferences.currentProvider?.name, ignoreCase = true)) {
+            Provider.providers.keys.find { it.name.equals(providerName, ignoreCase = true) }?.let {
+                UserPreferences.currentProvider = it
+            }
+        }
+
+        val navHost = supportFragmentManager.findFragmentById(R.id.nav_main_fragment) as? NavHostFragment ?: return
+        val navController = navHost.navController
+
+        // Make sure we are on the home screen first
+        if (navController.currentDestination?.id != R.id.home && UserPreferences.currentProvider != null) {
+            navController.navigate(
+                R.id.home,
+                null,
+                navOptions {
+                    launchSingleTop = true
+                    popUpTo(R.id.providers) { inclusive = true }
+                }
+            )
+        }
+
+        when (val videoType = parsed.videoType) {
+            is com.streamflixreborn.streamflix.models.Video.Type.Movie -> {
+                // Navigate to the movie detail screen
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(300) // Wait for navigation to settle
+                    navController.navigate(
+                        R.id.movie,
+                        com.streamflixreborn.streamflix.fragments.movie.MovieMobileFragmentArgs(
+                            id = videoType.id,
+                        ).toBundle(),
+                        navOptions {
+                            launchSingleTop = true
+                        }
+                    )
+                }
+            }
+            is com.streamflixreborn.streamflix.models.Video.Type.Episode -> {
+                val targetShowId = videoType.tvShow.id.ifEmpty { videoType.id }
+                // Navigate to the TV show detail screen
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(300) // Wait for navigation to settle
+                    navController.navigate(
+                        R.id.tv_show,
+                        com.streamflixreborn.streamflix.fragments.tv_show.TvShowMobileFragmentArgs(
+                            id = targetShowId,
+                            poster = videoType.tvShow.poster ?: videoType.poster,
+                            banner = videoType.tvShow.banner,
+                        ).toBundle(),
+                        navOptions {
+                            launchSingleTop = true
+                        }
+                    )
+                }
+            }
+        }
     }
 
     /**

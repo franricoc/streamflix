@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.streamflixreborn.streamflix.adapters.viewholders.CategoryViewHolder
 import com.streamflixreborn.streamflix.adapters.viewholders.EpisodeViewHolder
 import com.streamflixreborn.streamflix.adapters.viewholders.GenreViewHolder
@@ -693,7 +695,16 @@ class AppAdapter(
     }
 
 
-    fun submitList(list: List<Item>) {
+    private var maxScheduledGeneration = 0
+    private val adapterScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main.immediate)
+
+    fun submitList(list: List<Item>, commitCallback: (() -> Unit)? = null) {
+        val generation = ++maxScheduledGeneration
+        if (list === items) {
+            commitCallback?.invoke()
+            return
+        }
+
         val oldItems = items.toList()
         val newItemCount = list.size
 
@@ -703,6 +714,7 @@ class AppAdapter(
         ) {
             val appendedItems = list.subList(oldItems.size, newItemCount)
             if (appendedItems.isEmpty()) {
+                commitCallback?.invoke()
                 return
             }
 
@@ -717,6 +729,19 @@ class AppAdapter(
                 oldItems.size + (header?.let { 1 } ?: 0),
                 appendedItems.size
             )
+            commitCallback?.invoke()
+            return
+        }
+
+        if (list.isEmpty()) {
+            val count = items.size
+            items.clear()
+            itemIdentities = emptyList()
+            itemIdentityCounts = mutableMapOf()
+            itemStableIds = longArrayOf()
+            states.clear()
+            notifyItemRangeRemoved(header?.let { 1 } ?: 0, count)
+            commitCallback?.invoke()
             return
         }
 
@@ -724,55 +749,64 @@ class AppAdapter(
         val newIdentityState = list.buildIdentityState()
         val newIdentities = newIdentityState.identities
 
-        val result = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-            override fun getOldListSize() = items.size
+        adapterScope.launch {
+            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                    override fun getOldListSize() = oldItems.size
 
-            override fun getNewListSize() = list.size
+                    override fun getNewListSize() = list.size
 
-            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                val oldItem = oldItems[oldItemPosition]
-                val newItem = list[newItemPosition]
-                return oldIdentities.getOrNull(oldItemPosition) == newIdentities.getOrNull(newItemPosition) &&
-                        oldItem::class == newItem::class
+                    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                        val oldItem = oldItems.getOrNull(oldItemPosition) ?: return false
+                        val newItem = list.getOrNull(newItemPosition) ?: return false
+                        return oldIdentities.getOrNull(oldItemPosition) == newIdentities.getOrNull(newItemPosition) &&
+                                oldItem::class == newItem::class
+                    }
+
+                    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                        val oldItem = oldItems.getOrNull(oldItemPosition) ?: return false
+                        val newItem = list.getOrNull(newItemPosition) ?: return false
+                        return oldItem == newItem
+                    }
+                })
             }
 
-            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                val oldItem = oldItems[oldItemPosition]
-                val newItem = list[newItemPosition]
-                return oldItem == newItem
+            if (generation != maxScheduledGeneration) {
+                return@launch
             }
-        })
 
-        val newStates = mutableMapOf<Int, Parcelable?>()
-        if (items.size < list.size) {
-            for (newItemPosition in list.indices.reversed()) {
-                val oldItemPosition = result.convertNewPositionToOld(newItemPosition)
-                    .takeIf { it != -1 } ?: continue
+            val newStates = mutableMapOf<Int, Parcelable?>()
+            if (oldItems.size < list.size) {
+                for (newItemPosition in list.indices.reversed()) {
+                    val oldItemPosition = result.convertNewPositionToOld(newItemPosition)
+                        .takeIf { it != -1 } ?: continue
 
-                states[oldItemPosition]?.let { newStates[newItemPosition] = it }
-            }
-        } else if (items.size > list.size) {
-            for (oldItemPosition in items.indices) {
-                val newItemPosition = result.convertOldPositionToNew(oldItemPosition)
-                    .takeIf { it != -1 } ?: continue
+                    states[oldItemPosition]?.let { newStates[newItemPosition] = it }
+                }
+            } else if (oldItems.size > list.size) {
+                for (oldItemPosition in oldItems.indices) {
+                    val newItemPosition = result.convertOldPositionToNew(oldItemPosition)
+                        .takeIf { it != -1 } ?: continue
 
-                states[oldItemPosition]?.let { newStates[newItemPosition] = it }
+                    states[oldItemPosition]?.let { newStates[newItemPosition] = it }
+                }
+            } else {
+                for (index in list.indices) {
+                    states[index]?.let { newStates[index] = it }
+                }
             }
-        } else {
-            for (index in list.indices) {
-                states[index]?.let { newStates[index] = it }
-            }
+
+            states.clear()
+            states.putAll(newStates)
+
+            items.clear()
+            items.addAll(list)
+            itemIdentities = newIdentities
+            itemIdentityCounts = newIdentityState.counts
+            itemStableIds = newIdentityState.stableIds
+            result.dispatchUpdatesTo(this@AppAdapter)
+            commitCallback?.invoke()
         }
-
-        states.clear()
-        states.putAll(newStates)
-
-        items.clear()
-        items.addAll(list)
-        itemIdentities = newIdentities
-        itemIdentityCounts = newIdentityState.counts
-        itemStableIds = newIdentityState.stableIds
-        result.dispatchUpdatesTo(this)
     }
 
     fun moveItem(fromPosition: Int, toPosition: Int) {

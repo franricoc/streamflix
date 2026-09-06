@@ -26,9 +26,7 @@ import javax.net.ssl.X509TrustManager
 class GlideCustomModule : AppGlideModule() {
 
     private fun getOkHttpClient(context: Context): OkHttpClient {
-        val appCache = Cache(File(context.cacheDir, "glide-okhttp-cache"), 10 * 1024 * 1024)
-
-        val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC)
+        val appCache = Cache(File(context.cacheDir, "glide-okhttp-cache"), 150L * 1024L * 1024L)
 
         val trustAllCerts = arrayOf<TrustManager>(
             object : X509TrustManager {
@@ -54,9 +52,7 @@ class GlideCustomModule : AppGlideModule() {
                     requestBuilder.header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
                 }
                 if (original.header("Accept-Language") == null) {
-                    requestBuilder.header(
-                        "Accept-Language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"
-                    )
+                    requestBuilder.header("Accept-Language", NetworkClient.getAcceptLanguageHeader())
                 }
                 chain.proceed(requestBuilder.build())
             }
@@ -78,7 +74,11 @@ class GlideCustomModule : AppGlideModule() {
                 }
                 chain.proceed(fixedRequest)
             }
-            .addInterceptor(logging)
+            .apply {
+                if (com.streamflixreborn.streamflix.BuildConfig.DEBUG) {
+                    addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC))
+                }
+            }
             .sslSocketFactory(sslContext.socketFactory, trustManager)
             .hostnameVerifier { _, _ -> true }
             .dns(DnsResolver.doh)

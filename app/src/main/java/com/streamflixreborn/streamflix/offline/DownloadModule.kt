@@ -148,6 +148,18 @@ object DownloadModule {
         mimeType: String?
     ) {
         val appCtx = context.applicationContext
+        val minFreeSpaceBytes = 500L * 1024L * 1024L // 500 MB
+        if (appCtx.filesDir.usableSpace < minFreeSpaceBytes) {
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                android.widget.Toast.makeText(
+                    appCtx,
+                    "Espacio insuficiente para descargar (mínimo 500 MB libres requeridos)",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
+            return
+        }
+
         val resolvedMime = mimeType ?: when {
             url.contains(".m3u8") -> MimeTypes.APPLICATION_M3U8
             url.contains(".mpd") -> MimeTypes.APPLICATION_MPD

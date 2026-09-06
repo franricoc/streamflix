@@ -135,6 +135,7 @@
             android:text="📺 Transmitir a TV"
             android:textColor="@color/option_text" />
 
+
         <TextView
             android:id="@+id/btn_option_cancel"
             android:layout_width="match_parent"
