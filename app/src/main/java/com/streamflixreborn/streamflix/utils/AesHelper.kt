@@ -1,6 +1,7 @@
 package com.streamflixreborn.streamflix.utils
 
 import android.util.Base64
+import androidx.annotation.Keep
 import com.google.gson.Gson
 import java.security.DigestException
 import java.security.MessageDigest
@@ -90,7 +91,8 @@ object AesHelper {
             .toByteArray()
     }
 
-    private data class AesData(
+    @Keep
+    data class AesData(
         val ct: String,
         val iv: String,
         val s: String

@@ -2,6 +2,7 @@ package com.streamflixreborn.streamflix.utils
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.Keep
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
@@ -23,6 +24,7 @@ object UserDataCache {
     private val gson = Gson()
     private val memoryCache = ConcurrentHashMap<String, UserData>()
 
+    @Keep
     data class UserData(
         val favoritesMovies: List<CachedMovie> = emptyList(),
         val favoritesTvShows: List<CachedTvShow> = emptyList(),
@@ -68,9 +70,20 @@ object UserDataCache {
         if (!file.exists()) return null
 
         return runCatching {
-            gson.fromJson(file.readText(), UserData::class.java).normalized().also {
+            val data = gson.fromJson(file.readText(), UserData::class.java) ?: return null
+            val validated = data.copy(
+                favoritesMovies = data.favoritesMovies.filterIsInstance<CachedMovie>(),
+                favoritesTvShows = data.favoritesTvShows.filterIsInstance<CachedTvShow>(),
+                continueWatchingMovies = data.continueWatchingMovies.filterIsInstance<CachedMovie>(),
+                continueWatchingEpisodes = data.continueWatchingEpisodes.filterIsInstance<CachedEpisode>(),
+            )
+            validated.normalized().also {
                 memoryCache[key] = it
             }
+        }.recoverCatching {
+            memoryCache.remove(key)
+            file.delete()
+            null
         }.getOrNull()
     }
 
@@ -347,6 +360,7 @@ object UserDataCache {
 
 
 
+    @Keep
     data class CachedMovie(
         val id: String,
         val title: String,
@@ -366,6 +380,7 @@ object UserDataCache {
         val durationMillis: Long? = null,
     )
 
+    @Keep
     data class CachedTvShow(
         val id: String,
         val title: String,
@@ -381,6 +396,7 @@ object UserDataCache {
         val favoritedAtMillis: Long? = null,
     )
 
+    @Keep
     data class CachedEpisode(
         val id: String,
         val number: Int,

@@ -1,6 +1,7 @@
 package com.streamflixreborn.streamflix.utils
 
 import android.content.Context
+import androidx.annotation.Keep
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
@@ -30,14 +31,13 @@ object HomeCacheStore {
 
         return runCatching {
             val type = object : TypeToken<List<CachedCategory>>() {}.type
-            val payload: List<CachedCategory> = gson.fromJson(file.readText(), type)
-            memoryCache[cacheKey] = payload
-            payload.toCategories()
+            val payload: List<CachedCategory> = gson.fromJson(file.readText(), type) ?: return null
+            val validated = payload.filterIsInstance<CachedCategory>()
+            memoryCache[cacheKey] = validated
+            validated.toCategories()
         }.recoverCatching {
-            if (it is JsonSyntaxException) {
-                memoryCache.remove(cacheKey)
-                file.delete()
-            }
+            memoryCache.remove(cacheKey)
+            file.delete()
             null
         }.getOrNull()
     }
@@ -79,7 +79,8 @@ object HomeCacheStore {
         return mapNotNull { it.toCategoryOrNull() }
     }
 
-    private data class CachedCategory(
+    @Keep
+    data class CachedCategory(
         val name: String,
         val list: List<CachedItem>,
     ) {
@@ -98,7 +99,8 @@ object HomeCacheStore {
         }
     }
 
-    private data class CachedItem(
+    @Keep
+    data class CachedItem(
         val type: String,
         val id: String,
         val title: String? = null,

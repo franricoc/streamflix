@@ -20,6 +20,19 @@
 -keepclassmembers class com.streamflixreborn.streamflix.models.** { *; }
 -keep class com.streamflixreborn.streamflix.sync.RemoteMediaState { *; }
 -keepclassmembers class com.streamflixreborn.streamflix.sync.RemoteMediaState { *; }
+-keep class com.streamflixreborn.streamflix.utils.UserDataCache { *; }
+-keep class com.streamflixreborn.streamflix.utils.UserDataCache$* { *; }
+-keepclassmembers class com.streamflixreborn.streamflix.utils.UserDataCache { *; }
+-keepclassmembers class com.streamflixreborn.streamflix.utils.UserDataCache$* { *; }
+-keep class com.streamflixreborn.streamflix.utils.HomeCacheStore { *; }
+-keep class com.streamflixreborn.streamflix.utils.HomeCacheStore$* { *; }
+-keepclassmembers class com.streamflixreborn.streamflix.utils.HomeCacheStore { *; }
+-keepclassmembers class com.streamflixreborn.streamflix.utils.HomeCacheStore$* { *; }
+-keep class com.streamflixreborn.streamflix.cast.** { *; }
+-keepclassmembers class com.streamflixreborn.streamflix.cast.** { *; }
+-keep class com.streamflixreborn.streamflix.utils.AesData { *; }
+-keepclassmembers class com.streamflixreborn.streamflix.utils.AesData { *; }
+
 
 # -----------------------------------------------------------------------------
 # Providers & Extractors (Reflection & Registry Support)

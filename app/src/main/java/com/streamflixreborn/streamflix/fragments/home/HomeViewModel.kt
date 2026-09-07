@@ -52,9 +52,12 @@ class HomeViewModel(database: AppDatabase) : ViewModel() {
         idOf: (T) -> String,
     ): List<T> {
         val incomingById = incoming.associateBy(idOf)
-        val orderedExisting = cached.mapNotNull { cachedItem -> incomingById[idOf(cachedItem)] }
+        val orderedExisting = cached.mapNotNull { cachedItem ->
+            runCatching { idOf(cachedItem) }.getOrNull()?.let { incomingById[it] }
+        }
         val appendedNew = incoming.filter { incomingItem ->
-            cached.none { cachedItem -> idOf(cachedItem) == idOf(incomingItem) }
+            val incId = runCatching { idOf(incomingItem) }.getOrNull()
+            cached.none { cachedItem -> runCatching { idOf(cachedItem) }.getOrNull() == incId }
         }
         return orderedExisting + appendedNew
     }

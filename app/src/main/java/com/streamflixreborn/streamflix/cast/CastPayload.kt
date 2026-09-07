@@ -1,8 +1,10 @@
 package com.streamflixreborn.streamflix.cast
 
+import androidx.annotation.Keep
 import com.streamflixreborn.streamflix.models.Video
 import java.io.Serializable
 
+@Keep
 data class CastPayload(
     val action: String = "PLAY",
     val title: String,
@@ -71,12 +73,14 @@ data class CastPayload(
         )
     }
 
+    @Keep
     data class SubtitleInfo(
         val label: String,
         val url: String,
         val default: Boolean = false
     ) : Serializable
 
+    @Keep
     data class DiscoveredDevice(
         val name: String,
         val ipAddress: String,

@@ -42,13 +42,11 @@ class MainViewModel : ViewModel() {
             if (newReleases.isEmpty()) return@launch
 
             val apkAssets = newReleases.first().assets.filter { it.name.endsWith(".apk", ignoreCase = true) }
-            
-            val asset = apkAssets.firstOrNull() ?: throw Exception("Can't find update APK")
+            val asset = apkAssets.firstOrNull() ?: return@launch
 
             _state.emit(State.SuccessCheckingUpdate(newReleases, asset))
         } catch (e: Exception) {
             Log.e("MainViewModel", "checkUpdate: ", e)
-            _state.emit(State.FailedUpdate(e))
         }
     }
 
