@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.net.InetAddress
 
-class DeviceDiscoveryManager(context: Context) {
+class DeviceDiscoveryManager(private val context: Context) {
 
     private val nsdManager = context.applicationContext.getSystemService(Context.NSD_SERVICE) as NsdManager
 
@@ -19,6 +19,10 @@ class DeviceDiscoveryManager(context: Context) {
 
     private var registrationListener: NsdManager.RegistrationListener? = null
     private var discoveryListener: NsdManager.DiscoveryListener? = null
+    private var multicastLock: android.net.wifi.WifiManager.MulticastLock? = null
+
+    private val resolveQueue = java.util.ArrayDeque<NsdServiceInfo>()
+    private var isResolving = false
 
     companion object {
         const val SERVICE_TYPE = "_streamflix-cast._tcp."
@@ -75,6 +79,19 @@ class DeviceDiscoveryManager(context: Context) {
         stopDiscovery()
         _discoveredDevices.value = emptyList()
 
+        try {
+            if (multicastLock == null) {
+                val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager
+                multicastLock = wm?.createMulticastLock("streamflix:cast_discovery")?.apply {
+                    setReferenceCounted(false)
+                }
+            }
+            multicastLock?.acquire()
+            Log.d(TAG, "MulticastLock acquired for discovery")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to acquire MulticastLock", e)
+        }
+
         discoveryListener = object : NsdManager.DiscoveryListener {
             override fun onDiscoveryStarted(regType: String) {
                 Log.d(TAG, "Service discovery started")
@@ -83,7 +100,7 @@ class DeviceDiscoveryManager(context: Context) {
             override fun onServiceFound(service: NsdServiceInfo) {
                 Log.d(TAG, "Service found: ${service.serviceName}")
                 if (service.serviceType.contains("_streamflix-cast")) {
-                    resolveService(service)
+                    queueResolveService(service)
                 }
             }
 
@@ -119,29 +136,54 @@ class DeviceDiscoveryManager(context: Context) {
         }
     }
 
-    private fun resolveService(service: NsdServiceInfo) {
+    private fun queueResolveService(service: NsdServiceInfo) {
+        synchronized(resolveQueue) {
+            resolveQueue.add(service)
+            if (!isResolving) {
+                processNextResolve()
+            }
+        }
+    }
+
+    private fun processNextResolve() {
+        synchronized(resolveQueue) {
+            val next = resolveQueue.poll()
+            if (next == null) {
+                isResolving = false
+                return
+            }
+            isResolving = true
+            resolveServiceInternal(next)
+        }
+    }
+
+    private fun resolveServiceInternal(service: NsdServiceInfo) {
         val resolveListener = object : NsdManager.ResolveListener {
             override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                Log.e(TAG, "Resolve failed: $errorCode")
+                Log.e(TAG, "Resolve failed: $errorCode for ${serviceInfo.serviceName}")
+                processNextResolve()
             }
 
             override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
                 Log.d(TAG, "Service resolved: ${serviceInfo.serviceName} -> ${serviceInfo.host}:${serviceInfo.port}")
                 val host: InetAddress? = serviceInfo.host
                 if (host != null) {
-                    val ip = host.hostAddress ?: return
-                    val device = CastPayload.DiscoveredDevice(
-                        name = serviceInfo.serviceName.replace("$SERVICE_NAME-", ""),
-                        ipAddress = ip,
-                        port = serviceInfo.port
-                    )
+                    val ip = host.hostAddress
+                    if (ip != null) {
+                        val device = CastPayload.DiscoveredDevice(
+                            name = serviceInfo.serviceName.replace("$SERVICE_NAME-", ""),
+                            ipAddress = ip,
+                            port = serviceInfo.port
+                        )
 
-                    val currentList = _discoveredDevices.value.toMutableList()
-                    if (currentList.none { it.ipAddress == ip && it.port == serviceInfo.port }) {
-                        currentList.add(device)
-                        _discoveredDevices.value = currentList
+                        val currentList = _discoveredDevices.value.toMutableList()
+                        if (currentList.none { it.ipAddress == ip && it.port == serviceInfo.port }) {
+                            currentList.add(device)
+                            _discoveredDevices.value = currentList
+                        }
                     }
                 }
+                processNextResolve()
             }
         }
 
@@ -149,10 +191,15 @@ class DeviceDiscoveryManager(context: Context) {
             nsdManager.resolveService(service, resolveListener)
         } catch (e: Exception) {
             Log.e(TAG, "Error resolving service", e)
+            processNextResolve()
         }
     }
 
     fun stopDiscovery() {
+        synchronized(resolveQueue) {
+            resolveQueue.clear()
+            isResolving = false
+        }
         discoveryListener?.let {
             try {
                 nsdManager.stopServiceDiscovery(it)
@@ -160,6 +207,14 @@ class DeviceDiscoveryManager(context: Context) {
                 Log.e(TAG, "Error stopping discovery", e)
             }
             discoveryListener = null
+        }
+        try {
+            if (multicastLock?.isHeld == true) {
+                multicastLock?.release()
+                Log.d(TAG, "MulticastLock released")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error releasing multicast lock", e)
         }
     }
 }

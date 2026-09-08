@@ -26,8 +26,8 @@ android {
         applicationId = "com.streamflixreborn.streamflix"
         minSdk = 21
         targetSdk = 35
-        versionCode = 168
-        versionName = "1.7.231.1"
+        versionCode = 169
+        versionName = "1.7.231.2"
 
         buildConfigField("String", "APP_LAYOUT", "\"${properties.getProperty("APP_LAYOUT") ?: "universal"}\"")
         buildConfigField("String", "TMDB_API_KEY", "\"${properties.getProperty("TMDB_API_KEY") ?: ""}\"")
@@ -79,6 +79,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        dataBinding = false
     }
 
     lint {
@@ -94,7 +95,10 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
-        freeCompilerArgs.add("-nowarn")
+        freeCompilerArgs.addAll(
+            "-nowarn",
+            "-Xbackend-threads=4"
+        )
     }
 }
 

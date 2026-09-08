@@ -299,7 +299,13 @@ private fun serveFromCache(
         if (cachedBytes > 0) {
             totalLength = cachedBytes
         } else {
-            return null
+            val entity = loadEntity(appContext, originalUrl)
+            val dbBytes = entity?.downloadedBytes?.takeIf { it > 0 } ?: entity?.totalBytes ?: 0L
+            if (dbBytes > 0) {
+                totalLength = dbBytes
+            } else {
+                return null
+            }
         }
     }
 
@@ -381,8 +387,12 @@ private fun serveFromFiles(
     downloadId: String,
     appContext: Context,
 ): Response {
-    val cacheFolder = File(appContext.filesDir, "offline_videos")
-    val videoFile = findVideoFileForDownload(cacheFolder, downloadId)
+    val cacheFolder = DownloadModule.getDownloadFolder(appContext)
+    var videoFile = findVideoFileForDownload(cacheFolder, downloadId)
+    if (videoFile == null) {
+        val legacyFolder = File(appContext.filesDir, "offline_videos")
+        videoFile = findVideoFileForDownload(legacyFolder, downloadId)
+    }
     if (videoFile != null) {
         return serveFileWithRanges(session, videoFile)
     }

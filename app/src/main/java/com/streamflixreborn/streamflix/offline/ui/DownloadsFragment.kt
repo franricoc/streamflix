@@ -18,7 +18,6 @@ import com.streamflixreborn.streamflix.offline.DownloadModule
 import com.streamflixreborn.streamflix.offline.database.OfflineDatabase
 import com.streamflixreborn.streamflix.offline.database.OfflineVideoEntity
 import com.streamflixreborn.streamflix.utils.DialogTheme
-import com.streamflixreborn.streamflix.utils.UserPreferences
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -177,110 +176,7 @@ class DownloadsFragment : Fragment() {
     }
 
     private fun handleItemLongClick(video: OfflineVideoEntity) {
-        // Completed downloads can be sent straight to the TV: the phone serves the file over
-        // HTTP (LocalMediaServer) and the TV plays it without re-downloading anything.
-        val options = buildList {
-            if (video.state == 3) add("📺 Transmitir a la TV")
-            add("🗑️ Eliminar descarga")
-        }
-        AlertDialog.Builder(requireContext())
-            .setTitle(video.title)
-            .setItems(options.toTypedArray()) { _, which ->
-                when {
-                    video.state == 3 && which == 0 -> castDownloadedVideoToTv(video)
-                    else -> confirmDeleteDownload(video)
-                }
-            }
-            .show()
-    }
-
-    private fun castDownloadedVideoToTv(video: OfflineVideoEntity) {
-        if (video.state != 3) {
-            android.widget.Toast.makeText(
-                requireContext(),
-                "La descarga aún no se ha completado",
-                android.widget.Toast.LENGTH_SHORT,
-            ).show()
-            return
-        }
-
-        val localServer = com.streamflixreborn.streamflix.cast.LocalMediaServer.getInstance(requireContext())
-        val serverBaseUrl = localServer.startServer()
-        if (serverBaseUrl == null) {
-            android.widget.Toast.makeText(
-                requireContext(),
-                "Error iniciando servidor local en el teléfono",
-                android.widget.Toast.LENGTH_SHORT,
-            ).show()
-            return
-        }
-
-        val streamUrl = "$serverBaseUrl/offline_stream/${com.streamflixreborn.streamflix.cast.encodeIdForUrl(video.id)}"
-        val subtitle = if (video.seasonNumber != null) "S${video.seasonNumber} E${video.episodeNumber}" else "Descarga local"
-
-        val isEpisode = video.seasonNumber != null && video.episodeNumber != null
-        val payload = com.streamflixreborn.streamflix.cast.CastPayload(
-            action = "PLAY",
-            title = video.title,
-            subtitle = subtitle,
-            posterUrl = video.posterUrl,
-            streamUrl = streamUrl,
-            mimeType = video.mimeType,
-            mediaId = video.id,
-            isOfflineDownload = true,
-            // Always send the complete media (file or HLS playlist tree) to the TV so it
-            // plays locally and no longer depends on the phone staying awake.
-            fullTransfer = true,
-            contentType = if (isEpisode) "episode" else "movie",
-            providerName = UserPreferences.currentProvider?.name,
-            episodeId = if (isEpisode) video.id else null,
-            episodeNumber = video.episodeNumber,
-            seasonNumber = video.seasonNumber,
-            tvShowTitle = if (isEpisode) video.title else null,
-            fileSizeBytes = video.downloadedBytes.takeIf { it > 0 } ?: video.totalBytes,
-        )
-
-        sendCastPayloadToSelectedDevice(payload, video.title, subtitle)
-    }
-
-    private fun sendCastPayloadToSelectedDevice(
-        payload: com.streamflixreborn.streamflix.cast.CastPayload,
-        title: String,
-        subtitle: String?,
-    ) {
-        com.streamflixreborn.streamflix.cast.ui.DeviceSelectorDialog.show(requireContext()) { device ->
-            viewLifecycleOwner.lifecycleScope.launch {
-                android.widget.Toast.makeText(
-                    requireContext(),
-                    "Enviando a ${device.name}...",
-                    android.widget.Toast.LENGTH_SHORT,
-                ).show()
-                com.streamflixreborn.streamflix.cast.MobileCastClient.sendPayloadToTv(
-                    ipAddress = device.ipAddress,
-                    port = device.port,
-                    payload = payload,
-                    onSuccess = {
-                        android.widget.Toast.makeText(
-                            requireContext(),
-                            "📺 Transmitiendo en ${device.name}",
-                            android.widget.Toast.LENGTH_SHORT,
-                        ).show()
-                        com.streamflixreborn.streamflix.cast.CastControlManager.startSession(
-                            device = device,
-                            title = title,
-                            subtitle = subtitle,
-                        )
-                    },
-                    onError = { err ->
-                        android.widget.Toast.makeText(
-                            requireContext(),
-                            "Error al transmitir: $err",
-                            android.widget.Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                )
-            }
-        }
+        confirmDeleteDownload(video)
     }
 
     private fun confirmDeleteDownload(video: OfflineVideoEntity) {

@@ -36,6 +36,42 @@ object DownloadModule {
     @Volatile
     private var downloadManager: DownloadManager? = null
 
+    fun getDownloadFolder(context: Context): File {
+        val appCtx = context.applicationContext
+        val externalDir = appCtx.getExternalFilesDir(null)
+        val targetFolder = if (externalDir != null) {
+            File(externalDir, DOWNLOAD_DIR)
+        } else {
+            File(appCtx.filesDir, DOWNLOAD_DIR)
+        }
+
+        if (!targetFolder.exists()) {
+            targetFolder.mkdirs()
+        }
+
+        // Migrate legacy downloads from internal filesDir to externalDir if present
+        if (externalDir != null) {
+            val legacyFolder = File(appCtx.filesDir, DOWNLOAD_DIR)
+            if (legacyFolder.exists() && legacyFolder.isDirectory) {
+                val legacyFiles = legacyFolder.listFiles()
+                if (legacyFiles != null && legacyFiles.isNotEmpty()) {
+                    for (file in legacyFiles) {
+                        try {
+                            val dest = File(targetFolder, file.name)
+                            if (!dest.exists()) {
+                                file.renameTo(dest)
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.w("DownloadModule", "Failed to migrate download file: ${file.name}", e)
+                        }
+                    }
+                }
+            }
+        }
+
+        return targetFolder
+    }
+
     @Synchronized
     fun getDatabaseProvider(context: Context): StandaloneDatabaseProvider {
         return databaseProvider ?: StandaloneDatabaseProvider(context.applicationContext).also {
@@ -46,10 +82,7 @@ object DownloadModule {
     @Synchronized
     fun getDownloadCache(context: Context): Cache {
         return downloadCache ?: run {
-            val cacheFolder = File(context.applicationContext.filesDir, DOWNLOAD_DIR)
-            if (!cacheFolder.exists()) {
-                cacheFolder.mkdirs()
-            }
+            val cacheFolder = getDownloadFolder(context)
             val dbProvider = getDatabaseProvider(context)
             val cache = SimpleCache(cacheFolder, NoOpCacheEvictor(), dbProvider)
             downloadCache = cache
@@ -148,12 +181,13 @@ object DownloadModule {
         mimeType: String?
     ) {
         val appCtx = context.applicationContext
-        val minFreeSpaceBytes = 500L * 1024L * 1024L // 500 MB
-        if (appCtx.filesDir.usableSpace < minFreeSpaceBytes) {
+        val downloadFolder = getDownloadFolder(appCtx)
+        val minFreeSpaceBytes = 50L * 1024L * 1024L // 50 MB
+        if (downloadFolder.usableSpace < minFreeSpaceBytes) {
             android.os.Handler(android.os.Looper.getMainLooper()).post {
                 android.widget.Toast.makeText(
                     appCtx,
-                    "Espacio insuficiente para descargar (mínimo 500 MB libres requeridos)",
+                    "Espacio de almacenamiento casi agotado en el dispositivo",
                     android.widget.Toast.LENGTH_LONG
                 ).show()
             }

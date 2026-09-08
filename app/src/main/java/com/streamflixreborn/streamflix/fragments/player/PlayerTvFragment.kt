@@ -270,6 +270,11 @@ class PlayerTvFragment : Fragment() {
             initializeVideo()
             return
         }
+        isCastPlayback = true
+        TokenManager.maintainToken = payload.maintainToken
+        if (payload.maintainToken) {
+            payload.tokenQuery?.let { TokenManager.latestQuery = it }
+        }
         val videoType = payload.toVideoType()
         if (videoType is Video.Type.Episode) {
             lifecycleScope.launch(Dispatchers.IO) {
@@ -374,9 +379,6 @@ class PlayerTvFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        initializePlayer(false)
-        initializeVideo()
-
         val castPayload = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arguments?.getSerializable("cast_payload", com.streamflixreborn.streamflix.cast.CastPayload::class.java)
         } else {
@@ -384,8 +386,17 @@ class PlayerTvFragment : Fragment() {
             arguments?.getSerializable("cast_payload") as? com.streamflixreborn.streamflix.cast.CastPayload
         }
 
-        if (castPayload != null) {
-            onNewCastPayload(castPayload)
+        val isCast = castPayload != null || arguments?.getBoolean("is_cast", false) == true
+
+        if (isCast) {
+            isCastPlayback = true
+            initializePlayer(false)
+            if (castPayload != null) {
+                onNewCastPayload(castPayload)
+            }
+        } else {
+            initializePlayer(false)
+            initializeVideo()
         }
 
         binding.pvPlayer.onMediaPreviousClicked = ::handleMediaPrevious
@@ -1465,7 +1476,7 @@ class PlayerTvFragment : Fragment() {
                         lifecycleScope.launch {
                             delay(PLAYBACK_RETRY_DELAY_MS)
                             val server = currentServer ?: return@launch
-                            if (servers.contains(server)) {
+                            if (!isCastPlayback && servers.contains(server)) {
                                 viewModel.getVideo(server)
                             } else {
                                 // Cast/local stream: rebuild the media item and resume.
@@ -1477,11 +1488,13 @@ class PlayerTvFragment : Fragment() {
                     }
                     playbackRetryCount = 0
 
-                    val nextServer = servers.getOrNull(currentIdx + 1)
-                    if (nextServer != null) {
-                        Log.i("PlayerTvFragment", "Playback failed, trying next server: ${nextServer.name}")
-                        viewModel.getVideo(nextServer)
-                        return
+                    if (!isCastPlayback) {
+                        val nextServer = servers.getOrNull(currentIdx + 1)
+                        if (nextServer != null) {
+                            Log.i("PlayerTvFragment", "Playback failed, trying next server: ${nextServer.name}")
+                            viewModel.getVideo(nextServer)
+                            return
+                        }
                     }
 
                     // No more servers: surface the error instead of leaving a black screen.

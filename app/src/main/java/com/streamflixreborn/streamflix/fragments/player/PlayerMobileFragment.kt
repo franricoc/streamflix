@@ -569,18 +569,21 @@ class PlayerMobileFragment : Fragment() {
                     viewModel.playPreviousOrNextEpisode.collect { nextEpisode ->
                     releasePlayer()
                     isSetupDone = false
-                    val action = PlayerMobileFragmentDirections
-                        .actionPlayerMobileFragmentSelf(
-                            id = nextEpisode.id,
-                            videoType = nextEpisode,
-                            title = nextEpisode.tvShow.title,
-                            subtitle = "S${nextEpisode.season.number} E${nextEpisode.number}  •  ${nextEpisode.title}",
-                            preferredServerName = currentServer?.name,
+                    val playerArgs = Bundle().apply {
+                        putString("id", nextEpisode.id)
+                        putSerializable("videoType", nextEpisode)
+                        putString("title", nextEpisode.tvShow.title)
+                        putString(
+                            "subtitle",
+                            "S${nextEpisode.season.number} E${nextEpisode.number}  •  ${nextEpisode.title}"
                         )
+                        putString("preferredServerName", currentServer?.name)
+                    }
 
                     hideNextEpisodeOverlay()
                     findNavController().navigate(
-                        action,
+                        R.id.player,
+                        playerArgs,
                         NavOptions.Builder()
                             .setPopUpTo(
                                 findNavController().currentDestination?.id ?: return@collect, true
@@ -1194,7 +1197,9 @@ class PlayerMobileFragment : Fragment() {
     }
 
     private fun playNextEpisodeAcrossSeasons(autoplay: Boolean = false) {
-        val type = args.videoType as? Video.Type.Episode ?: return
+        val type = (currentVideoTypeForUi() as? Video.Type.Episode)
+            ?: (args.videoType as? Video.Type.Episode)
+            ?: return
 
         lifecycleScope.launch {
             val hasNextEpisode = withContext(Dispatchers.IO) {
@@ -1463,7 +1468,18 @@ class PlayerMobileFragment : Fragment() {
     }
 
     private fun createPlaybackListener(): Player.Listener = object : Player.Listener {
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            super.onPlaybackStateChanged(playbackState)
+            if (playbackState == Player.STATE_ENDED) {
+                if (args.videoType is Video.Type.Episode || currentVideoTypeForUi() is Video.Type.Episode) {
+                    if (UserPreferences.autoplay) {
+                        playNextEpisodeAcrossSeasons(autoplay = true)
+                    }
+                }
+            }
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
                 binding.pvPlayer.keepScreenOn = isPlaying || UserPreferences.keepScreenOnWhenPaused
 

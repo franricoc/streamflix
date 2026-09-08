@@ -36,7 +36,10 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
-        freeCompilerArgs.add("-nowarn")
+        freeCompilerArgs.addAll(
+            "-nowarn",
+            "-Xbackend-threads=4"
+        )
     }
 }
 
