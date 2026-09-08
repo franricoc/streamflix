@@ -26,8 +26,8 @@ android {
         applicationId = "com.streamflixreborn.streamflix"
         minSdk = 21
         targetSdk = 35
-        versionCode = 165
-        versionName = "1.7.230.2"
+        versionCode = 166
+        versionName = "1.7.231"
 
         buildConfigField("String", "APP_LAYOUT", "\"${properties.getProperty("APP_LAYOUT") ?: "universal"}\"")
         buildConfigField("String", "TMDB_API_KEY", "\"${properties.getProperty("TMDB_API_KEY") ?: ""}\"")
@@ -37,6 +37,10 @@ android {
         buildConfigField("String", "UPROT_MSFI_API_BASE", "\"${properties.getProperty("UPROT_MSFI_API_BASE") ?: ""}\"")
         buildConfigField("String", "UPROT_MSE_API_BASE", "\"${properties.getProperty("UPROT_MSE_API_BASE") ?: ""}\"")
         buildConfigField("String", "UPROT_API_KEY", "\"${properties.getProperty("UPROT_API_KEY") ?: ""}\"")
+        buildConfigField("String", "UPROT_API_BASE", "\"${properties.getProperty("UPROT_API_BASE") ?: ""}\"")
+        buildConfigField("String", "UPROT_SIGN_KEY", "\"${properties.getProperty("UPROT_SIGN_KEY") ?: ""}\"")
+        buildConfigField("String", "UPROT_DIRECT_API_BASE", "\"${properties.getProperty("UPROT_DIRECT_API_BASE") ?: ""}\"")
+        buildConfigField("String", "UPROT_DIRECT_KEY", "\"${properties.getProperty("UPROT_DIRECT_KEY") ?: ""}\"")
     }
 
     compileOptions {

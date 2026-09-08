@@ -18,6 +18,7 @@ object CineCalidadProvider : BaseProvider() {
     override val baseUrl = "https://www.cinecalidad.am"
     override val language = "es"
     override val logo = "https://www.cinecalidad.am/wp-content/themes/Cinecalidad/assets/img/logo.svg?v=1aaaaaa.0"
+    override val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
 
     override suspend fun getHome(): List<Category> = safeFetchList("getHome") {
         coroutineScope {

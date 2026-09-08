@@ -38,6 +38,10 @@ jobs:
           UPROT_MSFI_API_BASE: ${{ secrets.UPROT_MSFI_API_BASE }}
           UPROT_MSE_API_BASE: ${{ secrets.UPROT_MSE_API_BASE }}
           UPROT_API_KEY: ${{ secrets.UPROT_API_KEY }}
+          UPROT_API_BASE: ${{ secrets.UPROT_API_BASE }}
+          UPROT_SIGN_KEY: ${{ secrets.UPROT_SIGN_KEY }}
+          UPROT_DIRECT_API_BASE: ${{ secrets.UPROT_DIRECT_API_BASE }}
+          UPROT_DIRECT_KEY: ${{ secrets.UPROT_DIRECT_KEY }}
         run: |
           echo TMDB_API_KEY=$TMDB_API_KEY >> local.properties
           echo RABBITSTREAM_SOURCE_API=$RABBITSTREAM_SOURCE_API >> local.properties
@@ -45,6 +49,10 @@ jobs:
           echo UPROT_MSFI_API_BASE=$UPROT_MSFI_API_BASE >> local.properties
           echo UPROT_MSE_API_BASE=$UPROT_MSE_API_BASE >> local.properties
           echo UPROT_API_KEY=$UPROT_API_KEY >> local.properties
+          echo UPROT_API_BASE=$UPROT_API_BASE >> local.properties
+          echo UPROT_SIGN_KEY=$UPROT_SIGN_KEY >> local.properties
+          echo UPROT_DIRECT_API_BASE=$UPROT_DIRECT_API_BASE >> local.properties
+          echo UPROT_DIRECT_KEY=$UPROT_DIRECT_KEY >> local.properties
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
